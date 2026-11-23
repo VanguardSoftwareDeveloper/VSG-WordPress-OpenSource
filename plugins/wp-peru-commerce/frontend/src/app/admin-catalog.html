@@ -1,0 +1,322 @@
+<section class="pc-stack" aria-labelledby="pc-catalog-heading">
+  <div class="pc-row">
+    <div>
+      <h2 id="pc-catalog-heading">Catálogo, inventario y archivos</h2>
+      <p class="pc-muted">Gestión de productos y variantes en PEN; cada operación comprueba su permiso y versión en el servidor.</p>
+    </div>
+    @if(canEdit()){
+      <button type="button" (click)="startCreate()" [disabled]="busy()||hasPending()">
+        Crear producto
+      </button>
+    }
+  </div>
+
+  @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+  @if(notice()){<p class="pc-alert" role="status">{{notice()}}</p>}
+
+  @if(!canEdit()){
+    <p class="pc-panel">La consulta y edición del catálogo no están habilitadas para esta sesión. El permiso efectivo depende del backend y de las verificaciones de instalación.</p>
+  }@else{
+    <div class="pc-panel pc-stack">
+      <div class="pc-grid">
+        <label>Estado del producto
+          <select [(ngModel)]="filter" (ngModelChange)="filterChanged()"
+            [disabled]="loading()||busy()||hasPending()">
+            <option value="all">Todos</option>
+            <option value="draft">Borradores</option>
+            <option value="hidden">Ocultos</option>
+            <option value="published">Publicados</option>
+          </select>
+        </label>
+        <label>Buscar en esta página
+          <input type="search" [ngModel]="search()"
+            (ngModelChange)="search.set($event)" maxlength="100"
+            placeholder="Título o ID">
+        </label>
+      </div>
+      <div class="pc-actions">
+        <button type="button" class="pc-secondary" (click)="refresh()"
+          [disabled]="loading()||busy()">Recargar listado</button>
+      </div>
+      @if(loading()){<p role="status">Consultando productos y versiones…</p>}
+      @if(!loading()&&visibleItems().length===0){
+        <p>No hay productos en esta página con el filtro elegido.</p>
+      }
+      <ul class="pc-cards" aria-label="Productos administrativos">
+        @for(p of visibleItems();track p.id){
+          <li class="pc-card pc-stack">
+            <div class="pc-row">
+              <div>
+                <strong>{{p.title}}</strong>
+                <p class="pc-muted">
+                  Producto {{p.id}} · {{p.kind==='physical'?'Físico':p.kind==='service'?'Servicio':'Digital'}}
+                </p>
+              </div>
+              <span>{{p.visibility==='published'?'Publicado':p.visibility==='hidden'?'Oculto':'Borrador'}}</span>
+            </div>
+            <p class="pc-muted">Versión del catálogo: {{p.row_version}}
+              @if(p.price_cents!==undefined){
+                · Precio final: {{money(p.sale_active&&p.sale_price_cents?p.sale_price_cents:p.price_cents)}}
+              }@else{
+                · Precios por variante
+              }
+            </p>
+            <div class="pc-actions">
+              <button type="button" class="pc-secondary" (click)="select(p)"
+                [disabled]="busy()||hasPending()">Ver detalle</button>
+              <button type="button" class="pc-secondary" (click)="edit(p)"
+                [disabled]="busy()||hasPending()">Editar producto</button>
+            </div>
+          </li>
+        }
+      </ul>
+      <div class="pc-actions">
+        <button type="button" class="pc-secondary" (click)="pageChanged(-1)"
+          [disabled]="page()===1||loading()||busy()||hasPending()">Anterior</button>
+        <span>Página {{page()}}</span>
+        <button type="button" class="pc-secondary" (click)="pageChanged(1)"
+          [disabled]="!hasMore()||loading()||busy()||hasPending()">Siguiente</button>
+      </div>
+    </div>
+
+    @if(mode){
+      <section class="pc-panel pc-stack" aria-labelledby="pc-editor-heading">
+        <h3 id="pc-editor-heading">{{mode==='create'?'Nuevo producto':'Editar producto '+editing?.id}}</h3>
+        @if(mode==='edit'){
+          <p class="pc-muted">Versión esperada {{editing?.row_version}}. Los cambios simultáneos producen 409; no se pisan datos de otro empleado.</p>
+        }
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||hasPending()">
+          <legend>Datos comerciales</legend>
+          <label>Título
+            <input type="text" [(ngModel)]="form.title" maxlength="240" required>
+          </label>
+          <label>Tipo de producto
+            <select [(ngModel)]="form.kind" [disabled]="mode==='edit'">
+              <option value="physical">Físico</option>
+              <option value="digital">Digital</option>
+              <option value="service">Servicio presencial</option>
+            </select>
+          </label>
+          <label>Descripción
+            <textarea [(ngModel)]="form.description" maxlength="20000" rows="4"></textarea>
+          </label>
+          @if(mode==='create'){
+            <label>
+              <input type="checkbox" [(ngModel)]="form.variable" (ngModelChange)="switchVariable()">
+              Usar variantes con precio independiente
+            </label>
+          }@else{
+            <p class="pc-muted">{{form.variable?'Producto con variantes':'Producto con presentación única'}}. El tipo y la estructura no se convierten de forma destructiva.</p>
+          }
+        </fieldset>
+        @if(!form.variable){
+          <fieldset class="pc-fieldset pc-form" [disabled]="busy()||hasPending()">
+            <legend>Presentación única</legend>
+            <div class="pc-grid">
+              <label>Precio final en soles (S/)
+                <input type="text" [(ngModel)]="form.price" inputmode="decimal"
+                  placeholder="19.90">
+              </label>
+              <label>SKU (opcional)
+                <input type="text" [(ngModel)]="form.sku" maxlength="100">
+              </label>
+            </div>
+            <label><input type="checkbox" [(ngModel)]="form.saleActive">
+              Activar oferta simple
+            </label>
+            @if(form.saleActive){
+              <label>Precio de oferta en soles (S/)
+                <input type="text" [(ngModel)]="form.salePrice" inputmode="decimal">
+              </label>
+            }
+            @if(form.kind==='physical'){
+              <label><input type="checkbox" [(ngModel)]="form.trackStock">
+                Controlar inventario físico
+              </label>
+              @if(mode==='create' && form.trackStock){
+                <label>Unidades iniciales (solo al crear)
+                  <input type="text" [(ngModel)]="form.initialStock" inputmode="numeric" maxlength="19">
+                </label>
+              }
+              @if(mode==='edit'){
+                <p class="pc-muted">Las existencias no se editan aquí. Usa el ajuste de stock R8-35 con motivo y versión del vendible.</p>
+              }
+            }
+            @if(form.kind==='service'){
+              <div class="pc-grid">
+                <label>Duración (min)
+                  <input type="text" inputmode="numeric" maxlength="4" [(ngModel)]="form.duration">
+                </label>
+                <label>Margen previo (min)
+                  <input type="text" inputmode="numeric" maxlength="4" [(ngModel)]="form.bufferBefore">
+                </label>
+                <label>Margen posterior (min)
+                  <input type="text" inputmode="numeric" maxlength="4" [(ngModel)]="form.bufferAfter">
+                </label>
+              </div>
+            }
+          </fieldset>
+        }@else{
+          <section class="pc-stack" aria-labelledby="pc-variants-heading">
+            <h4 id="pc-variants-heading">Variantes y precios individuales</h4>
+            <p class="pc-muted">Añadir no elimina las anteriores. Para retirar una variante existente, desmarca «Activa»; las ventas históricas conservan su identidad.</p>
+            @for(v of form.variants;track v.key;let index=$index){
+              <fieldset class="pc-fieldset pc-form" [disabled]="busy()||hasPending()">
+                <legend>Variante {{index+1}}{{v.id?' — '+v.id:' — nueva'}}</legend>
+                <div class="pc-grid">
+                  <label>Presentación
+                    <input type="text" [(ngModel)]="v.label" maxlength="180" required>
+                  </label>
+                  <label>SKU
+                    <input type="text" [(ngModel)]="v.sku" maxlength="100">
+                  </label>
+                  <label>Precio final S/
+                    <input type="text" [(ngModel)]="v.price" inputmode="decimal" required>
+                  </label>
+                </div>
+                <label><input type="checkbox" [(ngModel)]="v.saleActive">Oferta activa</label>
+                @if(v.saleActive){
+                  <label>Oferta S/
+                    <input type="text" [(ngModel)]="v.salePrice" inputmode="decimal">
+                  </label>
+                }
+                <label><input type="checkbox" [(ngModel)]="v.active">
+                  Variante activa
+                </label>
+                @if(form.kind==='physical'){
+                  <label><input type="checkbox" [(ngModel)]="v.trackStock">
+                    Control de stock
+                  </label>
+                  @if(!v.id && v.trackStock){
+                    <label>Unidades al crear la variante
+                      <input type="text" [(ngModel)]="v.initialStock" inputmode="numeric" maxlength="19">
+                    </label>
+                  }
+                  @if(v.id){
+                    <p class="pc-muted">Stock: modifica mediante R8-35, no desde este formulario.</p>
+                  }
+                }
+                @if(form.kind==='service'){
+                  <div class="pc-grid">
+                    <label>Duración (min)
+                      <input type="text" inputmode="numeric" maxlength="4" [(ngModel)]="v.duration">
+                    </label>
+                    <label>Margen previo (min)
+                      <input type="text" inputmode="numeric" maxlength="4" [(ngModel)]="v.bufferBefore">
+                    </label>
+                    <label>Margen posterior (min)
+                      <input type="text" inputmode="numeric" maxlength="4" [(ngModel)]="v.bufferAfter">
+                    </label>
+                  </div>
+                }
+                @if(!v.id){
+                  <button type="button" class="pc-secondary" (click)="removeVariant(index)">
+                    Retirar variante sin guardar
+                  </button>
+                }
+              </fieldset>
+            }
+            <div class="pc-actions">
+              <button type="button" class="pc-secondary" (click)="addVariant()"
+                [disabled]="form.variants.length>=100||busy()||hasPending()">
+                Añadir variante
+              </button>
+            </div>
+          </section>
+        }
+        <div class="pc-actions">
+          <button type="button" (click)="save()" [disabled]="busy()">
+            {{hasPending()?'Reintentar exactamente el mismo guardado':'Guardar producto'}}
+          </button>
+          <button type="button" class="pc-secondary" (click)="cancelForm()"
+            [disabled]="busy()||hasPending()">Cerrar editor</button>
+        </div>
+        @if(hasPending()){
+          <p class="pc-alert" role="status">
+            Resultado pendiente o en conflicto: la clave del intento está retenida y los cambios del formulario no se envían nuevamente con una clave diferente.
+          </p>
+          <button type="button" class="pc-secondary" (click)="abandonPending()" [disabled]="busy()">
+            Descartar intento solo después de verificar el resultado
+          </button>
+        }
+      </section>
+    }
+
+    @if(chosen(); as selected){
+      <section class="pc-panel pc-stack" aria-labelledby="pc-selected-heading">
+        <div class="pc-row">
+          <div>
+            <h3 id="pc-selected-heading">{{selected.title}}</h3>
+            <p class="pc-muted">Producto {{selected.id}} · {{selected.visibility}} · versión catálogo {{selected.row_version}}</p>
+          </div>
+          @if(!mode){
+            <button class="pc-secondary" type="button" (click)="edit(selected)"
+              [disabled]="busy()||hasPending()">Editar</button>
+          }
+        </div>
+        <ul class="pc-cards">
+          @for(v of selected.variants||[];track v.id){
+            <li class="pc-card">
+              <div class="pc-row">
+                <strong>{{v.label}}</strong><span>{{v.active?'Activa':'Inactiva'}}</span>
+              </div>
+              <p>Precio: {{money(v.sale_active&&v.sale_price_cents?v.sale_price_cents:v.price_cents)}}</p>
+              <p class="pc-muted">Vendible {{v.id}} · versión {{v.row_version}}
+                @if(selected.kind==='physical' && v.track_stock){
+                  · existencia {{v.stock_on_hand}}
+                }
+              </p>
+              @if(selected.kind==='digital' && canFiles()){
+                <p class="pc-muted">Slots activos: {{v.digital_assignments?.length??0}}</p>
+              }
+            </li>
+          }
+        </ul>
+
+        @if(!mode){
+          @if(canHide()||canPublish()){
+            <fieldset class="pc-fieldset pc-form" [disabled]="busy()||hasPending()">
+              <legend>Visibilidad y publicación</legend>
+              <p class="pc-muted">Ocultar no borra ventas. Publicar exige administrador A y requisitos reales de stock, servicio o archivos digitales.</p>
+              <label>Motivo del cambio de visibilidad
+                <textarea [(ngModel)]="visibilityReason" maxlength="1000"></textarea>
+              </label>
+            </fieldset>
+            <div class="pc-actions">
+              @if(canHide() && selected.visibility!=='hidden'){
+                <button type="button" class="pc-secondary"
+                  (click)="changeVisibility('hidden')"
+                  [disabled]="busy()||(hasPending()&&pendingVisibilityTarget()!=='hidden')">
+                  {{hasPending()?'Reintentar el cambio':'Ocultar producto'}}
+                </button>
+              }
+              @if(canPublish() && selected.visibility!=='published'){
+                <button type="button" (click)="changeVisibility('published')"
+                  [disabled]="busy()||(hasPending()&&pendingVisibilityTarget()!=='published')">
+                  {{hasPending()?'Reintentar el cambio':'Publicar producto'}}
+                </button>
+              }
+            </div>
+          }
+
+          @if(pendingVisibilityTarget();as pendingTarget){
+            <p class="pc-alert" role="status">El cambio a
+              {{pendingTarget==='published'?'publicado':'oculto'}} conserva su
+              versión y clave de idempotencia. Comprueba el estado actual
+              antes de descartar o repetir.</p>
+            <button type="button" class="pc-secondary" (click)="abandonPending()"
+              [disabled]="busy()">Descartar intento de visibilidad tras verificar</button>
+          }
+          @if(selected.kind==='physical'&&canStock()){
+            <pc-admin-stock [product]="selected"
+              (changed)="reloadAfterChild()" (pendingChange)="childPending.set($event)" />
+          }
+          @if(selected.kind==='digital'&&canFiles()){
+            <pc-admin-digital-files [product]="selected" [allowed]="canFiles()"
+              (changed)="reloadAfterChild()" (pendingChange)="childPending.set($event)" />
+          }
+        }
+      </section>
+    }
+  }
+</section>

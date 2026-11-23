@@ -1,0 +1,18 @@
+# IMP-67: artefactos reales se producen solo tras una build autorizada.
+# No versionar bundle/manifest de una instalación ni salidas de release.
+/assets/app/
+/assets/.pc-app-stage-*/
+/dist/
+/*.zip
+/*.tar.gz
+
+# P-C: secretos nunca son parte del código fuente.
+/.env
+/.env.*
+/frontend/.env
+/frontend/.env.*
+/*.key
+/*.pem
+/backup*/
+/backups/
+/private-storage/

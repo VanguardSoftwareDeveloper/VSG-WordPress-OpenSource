@@ -6,7 +6,7 @@
 
 Develop and eventually distribute useful, **free-by-default WordPress plugins**, prioritizing site-owner control of infrastructure and costs. The maintainer volunteers development and maintenance work. When an external API charges money, site operators should ordinarily provide and pay for their **own provider accounts**. This avoids charging users a plugin license solely to recover the maintainer's time.
 
-The portfolio currently contains **131 distinct category directories and research plans**. It does **not** contain 131 implemented or released plugins. **PeruCommerce is the only category with substantial existing source**, which is private, statically reviewed and not yet validated as a working release; its integrated POS is still planned. The other 130 are project concepts and documentation, not packages.
+The portfolio currently contains **131 distinct category directories and research plans**. It does **not** contain 131 implemented or released plugins. **PeruCommerce is the only category with substantial existing source**, whose source is now publicly available as development code, statically reviewed and not yet validated as a working release; its integrated POS is still planned. The other 130 are project concepts and documentation, not packages.
 
 ## Potential ecosystem value — hypotheses, not proven impact
 
@@ -22,7 +22,7 @@ These are intended **design characteristics**, not claims of user adoption, cont
 
 | Signal a reviewer may assess | Verified status at this documentation cut |
 |---|---|
-| 131 documented product concepts | Present in **private** monorepository; not public releases |
+| 131 documented product concepts | Documented publicly in this repository, without plugin releases |
 | PeruCommerce PHP/Angular source | Present, with code review documentation; build/tests and production behavior **not verified** |
 | PeruCommerce integrated POS | Planned, not implemented |
 | Public releases / package downloads | No verifiable evidence supplied for this portfolio |
@@ -53,7 +53,7 @@ Source of truth (recheck at application time):
 
 ## Realistic next evidence milestones
 
-- Prepare a **focused** public repository and usable, security-audited release for one meaningful project (not an unreviewed mirror of the full private monorepo).
+- Prepare a usable, security-audited release for one meaningful project (not an unreviewed mirror of the full private monorepo).
 - Publish a license, corresponding source, clear scope, installation instructions, user examples and reproducible verification evidence.
 - Invite genuine issue reports, translations and pull requests; respond to them based on merit.
 - Measure **real** usage and downstream reliance over time and cite the source for every claim.

@@ -1,0 +1,319 @@
+<section class="pc-stack" aria-labelledby="pc-agenda-title">
+  <div class="pc-row">
+    <div>
+      <h2 id="pc-agenda-title">Agenda y citas</h2>
+      <p class="pc-muted">Un recurso de atención. Horarios, cierres y citas se verifican en WordPress; la pantalla no crea reservas nuevas.</p>
+    </div>
+    @if(view();as data){
+      <span>Recurso {{data.resource_id}} · {{data.timezone}}</span>
+    }
+  </div>
+
+  @if(!allowed()){
+    <p class="pc-panel" role="status">La agenda no está habilitada para esta sesión. Se requiere el permiso de citas y una instalación válida.</p>
+  }@else{
+    <div class="pc-panel pc-stack">
+      <div class="pc-row">
+        <label>Fecha comercial que deseas consultar
+          <input type="date" [ngModel]="date" (ngModelChange)="selectDate($event)"
+            [disabled]="busy()||loading()||pending()!==null">
+        </label>
+        <button type="button" class="pc-secondary" (click)="refresh()"
+          [disabled]="loading()||busy()">Consultar agenda y versiones</button>
+      </div>
+      <p class="pc-muted">La fecha de la agenda corresponde al calendario local del comercio. Los instantes para modificar citas y cierres se ingresan en <strong>UTC</strong>, de forma explícita, para evitar interpretaciones ambiguas por zona horaria.</p>
+    </div>
+
+    @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+    @if(notice()){<p role="status" class="pc-alert">{{notice()}}</p>}
+    @if(loading()){<p role="status">Consultando la agenda, citas y cierres…</p>}
+
+    @if(pending();as attempt){
+      <section class="pc-panel pc-stack" aria-label="Intento pendiente de comprobación">
+        <h3>Operación pendiente de verificación</h3>
+        <p class="pc-muted">{{attempt.context}}</p>
+        <p>El navegador conserva los datos, el identificador de recurso y la misma clave de idempotencia. Un conflicto 409 no autoriza sobrescribir la revisión vigente ni duplicar una cita.</p>
+        <div class="pc-actions">
+          <button type="button" (click)="execute(attempt.kind)" [disabled]="busy()||loading()">
+            Reintentar exactamente el mismo intento
+          </button>
+          <button type="button" class="pc-secondary" (click)="refresh()"
+            [disabled]="busy()||loading()">Consultar estado sin descartar</button>
+          <button type="button" class="pc-secondary" (click)="abandon()"
+            [disabled]="busy()||loading()">Descartar tras comprobar el resultado</button>
+        </div>
+      </section>
+    }
+
+    @if(view();as agenda){
+      <div class="pc-grid">
+        <section class="pc-panel pc-stack" aria-labelledby="pc-appointments-heading">
+          <div class="pc-row">
+            <h3 id="pc-appointments-heading">Citas de {{agenda.date}}</h3>
+            <span>{{agenda.appointments.length}} registros</span>
+          </div>
+          @if(agenda.appointments.length===0){
+            <p>No hay citas registradas en esta fecha. Esto no confirma que un nuevo cupo esté disponible.</p>
+          }
+          <ul class="pc-cards">
+            @for(appointment of agenda.appointments;track appointment.appointment_id){
+              <li class="pc-card pc-stack">
+                <div class="pc-row">
+                  <strong>{{appointment.service_label||'Cita '+appointment.appointment_id}}</strong>
+                  <span>{{appointment.state}}</span>
+                </div>
+                <p>{{local(appointment.starts_at_utc,agenda.timezone)}} – {{local(appointment.ends_at_utc,agenda.timezone)}}</p>
+                <p class="pc-muted">Cita {{appointment.appointment_id}} · versión {{appointment.row_version}}</p>
+                @if(appointment.contact_for_task){<p>Contacto operativo: {{appointment.contact_for_task}}</p>}
+                @if(appointment.state==='CONFIRMADA'){
+                  <button type="button" class="pc-secondary"
+                    (click)="selectAppointment(appointment)"
+                    [disabled]="busy()||loading()||pending()!==null">
+                    Seleccionar para reprogramar{{adminOutcome()?' o registrar resultado':''}}
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+
+        <section class="pc-panel pc-stack" aria-labelledby="pc-closures-heading">
+          <div class="pc-row">
+            <h3 id="pc-closures-heading">Bloqueos y excepciones</h3>
+            <span>{{activeClosures().length}} activos</span>
+          </div>
+          <p class="pc-muted">Un cierre impide la disponibilidad cuando corresponde, pero no cancela ni desplaza citas confirmadas.</p>
+          @if(agenda.closures.length===0){<p>No hay cierres registrados en esta fecha.</p>}
+          <ul class="pc-cards">
+            @for(closure of agenda.closures;track closure.closure_id){
+              <li class="pc-card">
+                <div class="pc-row"><strong>Cierre {{closure.closure_id}}</strong>
+                  <span>{{closure.active?'Activo':'Retirado'}}</span></div>
+                <p>{{local(closure.starts_at_utc,agenda.timezone)}} – {{local(closure.ends_at_utc,agenda.timezone)}}</p>
+                <p class="pc-muted">Versión {{closure.row_version}}.
+                  @if(closure.reason_code){ Motivo: {{closure.reason_code}} }
+                </p>
+                @if(closure.active){
+                  <button type="button" class="pc-secondary"
+                    (click)="selectClosure(closure)"
+                    [disabled]="busy()||loading()||pending()!==null">
+                    Administrar este cierre
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+          <button type="button" class="pc-secondary" (click)="createClosure()"
+            [disabled]="busy()||loading()||pending()!==null">
+            Preparar cierre nuevo
+          </button>
+        </section>
+      </div>
+
+      @if(selectedAppointment();as chosen){
+        <section class="pc-panel pc-stack" aria-labelledby="pc-appointment-action-title">
+          <div class="pc-row">
+            <div>
+              <h3 id="pc-appointment-action-title">Gestión de cita {{chosen.appointment_id}}</h3>
+              <p class="pc-muted">Estado {{chosen.state}}, versión {{chosen.row_version}}.</p>
+            </div>
+            <button type="button" class="pc-secondary"
+              (click)="selectedAppointment.set(null)"
+              [disabled]="busy()||pending()!==null">Cerrar detalle</button>
+          </div>
+          <p>Franja actual: <strong>{{local(chosen.starts_at_utc,agenda.timezone)}}</strong> a
+            <strong>{{local(chosen.ends_at_utc,agenda.timezone)}}</strong></p>
+          <p class="pc-muted">Inicio UTC original: {{chosen.starts_at_utc}} · Fin UTC original: {{chosen.ends_at_utc}}. El cambio solo puede conservar la duración del servicio vendido.</p>
+          @if(chosen.state==='CONFIRMADA'){
+            <fieldset class="pc-fieldset pc-form" [disabled]="busy()||pending()!==null">
+              <legend>Reprogramar franja (R8-38, A/O)</legend>
+              <div class="pc-grid">
+                <label>Nuevo inicio en UTC
+                  <input type="datetime-local" [(ngModel)]="rescheduleStartUtc">
+                </label>
+                <label>Nuevo fin en UTC
+                  <input type="datetime-local" [(ngModel)]="rescheduleEndUtc">
+                </label>
+              </div>
+              <p class="pc-muted">Nueva franja en el horario del comercio:
+                {{previewLocal(rescheduleStartUtc)}} – {{previewLocal(rescheduleEndUtc)}} ({{agenda.timezone}}).
+              </p>
+              <p class="pc-muted">Se validarán horario local, buffers originales, cierres, ocupación y acuerdo exigible en el servidor; el formulario no reserva otra cita.</p>
+              <label>Motivo de reprogramación
+                <textarea [(ngModel)]="rescheduleReason" maxlength="1000"></textarea>
+              </label>
+            </fieldset>
+            <button type="button" (click)="execute('reschedule')"
+              [disabled]="busy()||loading()||pending()!==null">
+              Solicitar reprogramación con versión {{chosen.row_version}}
+            </button>
+            @if(adminOutcome()){
+              <fieldset class="pc-fieldset pc-form" [disabled]="busy()||pending()!==null">
+                <legend>Constatar resultado del servicio (R8-54, solo A)</legend>
+                <p>Registrar un resultado implica una decisión administrativa sobre una prestación ya finalizada. No se infiere por transcurso del tiempo.</p>
+                <label>Resultado constatado
+                  <select [(ngModel)]="outcome">
+                    <option value="REALIZADA">Servicio realizado</option>
+                    <option value="NO_ASISTIO">Cliente no asistió</option>
+                  </select>
+                </label>
+                <label>Momento de constatación en UTC
+                  <input type="datetime-local" [(ngModel)]="observedUtc">
+                </label>
+                <label>Referencia opaca de evidencia (no URL)
+                  <input type="text" [(ngModel)]="outcomeEvidence"
+                    maxlength="500" autocomplete="off">
+                </label>
+              </fieldset>
+              <button type="button" class="pc-secondary" (click)="execute('outcome')"
+                [disabled]="busy()||loading()||pending()!==null">
+                Registrar resultado con evidencia
+              </button>
+            }@else{
+              <p class="pc-muted">El operador no puede constatar REALIZADA o NO_ASISTIO. Esta operación requiere administrador A.</p>
+            }
+          }@else{
+            <p>Esta cita ya no está confirmada; no se ofrece reprogramación ni resultado nuevo.</p>
+          }
+        </section>
+      }
+
+      <section class="pc-panel pc-stack" aria-labelledby="pc-closure-editor-title">
+        <h3 id="pc-closure-editor-title">Crear, modificar o retirar un cierre (R8-37)</h3>
+        <p class="pc-muted">Cada cierre tiene su ID y versión propios. Retirar marca inactivo y conserva historia; no borra eventos, citas ni reservas.</p>
+        @if(selectedClosure();as chosen){
+          <p>Seleccionado: cierre {{chosen.closure_id}}, versión {{chosen.row_version}}, estado {{chosen.active?'activo':'retirado'}}.</p>
+          <div class="pc-actions">
+            <button type="button" class="pc-secondary" (click)="chooseClosureAction('update')"
+              [disabled]="busy()||pending()!==null">Actualizar intervalo</button>
+            <button type="button" class="pc-secondary" (click)="chooseClosureAction('retire')"
+              [disabled]="busy()||pending()!==null">Retirar cierre</button>
+          </div>
+        }@else{
+          <p>Acción: crear un cierre nuevo para el recurso único.</p>
+        }
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||pending()!==null">
+          <legend>{{closureAction==='create'?'Nuevo cierre':closureAction==='update'?'Editar cierre':'Retirar cierre'}}</legend>
+          @if(closureAction!=='retire'){
+            <div class="pc-grid">
+              <label>Inicio en UTC
+                <input type="datetime-local" [(ngModel)]="closureStartUtc">
+              </label>
+              <label>Fin en UTC
+                <input type="datetime-local" [(ngModel)]="closureEndUtc">
+              </label>
+            </div>
+            <p class="pc-muted">Intervalo en el horario del comercio:
+              {{previewLocal(closureStartUtc)}} – {{previewLocal(closureEndUtc)}} ({{agenda.timezone}}).
+            </p>
+          }
+          <label>Motivo
+            <textarea [(ngModel)]="closureReason" maxlength="1000"></textarea>
+          </label>
+        </fieldset>
+        <button type="button" (click)="executeClosure()"
+          [disabled]="busy()||loading()||pending()!==null">
+          {{closureAction==='create'?'Registrar cierre':closureAction==='update'?'Guardar cambio de cierre':'Retirar cierre con CAS'}}
+        </button>
+      </section>
+
+      <section class="pc-panel pc-stack" aria-labelledby="pc-schedule-title">
+        <div class="pc-row">
+          <div>
+            <h3 id="pc-schedule-title">Horario semanal versionado (R8-53)</h3>
+            <p class="pc-muted">Zona de negocio {{agenda.weekly_schedule.timezone}} · versión del ancla
+              {{agenda.weekly_schedule.row_version}} · revisión efectiva
+              {{agenda.weekly_schedule.active_revision_no}} desde {{agenda.weekly_schedule.effective_from}}.
+            </p>
+          </div>
+        </div>
+        <p>Una nueva revisión afecta disponibilidad futura según vigencia, no altera citas confirmadas. Horas semanales en la zona local comercial; la fecha de entrada en vigor también es local.</p>
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||pending()!==null">
+          <legend>Reglas de la siguiente revisión</legend>
+          <label>Vigente desde (fecha local)
+            <input type="date" [(ngModel)]="scheduleEffectiveFrom"
+              [min]="todayForZone(agenda.timezone)">
+          </label>
+          <p class="pc-muted">{{scheduleRules.length}} de 28 ventanas. Un día sin ventanas habilitadas permanece cerrado.</p>
+          <div class="pc-grid">
+            @for(day of [1,2,3,4,5,6,7];track day){
+              <button type="button" class="pc-secondary" (click)="addWindow(day)"
+                [disabled]="scheduleRules.length>=28||busy()||pending()!==null">
+                Añadir ventana: {{weekdays[day]}}
+              </button>
+            }
+          </div>
+          <ul class="pc-cards">
+            @for(rule of scheduleRules;track rule.weekday+':'+rule.window_index){
+              <li class="pc-card pc-stack">
+                <div class="pc-row">
+                  <strong>{{weekdays[rule.weekday]}} · ventana {{rule.window_index}}</strong>
+                  <button type="button" class="pc-secondary"
+                    (click)="removeWindow(rule.weekday,rule.window_index)"
+                    [disabled]="scheduleRules.length<=1||busy()||pending()!==null">
+                    Quitar de nueva revisión
+                  </button>
+                </div>
+                <label>
+                  <input type="checkbox" [(ngModel)]="rule.enabled">
+                  Ventana habilitada
+                </label>
+                @if(rule.enabled){
+                  <div class="pc-grid">
+                    <label>Apertura local (HH:mm)
+                      <input type="time" [(ngModel)]="rule.opens_local">
+                    </label>
+                    <label>Cierre local (HH:mm)
+                      <input type="time" [(ngModel)]="rule.closes_local">
+                    </label>
+                    <label>Fin de ventana
+                      <select [(ngModel)]="rule.closes_day_offset">
+                        <option [ngValue]="0">El mismo día</option>
+                        <option [ngValue]="1">El día siguiente</option>
+                      </select>
+                    </label>
+                  </div>
+                }@else{
+                  <p class="pc-muted">Ventana deshabilitada: no se enviarán horas de apertura/cierre.</p>
+                }
+              </li>
+            }
+          </ul>
+          <label>Motivo de la nueva revisión semanal
+            <textarea [(ngModel)]="scheduleReason" maxlength="1000"></textarea>
+          </label>
+        </fieldset>
+        <button type="button" (click)="execute('schedule')"
+          [disabled]="busy()||loading()||pending()!==null">
+          Guardar nueva revisión con versión {{agenda.weekly_schedule.row_version}}
+        </button>
+      </section>
+
+      <section class="pc-panel pc-stack" aria-labelledby="pc-availability-title">
+        <h3 id="pc-availability-title">Consultar franjas estimadas de servicio (R8-04)</h3>
+        <p class="pc-muted">Esta consulta pública solo funciona para una variante de servicio publicada. No reserva, asegura ni garantiza un cupo; la reprogramación se valida por R8-38.</p>
+        <label>ID del vendible de servicio (puedes obtenerlo en Catálogo)
+          <input type="text" [(ngModel)]="serviceId" (ngModelChange)="availability.set(null)" inputmode="numeric"
+            maxlength="20" autocomplete="off" placeholder="Ej. 1">
+        </label>
+        <button type="button" class="pc-secondary" (click)="loadAvailability()"
+          [disabled]="availabilityBusy()||loading()">Consultar disponibilidad para {{agenda.date}}</button>
+        @if(availabilityBusy()){<p role="status">Consultando franjas sin reservar…</p>}
+        @if(availabilityError()){<p role="alert" class="pc-alert">{{availabilityError()}}</p>}
+        @if(availability();as result){
+          <p role="status">{{result.slots.length}} franjas informadas para el vendible {{result.service_id}}.</p>
+          @if(result.slots.length===0){<p>No hay franjas anunciadas para esa variante y fecha.</p>}
+          <ul class="pc-cards">
+            @for(slot of result.slots;track slot.starts_at_utc){
+              <li class="pc-card">
+                {{local(slot.starts_at_utc,agenda.timezone)}} –
+                {{local(slot.ends_at_utc,agenda.timezone)}}
+                <strong>{{slot.available?'Informada disponible (no reservada)':'No disponible'}}</strong>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</section>

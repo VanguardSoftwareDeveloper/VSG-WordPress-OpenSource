@@ -1,0 +1,51 @@
+<section class="pc-stack" aria-labelledby="pc-operations-heading">
+  <div>
+    <h2 id="pc-operations-heading">Configuración, bandeja y diagnóstico</h2>
+    <p class="pc-muted">Módulos con capacidades separadas: A administra configuración, cobertura y diagnóstico; A/O ve notificaciones operativas permitidas. Los botones son pistas UI y el backend vuelve a autorizar cada REST.</p>
+  </div>
+  @if(!canAny()){
+    <p>No hay operaciones de configuración ni bandeja autorizadas para esta sesión.</p>
+  }@else{
+    <nav class="pc-actions" aria-label="Secciones de operación del comercio">
+      <button type="button" [attr.aria-pressed]="section()==='notifications'"
+        (click)="show('notifications')" [disabled]="hasPending()||!canNotifications()">
+        Bandeja
+      </button>
+      <button type="button" [attr.aria-pressed]="section()==='settings'"
+        (click)="show('settings')" [disabled]="hasPending()||!canSettings()">
+        Configuración
+      </button>
+      <button type="button" [attr.aria-pressed]="section()==='coverage'"
+        (click)="show('coverage')" [disabled]="hasPending()||!canSettings()">
+        Cobertura/UBIGEO
+      </button>
+      <button type="button" [attr.aria-pressed]="section()==='diagnostics'"
+        (click)="show('diagnostics')" [disabled]="hasPending()||!canSettings()">
+        Diagnóstico
+      </button>
+    </nav>
+    @if(canNotifications()&&visited().includes('notifications')){
+      <section [hidden]="section()!=='notifications'" aria-label="Bandeja de avisos">
+        <pc-admin-notifications [employee]="employee()" [blocked]="settingsPending()||coveragePending()"
+          (pendingChange)="onPending('notifications',$event)"/>
+      </section>
+    }
+    @if(canSettings()&&visited().includes('settings')){
+      <section [hidden]="section()!=='settings'" aria-label="Configuración comercial">
+        <pc-admin-settings [employee]="employee()" [blocked]="coveragePending()||notificationsPending()"
+          (pendingChange)="onPending('settings',$event)"/>
+      </section>
+    }
+    @if(canSettings()&&visited().includes('coverage')){
+      <section [hidden]="section()!=='coverage'" aria-label="Cobertura de delivery">
+        <pc-admin-coverage [employee]="employee()" [blocked]="settingsPending()||notificationsPending()"
+          (pendingChange)="onPending('coverage',$event)"/>
+      </section>
+    }
+    @if(canSettings()&&visited().includes('diagnostics')){
+      <section [hidden]="section()!=='diagnostics'" aria-label="Diagnóstico de instalación">
+        <pc-admin-diagnostics [employee]="employee()"/>
+      </section>
+    }
+  }
+</section>

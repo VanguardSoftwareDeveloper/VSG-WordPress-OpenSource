@@ -1,0 +1,134 @@
+<section class="pc-panel pc-stack" aria-labelledby="pc-recon-title">
+  <div class="pc-row">
+    <div>
+      <h3 id="pc-recon-title">Conciliación Mercado Pago</h3>
+      <p class="pc-muted">Solo administrador. Un pago tardío no recupera automáticamente stock, cita ni derecho digital.</p>
+    </div>
+    @if(allowed()){
+      <button type="button" class="pc-secondary" (click)="load()"
+        [disabled]="loading()||busy()">Consultar expedientes</button>
+    }
+  </div>
+  @if(!allowed()){
+    <p>No hay permiso de conciliación habilitado para esta sesión.</p>
+  }@else{
+    <div class="pc-grid">
+      <label>Fase de conciliación
+        <select [(ngModel)]="state" (ngModelChange)="filterChanged()"
+          [disabled]="busy()||loading()||pending()!==null||needsRefresh()||blocked()">
+          @for(option of states;track option.value){
+            <option [value]="option.value">{{option.label}}</option>
+          }
+        </select>
+      </label>
+      <div class="pc-actions">
+        <button type="button" class="pc-secondary" (click)="pageMove(-1)"
+          [disabled]="page()<=1||loading()||busy()||pending()!==null">Anterior</button>
+        <span>Página {{page()}}</span>
+        <button type="button" class="pc-secondary" (click)="pageMove(1)"
+          [disabled]="!hasMore()||loading()||busy()||pending()!==null">Siguiente</button>
+      </div>
+    </div>
+    @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+    @if(needsRefresh()){<p class="pc-alert" role="status">Se necesita una lectura nueva de conciliación antes de otra decisión.</p>}
+    @if(notice()){<p role="status">{{notice()}}</p>}
+    @if(loading()){<p role="status">Consultando conciliaciones…</p>}
+    @if(!loading()&&cases().length===0){<p>No se encontraron expedientes en esta página y fase.</p>}
+    <ul class="pc-cards" aria-label="Expedientes de conciliación">
+      @for(c of cases();track c.case_id){
+        <li class="pc-card pc-stack">
+          <div class="pc-row">
+            <strong>Caso MP {{c.case_id}}</strong>
+            <span>{{c.has_verified_payment===true?'Hay asiento crediticio verificado':'Crédito no acreditado en lectura'}}</span>
+          </div>
+          <p>Motivo: {{c.reason_code}} · abierto {{c.created_at}}.</p>
+          <p class="pc-muted">Versión del caso {{c.row_version}}.
+            @if(c.order_id){ Pedido vinculado {{c.order_id}}. }
+            @if(c.source_operation_id){ Operación técnica {{c.source_operation_id}}. }
+          </p>
+          @if(c.provider_order_ref){<p class="pc-muted">Referencia MP informativa: {{c.provider_order_ref}}</p>}
+          @if(!c.order_id){
+            <p class="pc-alert">Sin pedido local vinculado: la resolución está bloqueada hasta recuperar legítimamente el vínculo. No crear un pedido ficticio.</p>
+          }
+          @if(state==='open_review'&&c.order_id){
+            <button type="button" class="pc-secondary" (click)="select(c)"
+              [disabled]="busy()||loading()||pending()!==null||needsRefresh()||blocked()">
+              Revisar posible resolución
+            </button>
+          }@else{
+            <p class="pc-muted">Consulta únicamente. Los casos terminales no se reabren desde el panel.</p>
+          }
+        </li>
+      }
+    </ul>
+    @if(selected();as c){
+      <section class="pc-panel pc-stack" aria-labelledby="pc-recon-decision">
+        <h4 id="pc-recon-decision">Resolución del caso {{c.case_id}}</h4>
+        <p class="pc-muted">Versión esperada {{c.row_version}}. El estado «abierto» procede de la consulta filtrada; no está incluido en el DTO de la fila.</p>
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||pending()!==null||blocked()">
+          <legend>Decisión administrativa</legend>
+          <label>Acción
+            <select [(ngModel)]="resolution">
+              <option value="close_no_charge">Cerrar sin cargo acreditado</option>
+              <option value="reassign_resources">Reasignar recursos por pago ya verificado</option>
+            </select>
+          </label>
+          <p class="pc-muted">
+            @if(resolution==='close_no_charge'){
+              El servidor hará GET oficial y exigirá estado fallido/cancelado sin dinero ni recursos asignados. La ausencia de indicador de crédito no es suficiente.
+            }@else{
+              Requiere un pedido vinculado, cargo acreditado confirmado por GET oficial y ledger local, más disponibilidad real. No revive holds vencidos ni crea un pago nuevo.
+            }
+          </p>
+          <label>Referencia de evidencia documental (opaca)
+            <input type="text" [(ngModel)]="evidence" maxlength="500" autocomplete="off">
+          </label>
+          @if(resolution==='reassign_resources'){
+            <p>Pedido vinculado: {{c.order_id}}. La cantidad y los compromisos originales no se editan aquí.</p>
+            <label>
+              <input type="checkbox" [(ngModel)]="serviceRequired">
+              El pedido contiene servicio y requiere nuevo horario con acuerdo real del comprador
+            </label>
+            @if(serviceRequired){
+              <p class="pc-muted">La verificación legítima del acuerdo es obligatoria en el servidor. Si no está registrada, la operación permanece bloqueada (fail-closed).</p>
+              <div class="pc-grid">
+                <label>Nuevo inicio UTC
+                  <input type="datetime-local" [(ngModel)]="serviceStartUtc">
+                </label>
+                <label>Nuevo fin UTC
+                  <input type="datetime-local" [(ngModel)]="serviceEndUtc">
+                </label>
+              </div>
+              <label>Referencia opaca de acuerdo del comprador
+                <input type="text" [(ngModel)]="buyerAgreement" maxlength="500">
+              </label>
+            }
+          }
+          <label>
+            <input type="checkbox" [(ngModel)]="validatedExternal">
+            Consulté los registros originales del pedido y las pruebas externas pertinentes. Entiendo que solo el backend verifica estado y dinero de Mercado Pago.
+          </label>
+        </fieldset>
+        <button type="button" (click)="submit()"
+          [disabled]="busy()||loading()||pending()!==null">
+          Solicitar resolución verificada R8-30
+        </button>
+      </section>
+    }
+    @if(pending();as attempt){
+      <section class="pc-panel pc-stack" aria-label="Intento de conciliación pendiente">
+        <h4>Intento de conciliación aún no aclarado</h4>
+        <p>El caso {{attempt.caseId}} mantiene su resolución, versión y clave originales; no se autoriza otra mutación simultánea.</p>
+        <div class="pc-actions">
+          <button type="button" (click)="submit()" [disabled]="busy()||loading()">
+            Reintentar el mismo intento
+          </button>
+          <button type="button" class="pc-secondary" (click)="load()"
+            [disabled]="busy()||loading()">Consultar casos</button>
+          <button type="button" class="pc-secondary" (click)="abandon()"
+            [disabled]="busy()||loading()">Descartar después de verificar</button>
+        </div>
+      </section>
+    }
+  }
+</section>

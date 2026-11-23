@@ -1,0 +1,164 @@
+<section class="pc-panel pc-stack" aria-labelledby="settings-heading">
+  <div class="pc-row">
+    <h3 id="settings-heading">Configuración del comercio</h3>
+    <button type="button" class="pc-secondary" (click)="load()" [disabled]="loading()||busy()">Consultar R8-45</button>
+  </div>
+  <p class="pc-muted">Solo A. Cada PATCH conserva campos omitidos y valida expected_version; guardar una opción no verifica funcionamiento en producción.</p>
+  @if(!canSettings()){
+    <p>Se requiere permiso de configuración. Para rotar credenciales también necesitas una versión R8-45 autorizada.</p>
+  }@else{
+    @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+    @if(notice()){<p role="status">{{notice()}}</p>}
+    @if(loading()){<p role="status">Leyendo configuración…</p>}
+    @if(freshRequired()){<p class="pc-alert" role="status">Consulta R8-45 otra vez antes de iniciar otra escritura: el último intento puede haber cambiado la versión.</p>}
+    @if(pending();as attempt){
+      <section class="pc-panel pc-stack">
+        <h4>Intento pendiente: {{attempt.action}}</h4>
+        <p>Conserva el mismo cuerpo, versión y clave. Un secreto pendiente permanece únicamente en memoria hasta verificar o descartar.</p>
+        <div class="pc-actions">
+          <button type="button" (click)="save(attempt.action)" [disabled]="busy()||blocked()">Reintentar mismo intento</button>
+          <button type="button" class="pc-secondary" (click)="load()" [disabled]="busy()">Consultar versión</button>
+          <button type="button" class="pc-secondary" (click)="abandon()" [disabled]="busy()">Descartar tras verificar</button>
+        </div>
+      </section>
+    }
+    @if(data();as settings){
+      <p>Versión de configuración <strong>{{settings.row_version}}</strong>.
+        @if(settings.policy_version){ Condiciones versión {{settings.policy_version}}. }
+        @if(settings.privacy_version){ Privacidad versión {{settings.privacy_version}}. }
+      </p>
+      <details class="pc-panel pc-stack" open>
+        <summary>Identidad comercial y Libro</summary>
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+          <legend>Proveedor y local único</legend>
+          <label>Nombre comercial <input type="text" [(ngModel)]="businessName" maxlength="200"></label>
+          <div class="pc-grid">
+            <label>Razón social <input type="text" [(ngModel)]="legalName" maxlength="240"></label>
+            <label>RUC <input type="text" inputmode="numeric" [(ngModel)]="ruc" maxlength="11"></label>
+          </div>
+          <label>Dirección <input type="text" [(ngModel)]="address" maxlength="500"></label>
+          <label>Contacto comercial <input type="text" [(ngModel)]="businessContact" maxlength="200"></label>
+          <label>Modalidad del Libro
+            <select [(ngModel)]="complaintMode">
+              <option value="native">Nativo</option><option value="external">Externo verificado</option>
+            </select>
+          </label>
+          @if(complaintMode==='external'){
+            <label>URL HTTPS del Libro externo <input type="url" [(ngModel)]="complaintUrl" maxlength="600"></label>
+          }
+          <label>Enlace complementario de privacidad HTTPS <input type="url" [(ngModel)]="privacyUrl" maxlength="600"></label>
+          <p>Un Libro externo exige comprobación legal real. Los campos opcionales omitidos conservan su valor; no se reescriben expedientes históricos.</p>
+        </fieldset>
+        <button type="button" (click)="save('business')" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">Guardar identidad</button>
+      </details>
+      <details class="pc-panel pc-stack">
+        <summary>Régimen fiscal declarado</summary>
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+          <legend>Información declarativa, no emisión SUNAT</legend>
+          <label>Régimen
+            <select [(ngModel)]="fiscalRegime">
+              @for(x of regimes;track x.value){<option [value]="x.value">{{x.label}}</option>}
+            </select>
+          </label>
+          @for(x of documentTypes;track x.value){
+            <label class="pc-inline-check">
+              <input type="checkbox" [checked]="hasDoc(x.value)" (change)="toggleDoc(x.value,$any($event.target).checked)">
+              {{x.label}}
+            </label>
+          }
+        </fieldset>
+        <button type="button" (click)="save('fiscal')" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">Guardar declaración fiscal</button>
+      </details>
+      <details class="pc-panel pc-stack">
+        <summary>Condiciones y privacidad versionadas</summary>
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+          <legend>Solo textos modificados crean nueva versión inmutable</legend>
+          <label>Condiciones comerciales <textarea [(ngModel)]="policyNotice" maxlength="30000" rows="6"></textarea></label>
+          <label>Aviso de privacidad <textarea [(ngModel)]="privacyNotice" maxlength="30000" rows="6"></textarea></label>
+        </fieldset>
+        <button type="button" (click)="save('policies')" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">Versionar textos nuevos</button>
+      </details>
+      <details class="pc-panel pc-stack">
+        <summary>Pagos, delivery, cuota y avisos rutinarios</summary>
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+          <legend>Opciones futuras, sin alterar ventas previas</legend>
+          <label class="pc-inline-check"><input type="checkbox" [(ngModel)]="deliveryEnabled">Permitir delivery con cobertura verificada</label>
+          <label class="pc-inline-check"><input type="checkbox" [(ngModel)]="paymentEnabled">Solicitar pasarela solo con gates reales</label>
+          <label>Cuota digital: vacío = ilimitada en futuras ventas
+            <input type="text" inputmode="numeric" maxlength="6" [(ngModel)]="quotaText">
+          </label>
+          <label class="pc-inline-check">
+            <input type="checkbox" [(ngModel)]="routineEmails">
+            Enviar nuevos correos informativos rutinarios físicos
+          </label>
+          <p>No altera Libro, ARCO, pagos, incidencias, citas, digitales, historial ni correos ya en cola; reactivar no recrea avisos omitidos.</p>
+        </fieldset>
+        <button type="button" (click)="save('options')" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">Guardar opciones cambiadas</button>
+      </details>
+      <details class="pc-panel pc-stack">
+        <summary>Remitente transaccional</summary>
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+          <legend>wp_mail, sin secretos SMTP ni garantía de recepción</legend>
+          <div class="pc-grid">
+            <label>Nombre <input type="text" [(ngModel)]="mailName" maxlength="160"></label>
+            <label>Correo <input type="email" [(ngModel)]="mailEmail" maxlength="254"></label>
+          </div>
+          <label>Firma <textarea [(ngModel)]="mailSignature" maxlength="1000"></textarea></label>
+          <p>Omitir conserva valores antiguos. Restaurar remitente elimina todo el subobjeto opcional.</p>
+        </fieldset>
+        <div class="pc-actions">
+          <button type="button" (click)="save('mail')" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">Guardar remitente</button>
+          <button type="button" class="pc-secondary" (click)="save('mail-reset')" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">Restaurar predeterminado</button>
+        </div>
+      </details>
+      <details class="pc-panel pc-stack">
+        <summary>Mapa externo opcional</summary>
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+          <legend>Proveedor de teselas revisado y consentimiento de apertura</legend>
+          <label class="pc-inline-check"><input type="checkbox" [(ngModel)]="mapEnabled">Habilitar mapa al abrirlo voluntariamente</label>
+          @if(mapEnabled){
+            <label>Plantilla HTTPS con {z}/{x}/{y}
+              <input type="text" [(ngModel)]="tileTemplate" maxlength="600">
+            </label>
+            <label>Texto de atribución <input type="text" [(ngModel)]="attributionText" maxlength="500"></label>
+            <label>URL HTTPS de licencia <input type="url" [(ngModel)]="attributionUrl" maxlength="500"></label>
+            <label class="pc-inline-check">
+              <input type="checkbox" [(ngModel)]="mapVerified">
+              Revisé licencia, origen, CSP y privacidad. El servidor debe validarlos de nuevo.
+            </label>
+          }
+          <p>Este PATCH reemplaza map_tiles entero. Apagarlo no impide delivery ni la elección manual del distrito. No carga teselas.</p>
+        </fieldset>
+        <button type="button" (click)="save('map')" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">Guardar mapa completo</button>
+      </details>
+      <details class="pc-panel pc-stack">
+        <summary>Credenciales Mercado Pago, solo escritura (R8-47)</summary>
+        <p>Bóveda legible: <strong>{{configured()?'Guardada':'No comprobada'}}</strong>. Webhook conectado: <strong>{{webhook()?'Sí':'No comprobado'}}</strong>.</p>
+        <p>Guardar credenciales no verifica pagos, Orders API, producción Perú ni webhook. La clave AES privada NO se ingresa aquí. Al rotar sin webhook secret se crea una credencial nueva sin secret; las versiones históricas permanecen cifradas para conciliación.</p>
+        @if(canCredentials()){
+          <fieldset class="pc-fieldset pc-form" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+            <legend>Rotación protegida por CAS</legend>
+            <label>Entorno
+              <select [(ngModel)]="environment">
+                <option value="test">Prueba</option><option value="production">Producción</option>
+              </select>
+            </label>
+            <label>Access token nuevo
+              <input type="password" [(ngModel)]="accessToken" autocomplete="new-password" maxlength="4096" spellcheck="false">
+            </label>
+            <label>Webhook secret para la NUEVA versión (opcional; omitir NO hereda el anterior)
+              <input type="password" [(ngModel)]="webhookSecret" autocomplete="new-password" maxlength="4096" spellcheck="false">
+            </label>
+            <label class="pc-inline-check">
+              <input type="checkbox" [(ngModel)]="credentialAcknowledged">
+              Comprobé canal legítimo, entorno y custodia de los secretos.
+            </label>
+          </fieldset>
+          <button type="button" (click)="save('credentials')" [disabled]="busy()||blocked()||pending()!==null||freshRequired()">Rotar credencial cifrada</button>
+        }@else{
+          <p>Se requieren settings_manage e integrations_manage para leer la versión R8-45 y rotar sin inventarla.</p>
+        }
+      </details>
+    }
+  }
+</section>

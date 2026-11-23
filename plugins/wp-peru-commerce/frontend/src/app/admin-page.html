@@ -1,0 +1,82 @@
+<section class="pc-stack" aria-labelledby="pc-admin-title">
+  <h1 id="pc-admin-title">Panel del comercio</h1>
+  <p role="status" class="pc-alert">{{notice()}}</p>
+  @if(state();as employee){
+    <div class="pc-panel">
+      <h2>{{employee.business_name||'Mi comercio'}}</h2>
+      <p>Rol actual: {{employee.role_label==='A'?'Administrador':'Operador'}}</p>
+      <p class="pc-muted">Las capacidades visuales son informativas: cada operación REST vuelve a comprobar tu autorización.</p>
+      <p>Catálogo, agenda, pedidos, finanzas, Libro y gestión operativa se muestran por capacidades reales. Cada REST vuelve a comprobar rol, recurso, finalidad, estado y versión.</p>
+    </div>
+    <nav class="pc-actions" aria-label="Secciones del panel">
+      <button type="button" [attr.aria-pressed]="section()==='catalog'"
+        (click)="showSection('catalog')"
+        [disabled]="ordersPending()||financePending()||legalPending()||operationsPending()||!employee.ui_capabilities.includes('perucommerce_catalog_edit')">
+        Catálogo y stock
+      </button>
+      <button type="button" [attr.aria-pressed]="section()==='agenda'"
+        (click)="showSection('agenda')"
+        [disabled]="ordersPending()||financePending()||legalPending()||operationsPending()||!employee.ui_capabilities.includes('perucommerce_appointments_manage')">
+        Agenda y citas
+      </button>
+      <button type="button" [attr.aria-pressed]="section()==='orders'"
+        (click)="showSection('orders')"
+        [disabled]="ordersPending()||financePending()||legalPending()||operationsPending()||!employee.ui_capabilities.includes('perucommerce_orders_read')">
+        Pedidos y operaciones
+      </button>
+      <button type="button" [attr.aria-pressed]="section()==='finance'"
+        (click)="showSection('finance')"
+        [disabled]="ordersPending()||financePending()||legalPending()||operationsPending()
+          ||employee.role_label!=='A'
+          ||!(employee.ui_capabilities.includes('perucommerce_orders_read')
+            ||employee.ui_capabilities.includes('perucommerce_reconciliation_manage'))">
+        Casos y finanzas
+      </button>
+      <button type="button" [attr.aria-pressed]="section()==='legal'"
+        (click)="showSection('legal')"
+        [disabled]="ordersPending()||financePending()||legalPending()||operationsPending()
+          ||employee.role_label!=='A'
+          ||!(employee.ui_capabilities.includes('perucommerce_complaints_manage')
+            ||employee.ui_capabilities.includes('perucommerce_privacy_manage'))">
+        Libro y privacidad
+      </button>
+      <button type="button" [attr.aria-pressed]="section()==='operations'"
+        (click)="showSection('operations')"
+        [disabled]="ordersPending()||financePending()||legalPending()||operationsPending()
+          ||!(employee.ui_capabilities.includes('perucommerce_notifications_operate')
+            ||employee.role_label==='A'
+              &&employee.ui_capabilities.includes('perucommerce_settings_manage'))">
+        Configuración y bandeja
+      </button>
+    </nav>
+    <section [hidden]="section()!=='catalog'" aria-label="Catálogo administrativo">
+      <pc-admin-catalog [employee]="employee"/>
+    </section>
+    @if(agendaVisited()){
+      <section [hidden]="section()!=='agenda'" aria-label="Agenda administrativa">
+        <pc-admin-agenda [employee]="employee"/>
+      </section>
+    }
+    @if(ordersVisited()){
+      <section [hidden]="section()!=='orders'" aria-label="Pedidos administrativos">
+        <pc-admin-orders [employee]="employee" (pendingChange)="ordersPending.set($event)"/>
+      </section>
+    }
+    @if(financeVisited()){
+      <section [hidden]="section()!=='finance'" aria-label="Casos y finanzas administrativos">
+        <pc-admin-finance [employee]="employee" (pendingChange)="financePending.set($event)"/>
+      </section>
+    }
+    @if(legalVisited()){
+      <section [hidden]="section()!=='legal'" aria-label="Libro y privacidad administrativos">
+        <pc-admin-legal [employee]="employee" (pendingChange)="legalPending.set($event)"/>
+      </section>
+    }
+    @if(operationsVisited()){
+      <section [hidden]="section()!=='operations'" aria-label="Configuración y bandeja">
+        <pc-admin-operations [employee]="employee" (pendingChange)="operationsPending.set($event)"/>
+      </section>
+    }
+  }
+  <button class="pc-secondary" type="button" (click)="load()" [disabled]="busy()||ordersPending()||financePending()||legalPending()||operationsPending()">Comprobar sesión</button>
+</section>

@@ -1,0 +1,350 @@
+<section class="pc-stack" aria-labelledby="pc-finance-title">
+  <div class="pc-row">
+    <div>
+      <h2 id="pc-finance-title">Casos y finanzas</h2>
+      <p class="pc-muted">Administración de hechos comprobados, expedientes, ajustes y documentos externos. Ningún botón realiza devoluciones en Mercado Pago ni emite documentos en SUNAT.</p>
+    </div>
+    <span class="pc-muted">Exclusivo A y facultades por operación</span>
+  </div>
+  @if(!hasAny()){
+    <p class="pc-panel" role="status">Esta sesión no dispone de capacidades administrativas para el panel de casos o conciliación.</p>
+  }@else{
+    @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+    @if(notice()){<p role="status">{{notice()}}</p>}
+    @if(canRead()){
+      <section class="pc-panel pc-stack" aria-labelledby="pc-finance-order-heading">
+        <div class="pc-row">
+          <h3 id="pc-finance-order-heading">Seleccionar pedido para revisión administrativa</h3>
+          <button type="button" class="pc-secondary" (click)="loadRecent()"
+            [disabled]="busy()||listing()">Consultar recientes</button>
+        </div>
+        <p class="pc-muted">El número de pedido y el indicador monetario no constituyen evidencia de acreditación o un saldo disponible. Se requiere leer cada pedido y sus operaciones autorizadas.</p>
+        <label>ID real del pedido
+          <input type="text" inputmode="numeric" maxlength="20" [(ngModel)]="orderId"
+            [disabled]="hasPending||busy()||reading()" autocomplete="off">
+        </label>
+        <button type="button" (click)="chooseOrder(orderId)"
+          [disabled]="hasPending||busy()||reading()||!orderId">
+          Leer pedido y versiones (R8-21)
+        </button>
+        @if(listing()){<p role="status">Consultando pedidos recientes…</p>}
+        <ul class="pc-cards" aria-label="Pedidos para revisión administrativa">
+          @for(item of recent();track item.id){
+            <li class="pc-card pc-row">
+              <div>
+                <strong>Pedido {{item.order_number}} · {{item.id}}</strong>
+                <p>{{item.order_state}} · {{money(item.total_cents)}} · indicador {{item.payment_indicator}}</p>
+              </div>
+              <button type="button" class="pc-secondary" (click)="chooseOrder(item.id)"
+                [disabled]="hasPending||busy()||reading()">Revisar</button>
+            </li>
+          }
+        </ul>
+        <div class="pc-actions">
+          <button type="button" class="pc-secondary" (click)="pageRecent(-1)"
+            [disabled]="hasPending||listing()||recentPage()<=1">Anterior</button>
+          <span>Página {{recentPage()}}</span>
+          <button type="button" class="pc-secondary" (click)="pageRecent(1)"
+            [disabled]="hasPending||listing()||!recentMore()">Siguiente</button>
+        </div>
+      </section>
+
+      @if(pending();as attempt){
+        <section class="pc-panel pc-stack" aria-labelledby="pc-finance-pending-heading">
+          <h3 id="pc-finance-pending-heading">Operación financiera pendiente de comprobación</h3>
+          <p>{{attempt.context}} · pedido {{attempt.orderId}}.</p>
+          <p class="pc-muted">El body, expected_version y UUID original quedan intactos para un único reintento. Un 409, error de red o 5xx no autoriza un segundo cargo, devolución ni asiento.</p>
+          <div class="pc-actions">
+            <button type="button" (click)="submit(attempt.kind)" [disabled]="busy()||reading()">
+              Reintentar exactamente el mismo intento
+            </button>
+            <button type="button" class="pc-secondary" (click)="loadOrder(attempt.orderId)"
+              [disabled]="busy()||reading()">Consultar pedido sin perder intento</button>
+            <button type="button" class="pc-secondary" (click)="abandon()"
+              [disabled]="busy()||reading()">Descartar tras verificar resultado</button>
+          </div>
+        </section>
+      }
+      @if(reading()){<p role="status">Releyendo estado, movimientos y versiones…</p>}
+      @if(needsRefresh()){
+        <p class="pc-alert" role="alert">Se requiere una lectura fresca del pedido después de la operación. No se permite otra decisión sobre esta versión hasta obtenerla.</p>
+      }
+
+      @if(order();as current){
+        <section class="pc-panel pc-stack" aria-labelledby="pc-finance-detail-heading">
+          <div class="pc-row">
+            <div>
+              <h3 id="pc-finance-detail-heading">Pedido {{current.order_number}}</h3>
+              <p class="pc-muted">ID {{current.id}} · versión global {{current.row_version}} · estado {{current.order_state}}</p>
+            </div>
+            <button type="button" class="pc-secondary" (click)="loadOrder(current.id)"
+              [disabled]="reading()||busy()">Releer pedido</button>
+          </div>
+          <div class="pc-grid">
+            <div class="pc-panel pc-soft">
+              <h4>Contrato comercial</h4>
+              <p>Total histórico pactado: <strong>{{money(current.total_cents)}}</strong></p>
+              <p>Estado: <strong>{{current.order_state}}</strong></p>
+            </div>
+            <div class="pc-panel pc-soft">
+              <h4>Estado de pago (indicador)</h4>
+              <p><strong>{{current.payment_indicator}}</strong></p>
+              <p class="pc-muted">No representa por sí mismo saldo cobrable, dinero reintegrado ni prueba externa.</p>
+            </div>
+          </div>
+
+          @if(current.financial_movements;as events){
+            <details class="pc-panel" open>
+              <summary>Movimientos financieros históricos autorizados ({{events.length}})</summary>
+              @if(!events.length){<p>Sin movimientos proyectados para este pedido.</p>}
+              <ul class="pc-cards">
+                @for(e of events;track e.event_id){
+                  <li class="pc-card">
+                    <strong>Evento {{e.event_id}} · {{e.kind}}</strong>
+                    <p>Importe firmado: {{money(e.amount_cents)}} · {{e.occurred_at}}</p>
+                    @if(e.source_payment_event_id){<p>Evento de origen {{e.source_payment_event_id}}</p>}
+                    @if(e.external_reference){<p class="pc-muted">Referencia informativa: {{e.external_reference}}</p>}
+                  </li>
+                }
+              </ul>
+            </details>
+          }@else{
+            <p class="pc-muted">Los asientos no están disponibles para esta capacidad. No se inventan ID de cobro ni fondos acreditados.</p>
+          }
+          @if(current.external_documents;as docs){
+            <details class="pc-panel">
+              <summary>Referencias de documentos emitidos externamente ({{docs.length}})</summary>
+              <ul class="pc-cards">
+                @for(d of docs;track d.id){
+                  <li class="pc-card">
+                    <strong>{{d.document_kind}} · registro {{d.id}}</strong>
+                    <p>{{d.series||''}} {{d.number||''}} · registrado {{d.recorded_at}}</p>
+                    @if(d.amount_cents){<p>Importe histórico de referencia: {{money(d.amount_cents)}}</p>}
+                  </li>
+                }
+              </ul>
+            </details>
+          }
+
+          @if(canCashCorrect()){
+            <section class="pc-panel pc-stack" aria-labelledby="pc-cash-correct-title">
+              <h4 id="pc-cash-correct-title">Corrección inmutable de caja (R8-25)</h4>
+              <p>Solo un administrador que verificó el evento de efectivo original. El delta crea un nuevo asiento; no edita ni borra la recepción previa. La corrección debe ser exacta y respaldada por evidencia.</p>
+              @if(sources().length){
+                <fieldset class="pc-fieldset pc-form" [disabled]="hasPending||busy()||needsRefresh()">
+                  <legend>Corrección del evento original</legend>
+                  <label>ID del evento de cargo original
+                    <select [(ngModel)]="cashSourceId">
+                      <option value="">Selecciona un evento verificable</option>
+                      @for(e of sources();track e.event_id){
+                        <option [value]="e.event_id">Evento {{e.event_id}} · {{money(e.amount_cents)}} · {{e.occurred_at}}</option>
+                      }
+                    </select>
+                  </label>
+                  <label>Delta firmado en soles, ej. -5.00 o 2.00
+                    <input type="text" [(ngModel)]="cashDelta" inputmode="decimal" maxlength="20">
+                  </label>
+                  <label>Motivo
+                    <textarea [(ngModel)]="cashReason" maxlength="1000"></textarea>
+                  </label>
+                  <label>Referencia de evidencia (opcional, no URL)
+                    <input type="text" [(ngModel)]="cashEvidence" maxlength="500">
+                  </label>
+                  <label>
+                    <input type="checkbox" [(ngModel)]="cashConfirmed">
+                    Verifiqué el evento original de recepción en efectivo y el cambio neto. El servidor comprobará proveedor, cuenta y saldo.
+                  </label>
+                </fieldset>
+                <button type="button" (click)="submit('cash-correction')"
+                  [disabled]="hasPending||busy()||needsRefresh()">Registrar asiento correctivo</button>
+              }@else{
+                <p class="pc-muted">No hay evento inicial visible en la proyección financiera: no registrar un source_event_id supuesto.</p>
+              }
+            </section>
+          }
+
+          @if(canFinancial()){
+            <section class="pc-panel pc-stack" aria-labelledby="pc-adjust-title">
+              <h4 id="pc-adjust-title">Ajuste de obligación comercial (R8-26)</h4>
+              <p>Este formulario es <strong>solo monetario</strong>. No libera unidades ni ejecuta una devolución externa. Los ajustes de unidades físicas requieren expediente R8-69, lectura original R8-21 y aceptación atómica en el bloque Casos.</p>
+              <fieldset class="pc-fieldset pc-form" [disabled]="hasPending||busy()||needsRefresh()">
+                <legend>Motivo e importe</legend>
+                <label>Delta comercial firmado en soles (puede ser negativo)
+                  <input type="text" [(ngModel)]="adjustDelta" inputmode="decimal" maxlength="20">
+                </label>
+                <label>Línea afectada (opcional)
+                  <select [(ngModel)]="adjustLineId">
+                    <option value="">Ajuste a nivel pedido</option>
+                    @for(l of current.lines;track l.line_id){
+                      <option [value]="l.line_id">Línea {{l.line_id}} · {{l.title}}</option>
+                    }
+                  </select>
+                </label>
+                <label>Expediente guest de solicitud de devolución abierto (opcional)
+                  <select [(ngModel)]="adjustCaseId">
+                    <option value="">Sin expediente guest asociado</option>
+                    @for(c of guestRefundCases();track c.case_id){
+                      <option [value]="c.case_id">Caso {{c.case_id}} · versión {{c.row_version}}</option>
+                    }
+                  </select>
+                </label>
+                <label>Motivo y base comercial del ajuste
+                  <textarea [(ngModel)]="adjustReason" maxlength="1000"></textarea>
+                </label>
+                <label>
+                  <input type="checkbox" [(ngModel)]="adjustConfirmed">
+                  Examiné saldo comercial y obligaciones: el ajuste no es cobro, reembolso ejecutado ni autorización para reescribir quantity.
+                </label>
+              </fieldset>
+              <button type="button" (click)="submit('adjustment')"
+                [disabled]="hasPending||busy()||needsRefresh()">Registrar ajuste de obligación</button>
+            </section>
+          }
+
+          @if(canRefund()){
+            <section class="pc-panel pc-stack" aria-labelledby="pc-refund-title">
+              <h4 id="pc-refund-title">Registrar reembolso externo ya efectuado (R8-27)</h4>
+              <p>Este botón <strong>NO inicia un refund en Mercado Pago ni en una entidad bancaria</strong>. Solo registra un resultado externo efectivamente confirmado y conciliado, asociado a un cobro real. El servidor verifica id de origen, límite y referencias únicas.</p>
+              @if(sources().length){
+                <fieldset class="pc-fieldset pc-form" [disabled]="hasPending||busy()||needsRefresh()">
+                  <legend>Resultado de devolución comprobada</legend>
+                  <label>Cobro de origen (evento real)
+                    <select [(ngModel)]="refundSourceId">
+                      <option value="">Selecciona el cargo original</option>
+                      @for(e of sources();track e.event_id){
+                        <option [value]="e.event_id">{{e.event_id}} · {{money(e.amount_cents)}} · {{e.occurred_at}}</option>
+                      }
+                    </select>
+                  </label>
+                  <label>Importe efectivamente reintegrado en soles
+                    <input type="text" [(ngModel)]="refundAmount" inputmode="decimal" maxlength="20">
+                  </label>
+                  <label>Referencia externa de la devolución (8–200 caracteres)
+                    <input type="text" [(ngModel)]="refundExternalRef" maxlength="200"
+                      autocomplete="off">
+                  </label>
+                  <label>Constancia independiente de devolución (8–500 caracteres)
+                    <input type="text" [(ngModel)]="refundEvidence" maxlength="500"
+                      autocomplete="off">
+                  </label>
+                  <label>
+                    <input type="checkbox" [(ngModel)]="refundConfirmed">
+                    Comprobé efectivamente fuera del plugin la devolución y su constancia, importe y medio. No estoy solicitando ejecutar un reembolso.
+                  </label>
+                </fieldset>
+                <button type="button" (click)="submit('refund')"
+                  [disabled]="hasPending||busy()||needsRefresh()">
+                  Registrar reembolso ya verificado, sin llamar al proveedor
+                </button>
+              }@else{
+                <p>No se proyecta ningún cobro original verificable; no se ofrece registrar una devolución sin evento fuente.</p>
+              }
+            </section>
+          }
+
+          @if(canDocument()){
+            <section class="pc-panel pc-stack" aria-labelledby="pc-document-title">
+              <h4 id="pc-document-title">Referencias de comprobantes externos (R8-64)</h4>
+              <p>Se registra exclusivamente un documento que ya existe fuera de PeruCommerce. No se emite CPE, factura, nota ni guía por SUNAT. El backend exige régimen aplicable y verificador fiscal P-C real; sin verificador falla cerrado.</p>
+              <fieldset class="pc-fieldset pc-form" [disabled]="hasPending||busy()||needsRefresh()">
+                <legend>Datos del documento originalmente emitido</legend>
+                <div class="pc-grid">
+                  <label>Tipo
+                    <select [(ngModel)]="documentKind">
+                      @for(k of documentKinds;track k.value){
+                        <option [value]="k.value">{{k.label}}</option>
+                      }
+                    </select>
+                  </label>
+                  <label>Fecha/hora de emisión en UTC
+                    <input type="datetime-local" [(ngModel)]="documentIssuedUtc">
+                  </label>
+                </div>
+                <div class="pc-grid">
+                  <label>Serie (opcional si hay referencia externa)
+                    <input type="text" [(ngModel)]="documentSeries" maxlength="30">
+                  </label>
+                  <label>Número (opcional si hay referencia externa)
+                    <input type="text" [(ngModel)]="documentNumber" maxlength="64">
+                  </label>
+                </div>
+                <label>Referencia documental externa (alternativa a serie+número)
+                  <input type="text" [(ngModel)]="documentExternalRef" maxlength="255">
+                </label>
+                @if(documentKind==='nota_credito'){
+                  <label>Documento de origen del mismo pedido
+                    <select [(ngModel)]="documentSourceId">
+                      <option value="">Selecciona un documento existente</option>
+                      @for(doc of originalDocuments();track doc.id){
+                        <option [value]="doc.id">{{doc.document_kind}} · registro {{doc.id}}</option>
+                      }
+                    </select>
+                  </label>
+                }
+                <label>Importe de documento en soles
+                  <input type="text" inputmode="decimal" [(ngModel)]="documentAmount" maxlength="20"
+                    [placeholder]="documentKind==='nota_credito'?'Obligatorio para nota de crédito':'Opcional'">
+                </label>
+                <label>Referencia de evidencia privada
+                  <input type="text" [(ngModel)]="documentEvidence" maxlength="500"
+                    [placeholder]="documentKind==='nota_credito'?'Obligatoria para nota de crédito':'Opcional'">
+                </label>
+                <label>
+                  <input type="checkbox" [(ngModel)]="documentChecked">
+                  Revisé la existencia y legitimidad del documento en su emisor externo; el registro en PeruCommerce no lo valida ante SUNAT.
+                </label>
+              </fieldset>
+              <button type="button" (click)="submit('document')"
+                [disabled]="hasPending||busy()||needsRefresh()">Registrar referencia externa (no emitir)</button>
+            </section>
+          }
+
+          @if(eligibleDelivery()){
+            <section class="pc-panel pc-stack" aria-labelledby="pc-delivery-approve-title">
+              <h4 id="pc-delivery-approve-title">Aprobación administrativa de nueva dirección (R8-28)</h4>
+              <p>El operador propone en IMP-63. En esta vista A con permiso financiero registra la aprobación, que puede modificar tarifa o producir crédito comercial. <strong>El DTO del pedido no proporciona una vista monetaria previa del cambio:</strong> no se deduce un saldo de la dirección; verifica de forma independiente tarifa, cobertura, acuerdo y propuesta original antes de continuar. El servidor revalida y niega tarifa superior sin mecanismo de cobro legítimo.</p>
+              <fieldset class="pc-fieldset pc-form" [disabled]="hasPending||busy()||needsRefresh()">
+                <legend>Dirección aprobable con revisión comercial</legend>
+                <label>Nuevo UBIGEO distrital
+                  <input type="text" [(ngModel)]="deliveryUbigeo" inputmode="numeric"
+                    maxlength="6">
+                </label>
+                <label>Nueva dirección exacta acordada
+                  <textarea [(ngModel)]="deliveryAddress" maxlength="500"></textarea>
+                </label>
+                <label>Motivo / constancia de acuerdo y cobertura revisada
+                  <textarea [(ngModel)]="deliveryReason" maxlength="1000"></textarea>
+                </label>
+                <label>
+                  <input type="checkbox" [(ngModel)]="deliveryCoverageChecked">
+                  Comprobé la cobertura y tarifa vigentes del destino y confronté los datos con la propuesta/acuerdo real.
+                </label>
+                <label>
+                  <input type="checkbox" [(ngModel)]="deliveryMoneyChecked">
+                  Verifiqué el posible impacto en dinero acreditado, tarifa y crédito comercial; no supongo que proponer equivalga a aprobar ni que exista refund.
+                </label>
+              </fieldset>
+              <button type="button" class="pc-secondary" (click)="submit('delivery-approval')"
+                [disabled]="hasPending||busy()||needsRefresh()">
+                Solicitar aprobación con revalidación financiera del backend
+              </button>
+            </section>
+          }
+
+          @if(canCases()){
+            <pc-admin-cases [employee]="employee()" [order]="current"
+              [blocked]="pending()!==null||reconPending()"
+              (pendingChange)="onChildPending('cases',$event)"
+              (changed)="loadOrder(current.id)"/>
+          }
+        </section>
+      }
+    }
+
+    @if(canReconcile()){
+      <pc-admin-reconciliation [employee]="employee()"
+        [blocked]="pending()!==null||casesPending()"
+        (pendingChange)="onChildPending('reconciliation',$event)"/>
+    }
+  }
+</section>

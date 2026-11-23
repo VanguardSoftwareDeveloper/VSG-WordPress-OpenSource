@@ -1,0 +1,164 @@
+{
+  "schema": "perucommerce-imp69-fixtures-v1",
+  "fictional": true,
+  "purpose": "Escenarios aislados; no importar a un comercio ni enviar a un proveedor",
+  "clock": {
+    "fixed_utc": "2027-06-15T18:00:00Z",
+    "site_timezone": "America/Lima",
+    "admission_expires_utc": "2027-06-15T18:01:00Z",
+    "mp_hold_expires_utc": "2027-06-15T18:15:00Z",
+    "otp_expires_utc": "2027-06-15T18:10:00Z",
+    "grant_expires_utc": "2027-06-15T18:05:00Z"
+  },
+  "site": {
+    "site_id": 1,
+    "db_prefix": "pc69_",
+    "schema_from": "1.0.0",
+    "schema_target": "1.0.2",
+    "other_site_id": 2,
+    "domain": "https://example.invalid",
+    "environment": "synthetic_only"
+  },
+  "sellables": [
+    {
+      "id": "101",
+      "kind": "physical",
+      "price_cents": "1599",
+      "stock_units": 2,
+      "stock_controlled": true,
+      "active": true
+    },
+    {
+      "id": "102",
+      "kind": "digital",
+      "price_cents": "1800",
+      "file_ids": [
+        "501",
+        "502"
+      ],
+      "file_versions": [
+        1,
+        2
+      ],
+      "active": true
+    },
+    {
+      "id": "103",
+      "kind": "service",
+      "price_cents": "4500",
+      "resource_id": "1",
+      "duration_minutes": 30,
+      "buffer_before_minutes": 10,
+      "buffer_after_minutes": 10,
+      "active": true
+    }
+  ],
+  "carts": [
+    {
+      "id": "cash-physical",
+      "payment": "cash",
+      "items": [
+        {
+          "sellable_id": "101",
+          "quantity": 2
+        }
+      ],
+      "delivery_cents": "600",
+      "expected_total_cents": "3798",
+      "contact": {
+        "phone": "+51999999999",
+        "email": null
+      },
+      "expected_service_appointments": 0,
+      "expected_digital_rights": 0
+    },
+    {
+      "id": "mp-mixed-pickup",
+      "payment": "mercado_pago",
+      "items": [
+        {
+          "sellable_id": "101",
+          "quantity": 2
+        },
+        {
+          "sellable_id": "102",
+          "quantity": 1
+        },
+        {
+          "sellable_id": "103",
+          "quantity": 1
+        }
+      ],
+      "delivery_cents": "0",
+      "expected_total_cents": "9498",
+      "contact": {
+        "phone": "+51999999999",
+        "email": "buyer@example.invalid"
+      },
+      "expected_service_appointments": 1,
+      "expected_digital_rights": 2
+    },
+    {
+      "id": "invalid-cash-digital",
+      "payment": "cash",
+      "items": [
+        {
+          "sellable_id": "102",
+          "quantity": 1
+        }
+      ],
+      "delivery_cents": "0",
+      "expected_total_cents": "1800",
+      "contact": {
+        "phone": null,
+        "email": "buyer@example.invalid"
+      },
+      "expected_denial": "digital_requires_online_payment"
+    }
+  ],
+  "concurrency": {
+    "last_stock_units": 1,
+    "parallel_cash_requests": 2,
+    "expected_confirmed": 1,
+    "expected_rejected": 1,
+    "service_resource_id": "1",
+    "shared_start_utc": "2027-06-15T18:30:00Z",
+    "shared_end_utc": "2027-06-15T19:00:00Z",
+    "expected_service_confirmed": 1
+  },
+  "external": {
+    "provider": "mercado_pago",
+    "currency": "PEN",
+    "country": "PER",
+    "mode": "production",
+    "order_id": "fictional-order-69",
+    "transaction_id": "fictional-transaction-69",
+    "attempt_id": "401",
+    "reference": "synthetic-pc69-reference",
+    "is_real": false
+  },
+  "identities": {
+    "staff_admin_role": "A",
+    "staff_operator_role": "O",
+    "guest_order_id": "701",
+    "other_guest_order_id": "702",
+    "otp_digits": "00000000",
+    "expired_token_marker": "synthetic-expired-no-secret",
+    "idempotency_key": "00000000-0000-4000-8000-000000000069"
+  },
+  "security": {
+    "never_persist": [
+      "raw_otp",
+      "raw_guest_secret",
+      "raw_download_token",
+      "mp_access_token",
+      "webhook_hmac_secret"
+    ],
+    "never_expose_to_operator": [
+      "evidence_snapshot",
+      "cash_correction_details",
+      "private_download_url",
+      "mp_credentials"
+    ]
+  }
+}

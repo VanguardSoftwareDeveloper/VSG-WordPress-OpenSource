@@ -1,0 +1,248 @@
+<section class="pc-panel pc-stack" aria-labelledby="pc-admin-privacy-title">
+  <div class="pc-row">
+    <div>
+      <h3 id="pc-admin-privacy-title">Derechos ARCO — expedientes privados</h3>
+      <p class="pc-muted">Solo A con privacidad. La recepción sigue los canales nativos WordPress confirmados o la recepción manual legitimada del comercio. No se exige que todo titular posea cuenta, correo o pedido.</p>
+    </div>
+    <button type="button" class="pc-secondary" (click)="load()"
+      [disabled]="loading()||busy()">Consultar lista</button>
+  </div>
+  @if(!allowed()){
+    <p>La administración de privacidad no está autorizada para esta sesión.</p>
+  }@else{
+    @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+    @if(notice()){<p role="status">{{notice()}}</p>}
+    @if(loading()){<p role="status">Consultando solicitudes ARCO…</p>}
+    @if(!loading()&&items().length===0){<p>No hay solicitudes en esta página.</p>}
+    <ul class="pc-cards" aria-label="Lista resumida de solicitudes ARCO">
+      @for(x of items();track x.id){
+        <li class="pc-card">
+          <div class="pc-row">
+            <strong>Solicitud {{x.id}} · {{x.request_type}}</strong>
+            <span>{{x.has_verified_identity===true?'Identidad registrada como verificada':'Identidad pendiente/no acreditada'}}</span>
+          </div>
+          <p>Recibida {{date(x.received_at)}}
+            @if(x.due_at){ · fecha límite informada {{date(x.due_at)}} }
+          </p>
+          <button type="button" class="pc-secondary" (click)="select(x)"
+            [disabled]="busy()||detailBusy()||blocked()||pending()!==null">
+            Leer expediente autorizado R8-66
+          </button>
+        </li>
+      }
+    </ul>
+    <div class="pc-actions">
+      <button type="button" class="pc-secondary" (click)="movePage(-1)"
+        [disabled]="loading()||page()<=1||pending()!==null">Anterior</button>
+      <span>Página {{page()}}</span>
+      <button type="button" class="pc-secondary" (click)="movePage(1)"
+        [disabled]="loading()||!more()||pending()!==null">Siguiente</button>
+    </div>
+
+    @if(pending();as attempt){
+      <section class="pc-panel pc-stack" aria-labelledby="pc-privacy-pending">
+        <h4 id="pc-privacy-pending">Intento legal pendiente de comprobación</h4>
+        <p>{{attempt.action==='export'?'Exportación privada':'Resolución ARCO'}} de expediente {{attempt.id}}. La misma clave y el mismo cuerpo se conservan ante resultado incierto.</p>
+        <div class="pc-actions">
+          <button type="button" (click)="execute(attempt.action)"
+            [disabled]="busy()||detailBusy()||blocked()">Reintentar el mismo intento</button>
+          <button type="button" class="pc-secondary" (click)="loadDetail(attempt.id)"
+            [disabled]="busy()||detailBusy()">Consultar estado actual</button>
+          <button type="button" class="pc-secondary" (click)="abandon()"
+            [disabled]="busy()||detailBusy()">Descartar tras verificar resultado</button>
+        </div>
+      </section>
+    }
+    @if(detailBusy()){<p role="status">Consultando detalle jurídico y evidencias autorizadas…</p>}
+    @if(detail();as d){
+      <section class="pc-panel pc-stack" aria-labelledby="pc-privacy-detail-title">
+        <div class="pc-row">
+          <div>
+            <h4 id="pc-privacy-detail-title">Expediente ARCO {{d.id}} — {{d.request_type}}</h4>
+            <p class="pc-muted">Versión {{d.row_version}} · recibido {{date(d.received_at)}}.</p>
+          </div>
+          <div class="pc-actions">
+            <button type="button" class="pc-secondary" (click)="loadDetail(d.id)"
+              [disabled]="busy()||detailBusy()">Releer detalle</button>
+            <button type="button" class="pc-secondary" (click)="close()"
+              [disabled]="busy()||detailBusy()||pending()!==null">Cerrar detalle</button>
+          </div>
+        </div>
+        <div class="pc-grid">
+          <div class="pc-panel pc-soft pc-stack">
+            <h4>Recepción y legitimación</h4>
+            <p>Verificación de identidad: <strong>{{d.verification_status}}</strong>
+              @if(d.verified_at){ · comprobada {{date(d.verified_at)}} }
+            </p>
+            @if(d.applicant_name){<p>Solicitante (solo expediente): {{d.applicant_name}}</p>}
+            @if(d.channel){<p>Canal original de recepción: {{d.channel}}</p>}
+            @if(d.due_at){<p>Fecha límite de respuesta informada: {{date(d.due_at)}}</p>}
+            @if(d.request_summary){<p class="pc-preserve">{{d.request_summary}}</p>}
+          </div>
+          <div class="pc-panel pc-soft pc-stack">
+            <h4>Estado de respuesta jurídica</h4>
+            @if(d.decision){<p>Decisión preparada/registrada: {{d.decision}}</p>}
+            @if(d.legal_basis){<p>Fundamento: {{d.legal_basis}}</p>}
+            @if(d.resolved_at){
+              <p><strong>Resolución registrada: {{date(d.resolved_at)}}</strong></p>
+            }@else{
+              <p>No consta una resolución final con entrega verificada.</p>
+            }
+            @if(d.response_channel){<p>Canal: {{d.response_channel}}</p>}
+            @if(d.response_evidence_ref){<p>Referencia de respuesta: {{d.response_evidence_ref}}</p>}
+          </div>
+        </div>
+
+        <section class="pc-stack" aria-labelledby="pc-privacy-evidence-title">
+          <h4 id="pc-privacy-evidence-title">Evidencias privadas del expediente</h4>
+          <p class="pc-muted">Cada referencia es un identificador opaco, no una dirección pública. R8-68 comprueba caso, finalidad, identidad, caducidad y autorización en cada descarga. Los archivos no se guardan en Web Storage.</p>
+          @if(d.identity_evidence_ref){
+            <p>Identidad registrada: {{d.identity_evidence_ref}}
+              <button type="button" class="pc-secondary" (click)="downloadEvidence(d.identity_evidence_ref)"
+                [disabled]="downloadBusy()||busy()||blocked()">Revisar identidad por canal privado</button>
+            </p>
+          }
+          @if(d.representation_evidence_ref){
+            <p>Representación: {{d.representation_evidence_ref}}
+              <button type="button" class="pc-secondary" (click)="downloadEvidence(d.representation_evidence_ref)"
+                [disabled]="downloadBusy()||busy()||blocked()">Descargar evidencia de representación</button>
+            </p>
+          }
+          @if(ordinaryEvidence().length){
+            <ul class="pc-cards">
+              @for(ref of ordinaryEvidence();track ref){
+                <li class="pc-card pc-row">
+                  <span>Ref. {{ref}}</span>
+                  <button type="button" class="pc-secondary" (click)="downloadEvidence(ref)"
+                    [disabled]="downloadBusy()||busy()||blocked()">Descargar con auditoría</button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+        @if(freshRequired()){
+          <p class="pc-alert" role="status">Una operación quedó confirmada y requiere lectura vigente del expediente antes de otra decisión.</p>
+        }
+
+        @if(d.verification_status!=='verified'){
+          <p class="pc-alert">
+            No se puede resolver ni exportar sin identidad y representación legitimadas. La confirmación de correo WordPress, una casilla o un nombre no equivalen a prueba legal.
+            La incorporación y comprobación manual de evidencias se realiza mediante las funciones administrativas autorizadas existentes; no existe una ruta REST pública improvisada para hacerlo.
+          </p>
+        }
+
+        @if(!d.resolved_at && d.verification_status==='verified' && !freshRequired()){
+          <fieldset class="pc-fieldset pc-form" [disabled]="busy()||detailBusy()||blocked()||pending()!==null">
+            <legend>Preparar o acreditar resolución ARCO (R8-44)</legend>
+            <label>Decisión con base legal revisada
+              <select [(ngModel)]="decision">
+                <option value="fulfilled">Atendido</option>
+                <option value="partially_fulfilled">Atendido parcialmente</option>
+                <option value="rejected">Rechazado con fundamento</option>
+                <option value="retained_due_to_legal_obligation">Conservación por obligación legal</option>
+              </select>
+            </label>
+            <label>Fundamento legal específico y justificado (máximo 400 caracteres)
+              <textarea [(ngModel)]="basis" maxlength="400"></textarea>
+            </label>
+            <label>Referencia protegida de evidencia de respuesta (si existe)
+              <input type="text" [(ngModel)]="decisionEvidence"
+                maxlength="128" autocomplete="off" placeholder="Ref. privada del mismo expediente">
+            </label>
+            <label>
+              <input type="checkbox" [(ngModel)]="reviewedRetention">
+              Revisé las obligaciones de conservación; resolver no implica borrar automáticamente ventas, Libro ni archivos legalmente exigidos.
+            </label>
+            <label>
+              <input type="checkbox" [(ngModel)]="verifiedDelivery">
+              Verifiqué el canal y la notificación exigibles, y comprendo que sin evidencia de entrega el servidor solo prepara la resolución.
+            </label>
+            <label>
+              <input type="checkbox" [(ngModel)]="verifiedRealIdentity">
+              Contrasté nuevamente la identidad del titular y su alcance con evidencia protegida y autorización. No infiero legitimidad por poseer correo o folio.
+            </label>
+          </fieldset>
+          <button type="button" (click)="execute('resolve')"
+            [disabled]="busy()||detailBusy()||pending()!==null||blocked()">
+            Registrar decisión sujeta a verificación R8-44
+          </button>
+        }
+
+        @if(d.verification_status==='verified' && !freshRequired()){
+          <fieldset class="pc-fieldset pc-form" [disabled]="busy()||detailBusy()||blocked()||pending()!==null">
+            <legend>Exportación privada, específica y temporal (R8-50)</legend>
+            <p>El archivo no se devuelve en el POST. HTTP 202 solo acepta una operación pendiente; consulta R8-66 y descarga por R8-68 cuando esté lista y sin vencer.</p>
+            <label>Alcance
+              <select [(ngModel)]="exportScope">
+                <option value="subject_verified">Solo datos del sujeto legitimado</option>
+                <option value="order_legal_copy">Copia legal de un pedido del mismo titular</option>
+              </select>
+            </label>
+            @if(exportScope==='order_legal_copy'){
+              <label>ID real del pedido del mismo titular
+                <input type="text" [(ngModel)]="exportOrderId" inputmode="numeric" maxlength="20">
+              </label>
+            }
+            <label>Motivo legítimo y mínimo necesario de exportación
+              <textarea [(ngModel)]="exportReason" maxlength="1000"></textarea>
+            </label>
+            <label>Referencia declarativa de identidad verificada (no documento, DNI, contraseña ni OTP)
+              <input type="text" [(ngModel)]="verifiedIdentityReference"
+                maxlength="200" autocomplete="off">
+            </label>
+            <label>
+              <input type="checkbox" [(ngModel)]="verifiedRealIdentity">
+              Revisé la legitimación verdadera del titular/representante en este expediente y su prueba privada; el texto declarado no reemplaza al verificador de servidor.
+            </label>
+            <label>
+              <input type="checkbox" [(ngModel)]="exportConfirmed">
+              Confirmé el alcance, finalidad, minimización y pertenencia de los datos; esta acción no es exportación comercial masiva.
+            </label>
+          </fieldset>
+          <button type="button" class="pc-secondary" (click)="execute('export')"
+            [disabled]="busy()||detailBusy()||pending()!==null||blocked()">
+            Solicitar exportación privada (202 pendiente)
+          </button>
+        }
+
+        <section class="pc-panel pc-stack" aria-labelledby="pc-privacy-exports-title">
+          <div class="pc-row">
+            <h4 id="pc-privacy-exports-title">Operaciones de exportación del expediente</h4>
+            <button type="button" class="pc-secondary" (click)="loadDetail(d.id)"
+              [disabled]="busy()||detailBusy()">Consultar estado R8-66</button>
+          </div>
+          @if(exportOperations().length===0){
+            <p>No se registran exportaciones visibles para este caso.</p>
+          }
+          <ul class="pc-cards">
+            @for(op of exportOperations();track op.operation_id){
+              <li class="pc-card pc-stack">
+                <div class="pc-row">
+                  <strong>Operación {{op.operation_id}}</strong>
+                  <span>
+                    {{op.status==='pending'?'Pendiente':
+                      op.status==='ready'?'Lista, caducidad aplicable':
+                      op.status==='expired'?'Expirada':'Fallida'}}
+                  </span>
+                </div>
+                @if(op.expires_at_utc){<p>Caduca en UTC {{op.expires_at_utc}}.</p>}
+                @if(op.failure_code){<p class="pc-alert">Código técnico: {{op.failure_code}}.</p>}
+                @if(isExportReady(op)){
+                  <button type="button" class="pc-secondary"
+                    (click)="downloadEvidence(op.evidence_ref,'privacy_export_download')"
+                    [disabled]="downloadBusy()||busy()||blocked()">
+                    Descargar copia privada vigente mediante R8-68
+                  </button>
+                }@else if(op.status==='expired'){
+                  <p>La copia venció; no existe descarga válida ni enlace público alternativo.</p>
+                }@else if(op.status==='pending'){
+                  <p>El proceso sigue pendiente. No afirmar que la exportación fue generada.</p>
+                }
+              </li>
+            }
+          </ul>
+        </section>
+      </section>
+    }
+  }
+</section>

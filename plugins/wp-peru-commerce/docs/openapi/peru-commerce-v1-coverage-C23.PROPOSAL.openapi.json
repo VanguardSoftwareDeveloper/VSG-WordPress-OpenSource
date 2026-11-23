@@ -1,0 +1,1809 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ARCHIVO HISTÓRICO — propuesta C23 antes de D-176…D-187",
+    "version": "0.1.0-archived",
+    "description": "Este archivo conserva las 12 operaciones C23 cuando eran propuestas. La cobertura se ratificó posteriormente como D-176…D-187/R8-53…R8-64, y ahora vive SOLO en docs/openapi/peru-commerce-v1.openapi.draft.json (0.3.0-draft). NO generar endpoints ni implementar a partir de este archivo. x-ratified=false en cada operación representa el estado HISTÓRICO de esta propuesta, no la aprobación vigente."
+  },
+  "servers": [
+    {
+      "url": "https://example.invalid/wp-json/peru-commerce/v1",
+      "description": "Base ficticia; WordPress resuelve rest_url dinámicamente"
+    }
+  ],
+  "paths": {
+    "/admin/agenda/schedule": {
+      "patch": {
+        "operationId": "C23-01",
+        "summary": "Horario semanal y buffers, sin mover citas confirmadas",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2301Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-01",
+        "x-ratified": false,
+        "x-per": "PER-19",
+        "x-capabilities-all": [
+          "perucommerce_appointments_manage"
+        ],
+        "x-actor": "OPERATOR_AND_ADMIN_PENDING_RATIFICATION",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2301Request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/appointments/{id}/outcome": {
+      "post": {
+        "operationId": "C23-02",
+        "summary": "CONFIRMADA→REALIZADA/NO_ASISTIO; actor O pendiente de ratificación",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2302Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-02",
+        "x-ratified": false,
+        "x-per": "PER-20",
+        "x-capabilities-all": [
+          "perucommerce_appointments_manage"
+        ],
+        "x-actor": "ADMIN_ONLY_PROPOSED",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2302Request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/orders/{id}/lines/{line_id}/logistics-incidents": {
+      "post": {
+        "operationId": "C23-03",
+        "summary": "Abrir incidencia de entrega no comprobada; no cancelar línea",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          },
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2303Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-03",
+        "x-ratified": false,
+        "x-per": "PER-27",
+        "x-capabilities-all": [
+          "perucommerce_orders_fulfill"
+        ],
+        "x-actor": "OPERATOR_AND_ADMIN_PENDING_RATIFICATION",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2303Request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/logistics-incidents/{id}/proposals": {
+      "post": {
+        "operationId": "C23-04",
+        "summary": "Proponer resolución sin efectos financieros/logísticos",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2304Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-04",
+        "x-ratified": false,
+        "x-per": "PER-28",
+        "x-capabilities-all": [
+          "perucommerce_orders_fulfill"
+        ],
+        "x-actor": "OPERATOR_AND_ADMIN_PENDING_RATIFICATION",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2304Request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/logistics-incidents/{id}/resolve": {
+      "post": {
+        "operationId": "C23-05",
+        "summary": "Resolver expediente; R8-22/23/26/27 ejecutan efectos separados",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2305Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-05",
+        "x-ratified": false,
+        "x-per": "PER-28/32",
+        "x-capabilities-all": [
+          "perucommerce_orders_financial_adjust",
+          "perucommerce_orders_fulfill"
+        ],
+        "x-actor": "ADMIN_ONLY_PROPOSED",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2305Request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/orders/{id}/tracking-links/reissue": {
+      "post": {
+        "operationId": "C23-06",
+        "summary": "Verificar identidad, revocar enlace anterior y emitir nuevo enlace una sola vez",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2306Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-06",
+        "x-ratified": false,
+        "x-per": "PER-11",
+        "x-capabilities-all": [
+          "perucommerce_privacy_manage",
+          "perucommerce_orders_read"
+        ],
+        "x-actor": "ADMIN_ONLY_PROPOSED",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2306Request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/digital-rights/{id}/links/reissue": {
+      "post": {
+        "operationId": "C23-07",
+        "summary": "Reemitir token 24h, sin modificar derecho/compra",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2307Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-07",
+        "x-ratified": false,
+        "x-per": "PER-41",
+        "x-capabilities-all": [
+          "perucommerce_digital_files_manage"
+        ],
+        "x-actor": "ADMIN_ONLY_PROPOSED",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2307Request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/digital-rights/{id}/revoke": {
+      "post": {
+        "operationId": "C23-08",
+        "summary": "Revocar derecho por causa legítima y decisión previa, nunca refund",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2308Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-08",
+        "x-ratified": false,
+        "x-per": "PER-41",
+        "x-capabilities-all": [
+          "perucommerce_digital_files_manage"
+        ],
+        "x-actor": "ADMIN_ONLY_PROPOSED",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2308Request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/digital-cases/{id}/decide": {
+      "post": {
+        "operationId": "C23-09",
+        "summary": "Decidir expediente sin revocar ni devolver dinero automáticamente",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2309Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-09",
+        "x-ratified": false,
+        "x-per": "PER-31",
+        "x-capabilities-all": [
+          "perucommerce_digital_files_manage"
+        ],
+        "x-actor": "ADMIN_ONLY_PROPOSED",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2309Request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/digital-files/{id}/download": {
+      "get": {
+        "operationId": "C23-10",
+        "summary": "Descarga protegida administrativa, sin exponer URL webroot",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          },
+          {
+            "name": "purpose",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            },
+            "description": "Finalidad administrativa auditada"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo privado sin caché",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-10",
+        "x-ratified": false,
+        "x-per": "PER-23",
+        "x-capabilities-all": [
+          "perucommerce_digital_files_manage"
+        ],
+        "x-actor": "ADMIN_ONLY_PROPOSED",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store"
+      }
+    },
+    "/admin/digital-files/{id}/replacements": {
+      "post": {
+        "operationId": "C23-11",
+        "summary": "Nuevo archivo para ventas futuras; pedidos anteriores conservan original",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2311Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-11",
+        "x-ratified": false,
+        "x-per": "PER-24",
+        "x-capabilities-all": [
+          "perucommerce_digital_files_manage"
+        ],
+        "x-actor": "ADMIN_ONLY_PROPOSED",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2311Request"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/orders/{id}/external-documents": {
+      "post": {
+        "operationId": "C23-12",
+        "summary": "Guardar referencia externa de boleta/factura/RHE/nota/guía, sin emisión SUNAT",
+        "description": "PROPUESTA NO AUTORIZADA. Fuente docs/27; no ampliar roles ni asumir permiso del operador.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "description": "CSRF, no autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]*$"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado documental propuesto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedC2312Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-proposal-id": "C23-12",
+        "x-ratified": false,
+        "x-per": "D-26/J-03",
+        "x-capabilities-all": [
+          "perucommerce_settings_manage",
+          "perucommerce_orders_read"
+        ],
+        "x-actor": "ADMIN_ONLY_PROPOSED",
+        "x-no-permission-expansion": true,
+        "x-cache": "private, no-store",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposedC2312Request"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SqlId": {
+        "type": "string",
+        "pattern": "^[1-9][0-9]*$"
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "data"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^pc_[a-z_]+$"
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "status",
+              "request_id",
+              "retryable"
+            ],
+            "properties": {
+              "status": {
+                "type": "integer"
+              },
+              "request_id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ProposedC2301Request": {
+        "type": "object",
+        "properties": {
+          "resource_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "weekly_rules": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 28,
+            "items": {
+              "type": "object",
+              "required": [
+                "weekday",
+                "enabled"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "weekday": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 7
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "opens_local": {
+                  "type": "string",
+                  "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+                },
+                "closes_local": {
+                  "type": "string",
+                  "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+                }
+              }
+            },
+            "description": "Varias ventanas por día posibles para pausas; bloques no solapados; rango horario y cruces de medianoche se validan en servidor"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "resource_id",
+          "effective_from",
+          "weekly_rules",
+          "reason",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2301Response": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "resource_id",
+          "row_version",
+          "effective_from",
+          "operation_id"
+        ],
+        "properties": {
+          "resource_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "row_version": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      },
+      "ProposedC2302Request": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "REALIZADA",
+              "NO_ASISTIO"
+            ]
+          },
+          "observed_at_utc": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "outcome",
+          "observed_at_utc",
+          "evidence_ref",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2302Response": {
+        "type": "object",
+        "required": [
+          "operation_id",
+          "result"
+        ],
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "result": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "row_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      },
+      "ProposedC2303Request": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "reason",
+          "evidence_ref",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2303Response": {
+        "type": "object",
+        "required": [
+          "case_id",
+          "operation_id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "case_phase": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        }
+      },
+      "ProposedC2304Request": {
+        "type": "object",
+        "properties": {
+          "resolution_proposal": {
+            "type": "string",
+            "enum": [
+              "delivery_verified",
+              "non_delivery_verified",
+              "continue_investigation"
+            ]
+          },
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "resolution_proposal",
+          "evidence_ref",
+          "reason",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2304Response": {
+        "type": "object",
+        "required": [
+          "case_id",
+          "operation_id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "case_phase": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        }
+      },
+      "ProposedC2305Request": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "decision",
+          "evidence_ref",
+          "reason",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2305Response": {
+        "type": "object",
+        "required": [
+          "case_id",
+          "operation_id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "case_phase": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        }
+      },
+      "ProposedC2306Request": {
+        "type": "object",
+        "properties": {
+          "identity_verification_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "original_verified_channel": {
+            "type": "string",
+            "enum": [
+              "registered_phone",
+              "registered_email",
+              "verified_in_person"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "identity_verification_ref",
+          "original_verified_channel",
+          "reason",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2306Response": {
+        "type": "object",
+        "required": [
+          "operation_id",
+          "url_once",
+          "expires_at_utc"
+        ],
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "url_once": {
+            "type": "string",
+            "format": "uri",
+            "description": "Sólo una respuesta segura, nunca guardar texto en claro"
+          },
+          "expires_at_utc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProposedC2307Request": {
+        "type": "object",
+        "properties": {
+          "identity_verification_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "identity_verification_ref",
+          "reason",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2307Response": {
+        "type": "object",
+        "required": [
+          "operation_id",
+          "url_once",
+          "expires_at_utc"
+        ],
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "url_once": {
+            "type": "string",
+            "format": "uri",
+            "description": "Sólo una respuesta segura, nunca guardar texto en claro"
+          },
+          "expires_at_utc": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProposedC2308Request": {
+        "type": "object",
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "legal_reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "case_id",
+          "legal_reason",
+          "evidence_ref",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2308Response": {
+        "type": "object",
+        "required": [
+          "operation_id",
+          "result"
+        ],
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "result": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          },
+          "row_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      },
+      "ProposedC2309Request": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "decision",
+          "evidence_ref",
+          "reason",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2309Response": {
+        "type": "object",
+        "required": [
+          "case_id",
+          "operation_id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "case_phase": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        }
+      },
+      "ProposedC2310Response": {
+        "type": "object",
+        "required": [
+          "case_id",
+          "operation_id"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "case_phase": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
+        }
+      },
+      "ProposedC2311Request": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "writeOnly": true
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "file",
+          "reason",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2311Response": {
+        "type": "object",
+        "required": [
+          "operation_id",
+          "new_file_id"
+        ],
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "new_file_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "old_file_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          }
+        }
+      },
+      "ProposedC2312Request": {
+        "type": "object",
+        "properties": {
+          "document_kind": {
+            "type": "string",
+            "enum": [
+              "boleta",
+              "factura",
+              "rhe",
+              "ticket",
+              "nota_credito",
+              "guia"
+            ]
+          },
+          "issued_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "series": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "number": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "external_reference": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "source_document_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "amount_cents": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)$"
+          },
+          "evidence_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "expected_version": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "document_kind",
+          "issued_at",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "PROPUESTO sin ratificar. Validación específica J-01…J-05/E-01/E-07 pendiente."
+      },
+      "ProposedC2312Response": {
+        "type": "object",
+        "required": [
+          "operation_id",
+          "record_id"
+        ],
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "record_id": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "external_only": {
+            "type": "boolean",
+            "const": true
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "WordPressSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "wordpress_logged_in_*",
+        "description": "Cookie WP dinámica, no hardcode; requerir capability y nonce"
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "WP_Error pc_*",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-contract-status": "ARCHIVED_NOT_SOURCE_OF_TRUTH",
+  "x-source": "docs/27-COBERTURA-OPERACIONES-P0-23-PROPUESTA-V1.md",
+  "x-superseded-by": "docs/openapi/peru-commerce-v1.openapi.draft.json",
+  "x-ratification-record": "docs/01-DECISIONES-Y-ESTADO.md D-176…D-187"
+}

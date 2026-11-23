@@ -1,0 +1,84 @@
+<section class="pc-panel pc-stack" aria-labelledby="pc-notifications-heading">
+  <div class="pc-row">
+    <div>
+      <h3 id="pc-notifications-heading">Bandeja de avisos y tareas</h3>
+      <p class="pc-muted">A/O según permisos. Las filas informan intenciones mínimas, no direcciones, contenido de correo ni expedientes jurídicos completos.</p>
+    </div>
+    <button type="button" class="pc-secondary" (click)="load()" [disabled]="loading()||busy()">Consultar R8-39</button>
+  </div>
+  @if(!allowed()){
+    <p>No tienes autorización efectiva para operar la bandeja.</p>
+  }@else{
+    @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+    @if(notice()){<p role="status">{{notice()}}</p>}
+    @if(loading()){<p role="status">Consultando intenciones…</p>}
+    <label>Buscar evento o ID en la página visible
+      <input type="search" [ngModel]="search()" (ngModelChange)="search.set($event)"
+        maxlength="100" placeholder="Código o identificador">
+    </label>
+    @if(!loading()&&visible().length===0){<p>Sin resultados en esta página.</p>}
+    <ul class="pc-cards" aria-label="Intenciones administrativas autorizadas">
+      @for(item of visible();track item.id){
+        <li class="pc-card pc-stack">
+          <div class="pc-row">
+            <strong>{{item.event_code}}</strong>
+            <span>{{item.priority==='high'?'Prioridad alta':item.priority==='normal'?'Prioridad normal':'Prioridad baja'}}</span>
+          </div>
+          <p class="pc-muted">Notificación {{item.id}} · {{item.created_at}} · versión {{item.row_version}}.</p>
+          @if(item.transport_indicator){
+            <p>Transporte/intención: <strong>{{item.transport_indicator}}</strong></p>
+            @if(item.transport_indicator==='correo_omitido_por_preferencia'){
+              <p class="pc-muted">Aviso omitido por preferencia futura: no es un fallo de SMTP, no tiene EMAIL pendiente que reintentar.</p>
+            }
+          }
+          @if(item.resource_type&&item.resource_id){
+            <p class="pc-muted">Recurso autorizado: {{item.resource_type}} {{item.resource_id}}. No se genera enlace a expediente reservado.</p>
+          }
+          @if(item.can_resend){
+            <button type="button" class="pc-secondary" (click)="choose(item)"
+              [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+              Revisar reenvío EMAIL permitido
+            </button>
+          }@else{
+            <p class="pc-muted">Sin reenvío permitido. No crear nueva intención, cambiar destinatario ni reinterpretar PANEL como EMAIL.</p>
+          }
+        </li>
+      }
+    </ul>
+    <div class="pc-actions">
+      <button type="button" class="pc-secondary" (click)="movePage(-1)"
+        [disabled]="page()<=1||loading()||busy()||pending()!==null">Anterior</button>
+      <span>Página {{page()}}</span>
+      <button type="button" class="pc-secondary" (click)="movePage(1)"
+        [disabled]="!more()||loading()||busy()||pending()!==null">Siguiente</button>
+    </div>
+    @if(freshRequired()){
+      <p class="pc-alert" role="status">Se confirmó el reencolado, pero debes consultar R8-39 antes de volver a solicitar otro.</p>
+    }
+    @if(selected();as item){
+      <fieldset class="pc-fieldset pc-form"
+        [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+        <legend>Reenvío auditado de intención {{item.id}} (R8-40)</legend>
+        <p>Solo se reenvía la MISMA intención EMAIL elegible, al destinatario originalmente verificado por servidor. La pantalla no permite agregar direcciones ni crear correos que antes se omitieron.</p>
+        <label>Motivo documentado del reintento
+          <textarea [(ngModel)]="reason" maxlength="1000"></textarea>
+        </label>
+      </fieldset>
+      <button type="button" (click)="resend()"
+        [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+        Reencolar intención elegible, no confirmar entrega
+      </button>
+    }
+    @if(pending();as attempt){
+      <section class="pc-panel pc-stack">
+        <h4>Intento de reenvío con resultado incierto</h4>
+        <p>Intención {{attempt.id}}; versión {{attempt.body.expected_version}}. Se conserva exactamente la misma clave y cuerpo.</p>
+        <div class="pc-actions">
+          <button type="button" (click)="resend()" [disabled]="busy()||blocked()">Reintentar mismo envío</button>
+          <button type="button" class="pc-secondary" (click)="load()" [disabled]="busy()">Consultar bandeja</button>
+          <button type="button" class="pc-secondary" (click)="abandon()" [disabled]="busy()">Descartar tras verificar</button>
+        </div>
+      </section>
+    }
+  }
+</section>

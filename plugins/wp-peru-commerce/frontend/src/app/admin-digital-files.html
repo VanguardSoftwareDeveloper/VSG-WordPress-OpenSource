@@ -1,0 +1,100 @@
+<section class="pc-panel pc-stack" aria-labelledby="pc-digital-heading">
+  <h3 id="pc-digital-heading">Archivos digitales privados</h3>
+  <p class="pc-muted">Solo administrador. El archivo vive fuera de medios públicos. Cada slot apunta a una versión para ventas futuras; los derechos ya vendidos conservan el archivo original.</p>
+  @if(!allowed()){
+    <p>Operación no autorizada para esta sesión.</p>
+  }@else{
+    @if(variants().length===0){
+      <p>El producto aún no tiene vendibles digitales. Guarda el catálogo antes de asignar archivos.</p>
+    }@else{
+      <div class="pc-stack">
+        <h4>Asignaciones activas</h4>
+        @if(slots().length===0){<p>Todavía no hay archivos asociados a este producto.</p>}
+        <ul class="pc-cards">
+          @for(slot of slots();track slotIdentity(slot)){
+            <li class="pc-card">
+              <div class="pc-row"><strong>{{slot.slot_key}}</strong>
+                <span>Vendible {{slot.sellable_id}}</span></div>
+              <p>{{slot.filename||'Archivo privado'}}</p>
+              <p class="pc-muted">Archivo {{slot.active_file_id}} · versión de asignación {{slot.assignment_row_version}}</p>
+              <button type="button" class="pc-secondary" (click)="download(slot)"
+                [disabled]="busy()||hasPending">
+                Descargar para revisión administrativa
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <fieldset class="pc-fieldset pc-form" [disabled]="busy()||hasPending">
+        <legend>Primera asignación a un slot nuevo (R8-48)</legend>
+        <label>Variante digital
+          <select [(ngModel)]="sellableId">
+            @for(variant of variants();track variant.id){
+              <option [value]="variant.id">{{variant.label}} ({{variant.id}})</option>
+            }
+          </select>
+        </label>
+        <label>Identificador del nuevo slot
+          <input type="text" [(ngModel)]="slotKey" maxlength="100"
+            placeholder="principal, manual, anexo_1">
+        </label>
+        <label>Archivo para ventas futuras
+          <input type="file" (change)="fileSelected($event,'initial')">
+        </label>
+        @if(initialFilename){<p>Seleccionado: {{initialFilename}}</p>}
+        <label>Nombre de archivo (máximo 255 caracteres)
+          <input type="text" [(ngModel)]="filename" maxlength="255">
+        </label>
+      </fieldset>
+      <div class="pc-actions">
+        <button type="button" (click)="send('initial')"
+          [disabled]="busy()||(hasPending&&pendingMode!=='initial')">
+          {{hasPending&&pendingMode==='initial'?'Reintentar la misma carga':'Crear asignación privada'}}
+        </button>
+      </div>
+
+      @if(slots().length){
+        <fieldset class="pc-fieldset pc-form" [disabled]="busy()||hasPending">
+          <legend>Reemplazo versionado (R8-63)</legend>
+          <label>Slot cuyo archivo cambiará para ventas futuras
+            <select [(ngModel)]="selectedSlot">
+              @for(slot of slots();track slotIdentity(slot)){
+                <option [value]="slotIdentity(slot)">{{slot.slot_key}} — vendible {{slot.sellable_id}} — archivo {{slot.active_file_id}}</option>
+              }
+            </select>
+          </label>
+          @if(selectedAssignment;as active){
+            <p class="pc-muted">Archivo activo {{active.active_file_id}} · expected_version {{active.assignment_row_version}}</p>
+          }
+          <label>Nuevo archivo
+            <input type="file" (change)="fileSelected($event,'replace')">
+          </label>
+          @if(replacementFilename){<p>Seleccionado: {{replacementFilename}}</p>}
+          <label>Motivo de sustitución
+            <textarea [(ngModel)]="reason" maxlength="1000"></textarea>
+          </label>
+        </fieldset>
+        <div class="pc-actions">
+          <button type="button" (click)="send('replace')"
+            [disabled]="busy()||(hasPending&&pendingMode!=='replace')">
+            {{hasPending&&pendingMode==='replace'?'Reintentar el mismo reemplazo':'Reemplazar archivo para nuevas ventas'}}
+          </button>
+        </div>
+      }
+      @if(hasPending){
+        <div class="pc-actions">
+          <button type="button" class="pc-secondary" (click)="changed.emit()" [disabled]="busy()">
+            Consultar versiones de asignación
+          </button>
+          <button type="button" class="pc-secondary" (click)="abandon()" [disabled]="busy()">
+            Descartar intento tras verificar
+          </button>
+        </div>
+      }
+    }
+    <p class="pc-muted">Revocar un derecho vendido no es sustituir un archivo: exige un expediente autorizado (R8-60). Esta pantalla no permite revocar derechos ni concede acceso al operador.</p>
+  }
+  @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+  @if(notice()){<p role="status">{{notice()}}</p>}
+</section>

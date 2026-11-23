@@ -1,0 +1,162 @@
+<section aria-labelledby="pc-checkout-title">
+  <h1 id="pc-checkout-title">Finalizar compra</h1>
+  <p class="pc-muted">Una cita por pedido. El servidor confirma precios, stock y tarifas.</p>
+  @if(bootstrap()?.policy_notice && bootstrap()?.privacy_notice){
+    <div class="pc-panel pc-soft pc-stack" aria-label="Información previa al contacto">
+      <p>Lee las condiciones e información de privacidad antes de proporcionar tus datos.</p>
+      <details><summary>Condiciones comerciales</summary>
+        <p class="pc-legal">{{bootstrap()?.policy_notice}}</p></details>
+      <details><summary>Tratamiento de datos personales</summary>
+        <p class="pc-legal">{{bootstrap()?.privacy_notice}}</p></details>
+    </div>
+  }@else{
+    <p class="pc-alert" role="status">El comercio todavía no dispone de condiciones y privacidad verificables; la compra permanece deshabilitada.</p>
+  }
+  @if(busy()){<p role="status">Procesando…</p>}
+  @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+  @if(info()){<p class="pc-alert" role="status">{{info()}}</p>}
+  @if(finished){
+    <div class="pc-panel pc-stack">
+      @if(order()){<p>Pedido: {{order()}}</p>}
+      @if(pending()){<p>La operación está pendiente de verificación. No significa que exista pago aprobado.</p>}
+      @if(payPrepared){<button type="button" (click)="goPay()">Continuar a Mercado Pago</button>}
+      @if(canTrack){<button type="button" class="pc-secondary" (click)="goTrack()">Abrir seguimiento privado</button>}
+      @if(!canTrack){<p>Si perdiste el enlace de seguimiento, solicita recuperación verificada al comercio.</p>}
+    </div>
+  }@else {
+    @if(cart.lines().length===0){<p class="pc-alert">El carrito está vacío.</p>}
+    @if(missingKinds()){<p class="pc-alert">Revisa los productos desde el carrito antes de continuar.</p>}
+    <div class="pc-layout">
+      @if(bootstrap()?.policy_notice && bootstrap()?.privacy_notice){
+      <form class="pc-form" (submit)="$event.preventDefault(); recalculate()" aria-label="Datos de compra">
+        <fieldset class="pc-fieldset pc-form">
+          <legend>Contacto necesario</legend>
+          <label>Nombre (opcional)
+            <input type="text" [(ngModel)]="name" name="buyer-name" maxlength="160"
+              autocomplete="name" (ngModelChange)="invalidate()">
+          </label>
+          @if(needsPhone()){
+            <label>Teléfono
+              <input type="tel" [(ngModel)]="phone" name="buyer-phone" maxlength="32"
+                autocomplete="tel" required (ngModelChange)="invalidate()">
+            </label>
+          }
+          @if(needsEmail()){
+            <label>Correo electrónico
+              <input type="email" [(ngModel)]="email" name="buyer-email" maxlength="254"
+                autocomplete="email" required (ngModelChange)="invalidate()">
+            </label>
+          }
+        </fieldset>
+        @if(needsPhone()){
+          <fieldset class="pc-fieldset pc-form">
+            <legend>Entrega del pedido</legend>
+            <label>Modalidad
+              <select [(ngModel)]="deliveryMode" name="delivery-mode" (ngModelChange)="invalidate()">
+                <option value="pickup" [disabled]="!bootstrap()?.supports_pickup">Recojo</option>
+                <option value="delivery" [disabled]="!bootstrap()?.supports_delivery">Delivery</option>
+              </select>
+            </label>
+            @if(deliveryMode==='delivery'){
+              <div class="pc-stack" aria-label="Buscar distrito de entrega">
+                <label>Buscar distrito por nombre o UBIGEO
+                  <input type="search" [(ngModel)]="districtQuery" name="district-search"
+                    maxlength="120" autocomplete="off"
+                    placeholder="Ejemplo: Miraflores">
+                </label>
+                <button type="button" class="pc-secondary" (click)="searchDistricts()"
+                  [disabled]="busy()||districtBusy()">
+                  {{districtBusy()?'Consultando distritos…':'Buscar distrito'}}
+                </button>
+                @if(districtError()){
+                  <p class="pc-alert" role="status">{{districtError()}}</p>
+                }
+                @if(districtMatches().length>0){
+                  <p class="pc-muted">Elige un distrito con cobertura habilitada. El importe de entrega se comprueba al cotizar.</p>
+                  <ul class="pc-cards" aria-label="Resultados de búsqueda de distritos">
+                    @for(item of districtMatches();track item.code){
+                      <li class="pc-card">
+                        <button type="button" class="pc-secondary"
+                          (click)="chooseDistrict(item)"
+                          [disabled]="busy()||districtBusy()||!item.delivery_available">
+                          {{item.district}} — {{item.province}}, {{item.department}} ({{item.code}})
+                          {{item.delivery_available?' · Seleccionar':' · Sin cobertura'}}
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
+                @if(selectedDistrict();as chosen){
+                  <p role="status">Distrito seleccionado: {{chosen.district}}, {{chosen.province}} ({{chosen.code}}).</p>
+                }
+              </div>
+              <label>Código UBIGEO del distrito
+                <input type="text" inputmode="numeric" pattern="[0-9]{6}"
+                  maxlength="6" [(ngModel)]="ubigeo" name="district-code"
+                  required (ngModelChange)="manualDistrictChanged()">
+              </label>
+              <label>Dirección de entrega
+                <textarea [(ngModel)]="address" name="delivery-address"
+                  maxlength="500" required (ngModelChange)="invalidate()"></textarea>
+              </label>
+              <label>Referencia (opcional)
+                <input type="text" [(ngModel)]="reference" name="delivery-reference"
+                  maxlength="250" (ngModelChange)="invalidate()">
+              </label>
+            }
+          </fieldset>
+        }
+        <button type="submit" [disabled]="busy()||cart.lines().length===0||missingKinds()">
+          Verificar precio y disponibilidad
+        </button>
+      </form>
+      }
+      <aside class="pc-panel pc-soft pc-sticky" aria-label="Resumen de compra">
+        <h2>Resumen</h2>
+        <ul class="pc-cards">
+          @for(item of cart.lines(); track item.sellable_id){
+            <li>{{item.title||'Artículo'}} × {{item.quantity}}
+              @if(item.slot){<p class="pc-muted">Cita {{item.slot.starts_at_utc}}</p>}
+            </li>
+          }
+        </ul>
+        @if(quote(); as result){
+          <hr>
+          <p>Subtotal: {{money(result.subtotal_cents)}}</p>
+          <p>Entrega: {{money(result.delivery_cents)}}</p>
+          <p class="pc-total">Total: {{money(result.total_cents)}}</p>
+          @for(warning of result.warnings||[];track $index){
+            <p class="pc-alert" role="status">{{warning}}</p>
+          }
+          <details class="pc-stack">
+            <summary>Condiciones comerciales vigentes</summary>
+            <p class="pc-legal">{{result.policy_notice}}</p>
+          </details>
+          <details class="pc-stack">
+            <summary>Información de privacidad</summary>
+            <p class="pc-legal">{{result.privacy_notice}}</p>
+          </details>
+          <label><input type="checkbox" [(ngModel)]="accepted" name="accept-terms">
+            He revisado las condiciones y la información de privacidad de esta compra.
+          </label>
+          <fieldset class="pc-fieldset pc-form">
+            <legend>Medio de pago disponible</legend>
+            @for(methodItem of methods();track methodItem){
+              <label><input type="radio" name="pay-method" [value]="methodItem"
+                [checked]="method===methodItem" (change)="chooseMethod(methodItem)">
+                {{methodItem==='cash'?'Efectivo pendiente de cobro':'Mercado Pago'}}
+              </label>
+            }
+          </fieldset>
+          <button type="button" (click)="confirm()"
+            [disabled]="busy()||!accepted||methods().length===0||!bootstrap()?.policy_notice||!bootstrap()?.privacy_notice">
+            {{method==='cash'?'Confirmar pedido sin cobro acreditado':'Continuar con intento de pago'}}
+          </button>
+          <p class="pc-muted">La cotización no reserva stock ni cita. Si cambia un dato, vuelve a verificar.</p>
+        }@else{
+          <p>Completa los datos y solicita una cotización antes de elegir cómo pagar.</p>
+        }
+      </aside>
+    </div>
+  }
+</section>

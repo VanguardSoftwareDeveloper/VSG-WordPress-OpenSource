@@ -1,0 +1,386 @@
+<section class="pc-panel pc-stack" aria-labelledby="pc-cases-title">
+  <h3 id="pc-cases-title">Expedientes y revisión administrativa del pedido</h3>
+  <p class="pc-muted">Solo administrador A con permisos del tipo de caso. Un expediente abierto, una decisión y un efecto financiero son hechos distintos.</p>
+  @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+  @if(notice()){<p role="status">{{notice()}}</p>}
+  @if(!canRead()){
+    <p>No hay lectura autorizada de casos para esta sesión.</p>
+  }@else{
+    @if(pending();as attempt){
+      <section class="pc-panel pc-stack" aria-label="Intento de expediente pendiente">
+        <h4>Intento aún no aclarado</h4>
+        <p>{{attempt.context}}. Se conserva la misma clave y el contenido del primer envío.</p>
+        <div class="pc-actions">
+          <button type="button" (click)="execute(attempt.action)" [disabled]="busy()||detailBusy()">
+            Reintentar exactamente el mismo intento
+          </button>
+          @if(attempt.caseId){
+            <button type="button" class="pc-secondary"
+              (click)="loadCase(attempt.caseId)" [disabled]="busy()||detailBusy()">
+              Consultar versión actual del caso
+            </button>
+          }
+          <button type="button" class="pc-secondary" (click)="abandon()"
+            [disabled]="busy()||detailBusy()">Descartar tras verificar estado</button>
+        </div>
+      </section>
+    }
+
+    @if(needsRefresh()){
+      <p role="status" class="pc-alert">El último efecto fue confirmado, pero es necesario volver a leer el pedido y el caso. No se permite decidir sobre versiones anteriores.</p>
+    }
+
+    <section class="pc-stack" aria-labelledby="pc-cases-existing">
+      <h4 id="pc-cases-existing">Casos vinculados a este pedido</h4>
+      <p class="pc-muted">Un caso solo aparece cuando R8-21 comprobó la capacidad específica de A. El resumen no sustituye al detalle ni habilita su resolución.</p>
+      @if(!order().cases?.length){
+        <p>No hay expedientes visibles bajo las facultades actuales.</p>
+      }@else{
+        <ul class="pc-cards">
+          @for(item of order().cases??[];track item.case_id){
+            <li class="pc-card pc-stack">
+              <div class="pc-row">
+                <strong>Expediente {{item.case_id}}</strong>
+                <span>{{item.case_phase}}</span>
+              </div>
+              <p>Tipo: {{item.case_type}}.</p>
+              <p class="pc-muted">
+                Versión {{item.row_version}} · abierto {{item.opened_at}}.
+                @if(item.order_line_id){ Línea {{item.order_line_id}}. }
+              </p>
+              <button type="button" class="pc-secondary" (click)="selectCase(item)"
+                [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+                Leer solicitud original y eventos
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    @if(canFinancial()&&eligiblePhysical.length>0){
+      <fieldset class="pc-fieldset pc-form" [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+        <legend>Abrir solicitud manual de reducción física parcial (R8-69)</legend>
+        <p>Este paso <strong>solo abre el expediente</strong>. No reduce stock, cambia el contrato, devuelve dinero ni cancela la línea. Antes debe verificarse el control del teléfono originalmente registrado y un dato privado independiente.</p>
+        <label>Línea física con compromiso pendiente
+          <select [(ngModel)]="manualLineId">
+            <option value="">Elige una línea autorizada</option>
+            @for(line of eligiblePhysical;track line.line_id){
+              <option [value]="line.line_id">
+                {{line.line_id}} — {{line.title}} — pendientes de salida {{line.physical_quantities?.pending_stock_out_units}}
+              </option>
+            }
+          </select>
+        </label>
+        <label>Unidades cuya reducción parcial solicita realmente el comprador
+          <input type="text" inputmode="numeric" maxlength="6" [(ngModel)]="manualUnits"
+            placeholder="Menor que las pendientes de salida">
+        </label>
+        <label>Motivo original de la solicitud
+          <textarea [(ngModel)]="manualReason" maxlength="1000"></textarea>
+        </label>
+        <div class="pc-grid">
+          <label>Método real de control del teléfono registrado
+            <select [(ngModel)]="manualContactMethod">
+              <option value="outbound_call_to_registered_phone">Llamada saliente al número registrado</option>
+              <option value="verified_reply_from_registered_phone">Respuesta verificada desde el número registrado</option>
+            </select>
+          </label>
+          <label>Segundo dato privado contrastado
+            <select [(ngModel)]="manualFactCategory">
+              <option value="private_order_detail">Detalle privado del pedido</option>
+              <option value="private_delivery_detail">Detalle privado de entrega</option>
+            </select>
+          </label>
+        </div>
+        <label><input type="checkbox" [(ngModel)]="manualPhoneConfirmed">
+          Comprobé efectivamente el control del teléfono ORIGINAL; no confié únicamente en Caller ID.
+        </label>
+        <label><input type="checkbox" [(ngModel)]="manualFactConfirmed">
+          Contrasté un segundo dato privado del pedido por el canal autorizado.
+        </label>
+        <label>Nota de auditoría segura (sin teléfonos, DNI, números, @ ni dato privado literal)
+          <textarea [(ngModel)]="manualNote" maxlength="400"></textarea>
+        </label>
+        <button type="button" (click)="execute('manual-open')"
+          [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+          Abrir expediente para revisión, sin ejecutar ajuste
+        </button>
+      </fieldset>
+    }
+
+    @if(detailBusy()){<p role="status">Consultando expediente, solicitud original e historia…</p>}
+    @if(detail();as record){
+      <section class="pc-panel pc-stack" aria-labelledby="pc-case-detail-title">
+        <div class="pc-row">
+          <div>
+            <h4 id="pc-case-detail-title">Detalle del expediente {{record.case_id}}</h4>
+            <p class="pc-muted">Tipo {{record.case_type}} · fase {{record.case_phase}} · versión {{record.row_version}}</p>
+          </div>
+          <button type="button" class="pc-secondary" (click)="loadCase()"
+            [disabled]="busy()||detailBusy()">Releer caso actual</button>
+        </div>
+        @if(record.original_request;as original){
+          <section class="pc-panel pc-soft pc-stack" aria-label="Solicitud original protegida">
+            <h4>Origen y solicitud original</h4>
+            <p>Procedencia {{original.source_kind}} · registrada {{original.recorded_at}}.</p>
+            @if(original.purpose){<p>Finalidad: {{original.purpose}}</p>}
+            @if(original.reason){<p>Motivo original: {{original.reason}}</p>}
+            @if(original.requested_affected_units!==undefined){
+              <p>Unidades solicitadas originalmente: <strong>{{original.requested_affected_units}}</strong></p>
+            }
+            @if(original.requested_ubigeo){<p>UBIGEO original: {{original.requested_ubigeo}}</p>}
+            @if(original.requested_address){<p>Dirección solicitada: {{original.requested_address}}</p>}
+            @if(original.case_details){<p>{{original.case_details}}</p>}
+            @if(original.evidence_ref){<p>Referencia original de evidencia: {{original.evidence_ref}}</p>}
+            @if(original.manual_verification_basis){
+              <p>Base de verificación: {{original.manual_verification_basis}}</p>
+            }
+          </section>
+        }@else{
+          <p class="pc-alert">No hay solicitud original proyectada: no decidas una reducción parcial desde un motivo o evento posterior.</p>
+        }
+        <section class="pc-stack" aria-labelledby="pc-case-events-heading">
+          <h4 id="pc-case-events-heading">Eventos del expediente</h4>
+          <p class="pc-muted">Página {{casePage()}} · hasta {{record.events_per_page}} hechos históricos, en orden. Un evento no sustituye al acuerdo original.</p>
+          <ul class="pc-cards">
+            @for(e of record.events;track e.event_id){
+              <li class="pc-card">
+                <strong>{{e.event_code}}</strong> · {{e.occurred_at}}
+                <p>Actor {{e.actor_kind}}
+                  @if(e.decision_code){ · decisión {{e.decision_code}} }
+                </p>
+                @if(e.safe_summary){<p>{{e.safe_summary}}</p>}
+                @if(e.evidence_ref){<p class="pc-muted">Referencia {{e.evidence_ref}}</p>}
+              </li>
+            }
+          </ul>
+          <div class="pc-actions">
+            <button type="button" class="pc-secondary" (click)="casePageMove(-1)"
+              [disabled]="casePage()<=1||busy()||detailBusy()||pending()!==null">
+              Eventos anteriores
+            </button>
+            <button type="button" class="pc-secondary" (click)="casePageMove(1)"
+              [disabled]="!record.events_has_more||busy()||detailBusy()||pending()!==null">
+              Eventos siguientes
+            </button>
+          </div>
+        </section>
+
+        @if(record.case_type==='physical_partial_quantity_adjustment'
+          &&record.case_phase==='open_review'&&canFinancial()){
+          <section class="pc-stack" aria-labelledby="pc-partial-case-action">
+            <h4 id="pc-partial-case-action">Resolver solicitud de reducción parcial</h4>
+            <p>La aceptación es R8-26: un único COMMIT libera las unidades pendientes solicitadas y registra ajuste comercial exacto. <strong>No ejecuta un reembolso externo.</strong> Rechazar o registrar retiro verificado utiliza R8-70 sin cambiar dinero o stock.</p>
+            @if(canPartiallyAdjust()){
+              <p>Reducción solicitada: <strong>{{originalUnits()}}</strong> unidades de línea {{partialLine()?.line_id}}. Valor histórico contractual del ajuste: <strong>{{partialPreview}}</strong> (negativo).</p>
+              <fieldset class="pc-fieldset pc-form" [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+                <legend>Aceptar reducción exacta y cerrar el caso (R8-26)</legend>
+                <p class="pc-muted">Se usarán expected_version {{order().row_version}} del pedido y expected_case_version {{record.row_version}} del caso. La cantidad histórica «quantity» no se reescribe.</p>
+                <label>Motivo documentado de la decisión
+                  <textarea [(ngModel)]="adjustReason" maxlength="1000"></textarea>
+                </label>
+              </fieldset>
+              <button type="button" (click)="execute('manual-adjust')"
+                [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+                Aplicar ajuste parcial atómico conforme solicitud original
+              </button>
+            }@else{
+              <p class="pc-alert">La petición original o los contadores actuales no permiten un ajuste parcial automático. Revisa el expediente; no alteres cantidad ni importe para conseguir que pase.</p>
+            }
+            <fieldset class="pc-fieldset pc-form" [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+              <legend>Rechazar o registrar retiro verificado (R8-70)</legend>
+              <label>Motivo de cierre
+                <textarea [(ngModel)]="closeReason" maxlength="1000"></textarea>
+              </label>
+              <p>Rechazar cierra la solicitud sin ajuste. Retiro por comprador exige nueva verificación de identidad, distinta de la apertura.</p>
+              <button type="button" class="pc-secondary" (click)="execute('manual-reject')"
+                [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+                Rechazar solicitud y conservar historial
+              </button>
+              <div class="pc-grid">
+                <label>Verificación renovada del teléfono registrado
+                  <select [(ngModel)]="withdrawalMethod">
+                    <option value="outbound_call_to_registered_phone">Llamada saliente al número registrado</option>
+                    <option value="verified_reply_from_registered_phone">Respuesta verificada del número registrado</option>
+                  </select>
+                </label>
+                <label>Segundo dato privado verificado de nuevo
+                  <select [(ngModel)]="withdrawalCategory">
+                    <option value="private_order_detail">Detalle privado del pedido</option>
+                    <option value="private_delivery_detail">Detalle privado de entrega</option>
+                  </select>
+                </label>
+              </div>
+              <label><input type="checkbox" [(ngModel)]="withdrawalPhoneConfirmed">
+                Verifiqué nuevamente el control del teléfono original.
+              </label>
+              <label><input type="checkbox" [(ngModel)]="withdrawalFactConfirmed">
+                Verifiqué nuevamente un segundo dato no público.
+              </label>
+              <label>Nueva nota segura (distinta de la nota de apertura; no incluir números ni dato privado literal)
+                <textarea [(ngModel)]="withdrawalNote" maxlength="400"></textarea>
+              </label>
+            </fieldset>
+            <button type="button" class="pc-secondary" (click)="execute('manual-withdrawn')"
+              [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+              Registrar retiro verificado del comprador
+            </button>
+          </section>
+        }
+        @if(canOpenTypedDigitalCase()){
+          <section class="pc-stack" aria-labelledby="pc-digital-open-title">
+            <h4 id="pc-digital-open-title">Individualizar un caso digital de solicitud invitada</h4>
+            <p>La solicitud original R8-12 no identifica por sí sola uno de varios archivos vendidos. Este paso administrativo únicamente crea un expediente tipado para un derecho específico, preservando la solicitud original. No concede una decisión, revocación, devolución ni enlace.</p>
+            <form ngNoForm method="post" class="pc-fieldset pc-form"
+              [attr.action]="nativeDigitalOpen.digitalOpenUrl"
+              (submit)="beginTypedDigitalOpen($event)">
+              <input type="hidden" name="action" value="perucommerce_digital_case_open">
+              <input type="hidden" name="_pc_digital_nonce" [value]="nativeDigitalOpen.digitalOpenNonce">
+              <input type="hidden" name="guest_case_id" [value]="record.case_id">
+              <input type="hidden" name="idempotency_key" [value]="typedCaseKey">
+              <label>Derecho digital original para investigar
+                <select [(ngModel)]="typedCaseRightId" name="right_id" required>
+                  <option value="">Selecciona un derecho vigente y su archivo histórico</option>
+                  @for(right of eligibleTypedRights;track right.right_id){
+                    <option [value]="right.right_id">
+                      Derecho {{right.right_id}} · línea {{right.order_line_id}} · archivo {{right.file_id}}
+                    </option>
+                  }
+                </select>
+              </label>
+              <label>Motivo verificable de la apertura de investigación (sin datos sensibles literales)
+                <textarea [(ngModel)]="typedCaseReason" name="review_reason"
+                  maxlength="1000" required></textarea>
+              </label>
+              <p class="pc-muted">La acción usa POST de WordPress con sesión y nonce específicos de A. Al volver al panel, recarga el pedido para conocer el nuevo caso; no repitas con una clave distinta si el resultado quedó incierto.</p>
+              <button type="submit" class="pc-secondary"
+                [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()
+                  ||!typedCaseRightId||!typedCaseReason.trim()">
+                Abrir expediente digital tipado sin decidir ni revocar
+              </button>
+            </form>
+          </section>
+        }
+        @if(canDigital()
+          &&['digital_access_dispute','guest_request_refund'].includes(record.case_type)
+          &&record.case_phase==='open_review'){
+          <section class="pc-stack" aria-labelledby="pc-digital-decision-title">
+            <h4 id="pc-digital-decision-title">Revisión de acceso digital (R8-61)</h4>
+            <p>Solo administrador con permiso de archivos digitales. La decisión conserva el expediente y su evidencia; NO revoca por sí misma un archivo vendido ni registra dinero. Un caso invitado solo será elegible cuando el servidor confirme exactamente un derecho digital propio.</p>
+            <fieldset class="pc-fieldset pc-form"
+              [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+              <legend>Decisión documental sobre el caso</legend>
+              <label>Decisión autorizada
+                <select [(ngModel)]="digitalDecision">
+                  <option value="maintain_access">Mantener acceso original</option>
+                  <option value="authorize_revocation">Autorizar revocación posterior por expediente</option>
+                  <option value="financial_review">Solicitar revisión financiera sin devolución automática</option>
+                </select>
+              </label>
+              <label>Referencia de evidencia protegida (sin URL ni secreto)
+                <input type="text" [(ngModel)]="digitalEvidence" maxlength="500">
+              </label>
+              <label>Motivo documentado
+                <textarea [(ngModel)]="digitalReason" maxlength="1000"></textarea>
+              </label>
+            </fieldset>
+            <button type="button" (click)="execute('digital-decide')"
+              [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+              Registrar decisión digital sin modificar derechos ni cobrar
+            </button>
+          </section>
+        }
+        @if(canDigital()&&record.case_type==='digital_access_dispute'
+          &&record.case_phase==='closed_revocation_authorized'){
+          <section class="pc-stack" aria-labelledby="pc-digital-revoke-title">
+            <h4 id="pc-digital-revoke-title">Aplicar revocación autorizada de derecho (R8-60)</h4>
+            <p>El servidor comprobará que el caso original, la decisión y su evidencia corresponden al derecho histórico exacto. Una revocación de un archivo no sustituye otros archivos vendidos ni devuelve dinero.</p>
+            @if(digitalApprovedRef();as evidence){
+              <p>Referencia de decisión aprobada: <strong>{{evidence}}</strong>.</p>
+              <fieldset class="pc-fieldset pc-form"
+                [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+                <legend>Derecho individual y motivo jurídico verificado</legend>
+                <label>Derecho original de esta línea (R8-21)
+                  <select [(ngModel)]="selectedRightId">
+                    <option value="">Selecciona un derecho vigente</option>
+                    @for(right of eligibleDigitalRights;track right.right_id){
+                      <option [value]="right.right_id">
+                        Derecho {{right.right_id}} · archivo {{right.file_id}} · versión {{right.row_version}}
+                      </option>
+                    }
+                  </select>
+                </label>
+                <label>Motivo legal de revocación
+                  <textarea [(ngModel)]="digitalRevokeReason" maxlength="1000"></textarea>
+                </label>
+              </fieldset>
+              <button type="button" class="pc-secondary" (click)="execute('digital-revoke')"
+                [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()
+                  ||!selectedDigitalRight">
+                Revocar únicamente el derecho verificado y sus tokens
+              </button>
+            }@else{
+              <p class="pc-alert" role="status">Lee la página que contiene el evento de autorización de revocación y su referencia de evidencia. Sin ese evento visible no se ofrece revocar.</p>
+            }
+          </section>
+        }
+        @if(record.case_type==='logistics_non_delivery'
+          &&['open_review','in_review'].includes(record.case_phase)&&canLogistics()){
+          <section class="pc-stack" aria-labelledby="pc-logistics-actions">
+            <h4 id="pc-logistics-actions">Investigación de no entrega</h4>
+            <p>La propuesta R8-56 documenta evidencia, no cambia dinero ni estado de la línea. La resolución R8-57 exige un administrador con permisos financieros y una propuesta terminal vigente. Ni la propuesta ni su resolución ejecutan automáticamente devolución o cambio de fulfillment.</p>
+            <fieldset class="pc-fieldset pc-form" [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+              <legend>Proponer resultado documental (R8-56)</legend>
+              <label>Conclusión propuesta
+                <select [(ngModel)]="logisticsProposal">
+                  <option value="continue_investigation">Continuar investigación</option>
+                  <option value="delivery_verified">Entrega verificada</option>
+                  <option value="non_delivery_verified">No entrega verificada</option>
+                </select>
+              </label>
+              <label>Evidencia opaca
+                <input type="text" [(ngModel)]="logisticsEvidence" maxlength="500">
+              </label>
+              <label>Motivo
+                <textarea [(ngModel)]="logisticsReason" maxlength="1000"></textarea>
+              </label>
+            </fieldset>
+            <button type="button" class="pc-secondary" (click)="execute('logistics-propose')"
+              [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+              Registrar propuesta sin efectos comerciales
+            </button>
+            @if(record.case_phase==='in_review'&&canResolveLogistics()){
+              <fieldset class="pc-fieldset pc-form" [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()||blocked()">
+                <legend>Resolver con base en la última propuesta (R8-57)</legend>
+                @if(latestProposal();as latest){
+                  <p>Última propuesta visible: <strong>{{latest.decision_code||'sin conclusión'}}</strong> · {{latest.occurred_at}}.</p>
+                }@else{
+                  <p>Lee la última página de eventos antes de resolver.</p>
+                }
+                @if(record.events_has_more){
+                  <p class="pc-alert">Hay eventos más recientes en páginas siguientes. No se ofrece resolver hasta leer el final.</p>
+                }
+                <label>Nueva referencia de evidencia administrativa
+                  <input type="text" [(ngModel)]="logisticsResolveEvidence" maxlength="500">
+                </label>
+                <label>Motivo final
+                  <textarea [(ngModel)]="logisticsResolveReason" maxlength="1000"></textarea>
+                </label>
+              </fieldset>
+              <button type="button" class="pc-secondary" (click)="execute('logistics-resolve')"
+                [disabled]="busy()||detailBusy()||pending()!==null||needsRefresh()
+                  ||record.events_has_more||!latestProposal()
+                  ||!['delivery_verified','non_delivery_verified'].includes(latestProposal()?.decision_code??'')">
+                Registrar decisión documental final
+              </button>
+            }
+          </section>
+        }
+        @if(!['open_review','in_review'].includes(record.case_phase)){
+          <p class="pc-muted">Este expediente está en fase terminal. Se conserva su historia, sin botón para reabrir ni generar nuevos efectos.</p>
+        }
+      </section>
+    }
+  }
+</section>

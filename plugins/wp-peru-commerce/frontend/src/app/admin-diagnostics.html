@@ -1,0 +1,28 @@
+<section class="pc-panel pc-stack" aria-labelledby="pc-diagnostics-title">
+  <div class="pc-row">
+    <div>
+      <h3 id="pc-diagnostics-title">Diagnóstico seguro de la instalación</h3>
+      <p class="pc-muted">Solo lectura A con R8-49. Sin tokens, rutas privadas, logs brutos, SQL ni pruebas de proveedor ejecutadas.</p>
+    </div>
+    <button type="button" class="pc-secondary" (click)="load()" [disabled]="loading()">Consultar señales</button>
+  </div>
+  @if(!allowed()){
+    <p>No hay autorización para consultar diagnósticos del comercio.</p>
+  }@else{
+    @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+    @if(notice()){<p role="status">{{notice()}}</p>}
+    @if(loading()){<p role="status">Leyendo señales disponibles…</p>}
+    @if(data();as d){
+      <dl class="pc-config-diagnostics">
+        <dt>HTTPS detectado</dt><dd>{{d.https_available?'Sí':'No'}}</dd>
+        <dt>Motor declarado por inspección</dt><dd>{{d.db_engine}}</dd>
+        <dt>Señal de transacciones/locks</dt>
+        <dd>{{d.db_transactions_supported?'Condición lógica informada':'No acreditada'}}</dd>
+        <dt>Almacenamiento privado</dt><dd>{{d.private_storage_status}}</dd>
+        <dt>Transporte de correo</dt><dd>{{d.email_transport_status||'No informado'}}</dd>
+        <dt>Trabajos pendientes aproximados</dt><dd>{{d.pending_jobs??'No informado'}}</dd>
+      </dl>
+      <p class="pc-muted">Estos indicadores no ejecutan pruebas P-C/P-D de InnoDB, callbacks de almacenamiento, cron, SMTP, Mercado Pago, bloqueos concurrentes, correo recibido ni funcionamiento de producción. Un estado «verified» del almacenamiento solo describe la señal del gate.</p>
+    }
+  }
+</section>

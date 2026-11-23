@@ -1,0 +1,43 @@
+<section class="pc-panel pc-stack" aria-labelledby="pc-stock-heading">
+  <h3 id="pc-stock-heading">Inventario físico</h3>
+  <p class="pc-muted">Los valores mostrados son unidades existentes, no disponibilidad prometida. Las reservas y compromisos se validan exclusivamente en el servidor.</p>
+  @if(options().length===0){
+    <p>Este producto no tiene variantes físicas con control de stock habilitado.</p>
+  }@else{
+    <label>Variante con seguimiento
+      <select [value]="selectedId" (change)="selectedId=$any($event.target).value"
+        [disabled]="busy()||hasPending">
+        @for(v of options();track v.id){
+          <option [value]="v.id">{{v.label}} · Vendible {{v.id}}</option>
+        }
+      </select>
+    </label>
+    @if(selected; as variant){
+      <p>Existencia registrada: <strong>{{variant.stock_on_hand}}</strong> unidades.</p>
+      <p class="pc-muted">Versión del vendible: {{variant.row_version}}.</p>
+    }
+    <label>Ajuste de unidades (ejemplo: +5 o -2)
+      <input type="text" inputmode="numeric" [(ngModel)]="changeText"
+        maxlength="12" [disabled]="busy()||hasPending">
+    </label>
+    <label>Motivo documentado del ajuste
+      <textarea [(ngModel)]="reason" maxlength="1000"
+        [disabled]="busy()||hasPending"></textarea>
+    </label>
+    <div class="pc-actions">
+      <button type="button" (click)="adjust()" [disabled]="busy()||!selected">
+        {{hasPending?'Reintentar el mismo ajuste':'Registrar ajuste'}}
+      </button>
+      @if(hasPending){
+        <button type="button" class="pc-secondary" (click)="changed.emit()" [disabled]="busy()">
+          Consultar saldo actual
+        </button>
+        <button type="button" class="pc-secondary" (click)="abandon()" [disabled]="busy()">
+          Descartar intento tras verificar
+        </button>
+      }
+    </div>
+  }
+  @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+  @if(notice()){<p role="status">{{notice()}}</p>}
+</section>

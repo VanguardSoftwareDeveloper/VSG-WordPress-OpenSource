@@ -1,0 +1,180 @@
+.pc-app-root {
+  --pc-ink:#152b24;
+  --pc-subtle:#465b53;
+  --pc-accent:#14613f;
+  --pc-accent-text:#fff;
+  --pc-soft:#f3f7f5;
+  --pc-border:#b8cec5;
+  display:block;
+  color:var(--pc-ink);
+  font:inherit;
+  line-height:1.5;
+}
+.pc-app-root *,
+.pc-app-root *::before,
+.pc-app-root *::after {box-sizing:border-box}
+.pc-app-root .pc-shell{max-width:1100px;margin:0 auto;padding:clamp(12px,3vw,32px)}
+.pc-app-root .pc-header{display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--pc-border);padding-bottom:14px;margin-bottom:22px}
+.pc-app-root .pc-subtitle,.pc-app-root .pc-muted{color:var(--pc-subtle)}
+.pc-app-root h1,.pc-app-root h2,.pc-app-root h3{line-height:1.25;margin:0 0 12px}
+.pc-app-root h1{font-size:clamp(1.55rem,3vw,2.1rem)}
+.pc-app-root h2{font-size:1.25rem}
+.pc-app-root p{margin:8px 0}
+.pc-app-root a{color:var(--pc-accent);text-underline-offset:3px}
+.pc-app-root button,.pc-app-root input,.pc-app-root select,.pc-app-root textarea{font:inherit}
+.pc-app-root button,.pc-app-root .pc-action{
+  display:inline-flex;justify-content:center;align-items:center;
+  min-width:44px;min-height:44px;padding:8px 16px;
+  border:1px solid var(--pc-accent);border-radius:8px;
+  background:var(--pc-accent);color:var(--pc-accent-text);
+  text-decoration:none;cursor:pointer;font-weight:600
+}
+.pc-app-root button.pc-secondary,.pc-app-root .pc-action.pc-secondary{background:white;color:var(--pc-accent)}
+.pc-app-root button:disabled,.pc-app-root .pc-action[aria-disabled="true"]{opacity:.6;cursor:not-allowed}
+.pc-app-root :is(a,button,input,select,textarea,summary):focus-visible{outline:3px solid #0c7eaa;outline-offset:3px}
+.pc-app-root :is(input,select,textarea){max-width:100%;min-height:44px;border:1px solid #647b71;border-radius:7px;padding:8px;background:#fff;color:var(--pc-ink)}
+.pc-app-root textarea{min-height:86px}
+.pc-app-root label{display:grid;gap:4px;font-weight:600}
+.pc-app-root label:has(input[type="checkbox"]),.pc-app-root label:has(input[type="radio"]){display:flex;align-items:center;gap:10px}
+.pc-app-root input[type="checkbox"],.pc-app-root input[type="radio"]{width:22px;min-height:22px;height:22px;accent-color:var(--pc-accent)}
+.pc-app-root .pc-fieldset{border:1px solid var(--pc-border);border-radius:10px;padding:16px;margin:18px 0}
+.pc-app-root fieldset legend{font-weight:700;padding:0 6px}
+.pc-app-root .pc-form{display:grid;gap:16px}
+.pc-app-root .pc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:16px}
+.pc-app-root .pc-layout{display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
+.pc-app-root .pc-panel{padding:18px;border:1px solid var(--pc-border);border-radius:10px;background:#fff;min-width:0}
+.pc-app-root .pc-panel.pc-soft{background:var(--pc-soft)}
+.pc-app-root .pc-stack{display:grid;gap:12px}
+.pc-app-root .pc-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
+.pc-app-root .pc-cards{list-style:none;padding:0;margin:0;display:grid;gap:14px}
+.pc-app-root .pc-card{padding:16px;border:1px solid var(--pc-border);border-radius:10px}
+.pc-app-root .pc-row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.pc-app-root .pc-alert{padding:12px 14px;border:1px solid #a66d36;border-radius:8px;background:#fff7ed}
+.pc-app-root .pc-alert[role="alert"]{border-color:#b94d44;background:#fff4f3}
+.pc-app-root .pc-total{font-size:1.45rem;font-weight:750}
+.pc-app-root .pc-legal{max-height:16rem;overflow:auto;white-space:pre-wrap;border:1px solid var(--pc-border);padding:12px;background:var(--pc-soft)}
+.pc-app-root .pc-sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (min-width:850px) {
+  .pc-app-root .pc-layout{grid-template-columns:minmax(0,1.65fr) minmax(270px,1fr)}
+  .pc-app-root .pc-sticky{position:sticky;top:24px;align-self:start}
+}
+@media (max-width:480px) {
+  .pc-app-root .pc-actions>button,.pc-app-root .pc-actions>.pc-action{flex:1 1 auto}
+  .pc-app-root .pc-panel{padding:14px}
+}
+@media (prefers-reduced-motion:reduce) {
+  .pc-app-root *, .pc-app-root *::before, .pc-app-root *::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
+}
+
+/* IMP-61: administración responsive, sin estilos aplicados al tema WP. */
+.pc-app-root .pc-management-summary{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.pc-app-root .pc-panel section{min-width:0}
+.pc-app-root .pc-panel textarea{width:100%;resize:vertical}
+.pc-app-root .pc-panel label{min-width:0}
+.pc-app-root .pc-panel :is(select,input[type="search"],input[type="text"],input[type="number"]){width:100%}
+.pc-app-root .pc-panel fieldset[disabled]{opacity:.7}
+.pc-app-root .pc-panel .pc-card{overflow-wrap:anywhere}
+.pc-app-root .pc-panel .pc-card p{margin:6px 0}
+.pc-app-root .pc-panel .pc-row strong{overflow-wrap:anywhere}
+.pc-app-root .pc-panel .pc-actions{align-items:center}
+.pc-app-root input[type="file"]{max-width:100%;padding:10px}
+.pc-app-root [role="alert"],.pc-app-root [role="status"]{overflow-wrap:anywhere}
+@media(max-width:700px){
+  .pc-app-root .pc-panel .pc-actions>button{flex:1 1 44%}
+  .pc-app-root .pc-grid{grid-template-columns:minmax(0,1fr)}
+}
+
+/* IMP-62: formularios y citas versionadas, confinados al root del plugin. */
+.pc-app-root pc-admin-agenda{display:block;margin-top:28px}
+.pc-app-root pc-admin-agenda .pc-card p{overflow-wrap:anywhere}
+.pc-app-root pc-admin-agenda fieldset{min-width:0}
+.pc-app-root pc-admin-agenda input[type="date"],
+.pc-app-root pc-admin-agenda input[type="datetime-local"],
+.pc-app-root pc-admin-agenda input[type="time"]{width:100%;max-width:100%}
+.pc-app-root pc-admin-agenda .pc-actions button{min-height:44px}
+.pc-app-root pc-admin-agenda .pc-stack>button{justify-self:start}
+@media(max-width:700px){
+  .pc-app-root pc-admin-agenda .pc-stack>button{justify-self:stretch}
+}
+
+/* IMP-63: operación de pedidos confinada al panel del plugin. */
+.pc-app-root pc-admin-orders{display:block;margin-top:28px}
+.pc-app-root pc-admin-orders .pc-card{overflow-wrap:anywhere}
+.pc-app-root pc-admin-orders :is(fieldset,details){min-width:0}
+.pc-app-root pc-admin-orders textarea{width:100%;resize:vertical}
+.pc-app-root pc-admin-orders input[type="search"],
+.pc-app-root pc-admin-orders input[inputmode="decimal"],
+.pc-app-root pc-admin-orders input[inputmode="numeric"],
+.pc-app-root pc-admin-orders select{width:100%;max-width:100%}
+.pc-app-root pc-admin-orders .pc-legal{overflow-wrap:anywhere}
+.pc-app-root pc-admin-orders .pc-stack>button{justify-self:start}
+.pc-app-root pc-admin-orders .pc-row{align-items:flex-start}
+.pc-app-root pc-admin-orders .pc-actions>button{min-height:44px}
+@media(max-width:700px){
+ .pc-app-root pc-admin-orders .pc-stack>button{justify-self:stretch}
+ .pc-app-root pc-admin-orders .pc-actions>button{flex:1 1 44%}
+}
+
+/* IMP-64: formularios sensibles aislados del tema y sin datos en selectores globales. */
+.pc-app-root pc-admin-finance{display:block;margin-top:28px}
+.pc-app-root pc-admin-finance .pc-card{overflow-wrap:anywhere}
+.pc-app-root pc-admin-finance :is(fieldset,details){min-width:0}
+.pc-app-root pc-admin-finance textarea{width:100%;resize:vertical}
+.pc-app-root pc-admin-finance :is(input[type="text"],input[type="datetime-local"],
+input[inputmode="decimal"],input[inputmode="numeric"],select){width:100%;max-width:100%}
+.pc-app-root pc-admin-finance .pc-actions button{min-height:44px}
+.pc-app-root pc-admin-finance .pc-stack>button{justify-self:start}
+.pc-app-root pc-admin-finance .pc-legal{overflow-wrap:anywhere}
+.pc-app-root pc-admin-finance .pc-row{align-items:flex-start}
+@media(max-width:700px){
+  .pc-app-root pc-admin-finance .pc-stack>button{justify-self:stretch}
+  .pc-app-root pc-admin-finance .pc-actions>button{flex:1 1 44%}
+}
+
+
+/* IMP-65: expedientes legales solo dentro del root administrativo. */
+.pc-app-root pc-admin-legal{display:block;margin-top:28px}
+.pc-app-root pc-admin-legal pc-admin-complaints,
+.pc-app-root pc-admin-legal pc-admin-privacy{display:block}
+.pc-app-root pc-admin-legal .pc-card{overflow-wrap:anywhere}
+.pc-app-root pc-admin-legal :is(fieldset,details){min-width:0}
+.pc-app-root pc-admin-legal textarea{width:100%;resize:vertical}
+.pc-app-root pc-admin-legal :is(input[type="text"],select){width:100%;max-width:100%}
+.pc-app-root pc-admin-legal .pc-preserve{white-space:pre-wrap;overflow-wrap:anywhere}
+.pc-app-root pc-admin-legal .pc-actions button{min-height:44px}
+.pc-app-root pc-admin-legal .pc-stack>button{justify-self:start}
+@media(max-width:700px){
+  .pc-app-root pc-admin-legal .pc-stack>button{justify-self:stretch}
+  .pc-app-root pc-admin-legal .pc-actions>button{flex:1 1 44%}
+}
+
+
+/* IMP-66: configuración y bandeja en el root administrativo, nunca CSS global. */
+.pc-app-root pc-admin-operations{display:block;margin-top:28px}
+.pc-app-root pc-admin-operations pc-admin-settings,
+.pc-app-root pc-admin-operations pc-admin-coverage,
+.pc-app-root pc-admin-operations pc-admin-notifications,
+.pc-app-root pc-admin-operations pc-admin-diagnostics{display:block}
+.pc-app-root pc-admin-operations details{min-width:0;overflow-wrap:anywhere}
+.pc-app-root pc-admin-operations details>summary{cursor:pointer;font-weight:650;min-height:44px}
+.pc-app-root pc-admin-operations fieldset{min-width:0}
+.pc-app-root pc-admin-operations textarea{width:100%;resize:vertical}
+.pc-app-root pc-admin-operations :is(input[type="text"],input[type="email"],
+input[type="password"],input[type="search"],input[type="url"],select){
+ width:100%;max-width:100%}
+.pc-app-root pc-admin-operations .pc-inline-check{
+ display:flex;gap:10px;align-items:flex-start}
+.pc-app-root pc-admin-operations .pc-inline-check input{width:auto;min-width:20px;min-height:20px;margin-top:3px}
+.pc-app-root pc-admin-operations .pc-config-diagnostics{
+ display:grid;grid-template-columns:minmax(120px,1fr) minmax(0,1fr);
+ gap:8px 12px;margin:0}
+.pc-app-root pc-admin-operations .pc-config-diagnostics dt{font-weight:650}
+.pc-app-root pc-admin-operations .pc-config-diagnostics dd{margin:0;overflow-wrap:anywhere}
+.pc-app-root pc-admin-operations .pc-card{overflow-wrap:anywhere}
+.pc-app-root pc-admin-operations .pc-actions button{min-height:44px}
+.pc-app-root pc-admin-operations .pc-stack>button{justify-self:start}
+@media(max-width:700px){
+ .pc-app-root pc-admin-operations .pc-stack>button{justify-self:stretch}
+ .pc-app-root pc-admin-operations .pc-actions>button{flex:1 1 44%}
+ .pc-app-root pc-admin-operations .pc-config-diagnostics{grid-template-columns:minmax(0,1fr)}
+}

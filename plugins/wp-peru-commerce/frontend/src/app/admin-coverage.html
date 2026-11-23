@@ -1,0 +1,79 @@
+<section class="pc-panel pc-stack" aria-labelledby="pc-coverage-heading">
+  <div class="pc-row">
+    <div>
+      <h3 id="pc-coverage-heading">Cobertura distrital y tarifas</h3>
+      <p class="pc-muted">Solo A. Fuente INEI activa y versión CAS. Las tarifas nuevas nunca reescriben pedidos ya cotizados o confirmados.</p>
+    </div>
+    <button type="button" class="pc-secondary" (click)="load()" [disabled]="loading()||busy()">Consultar R8-51</button>
+  </div>
+  @if(!allowed()){<p>La administración de cobertura no está autorizada.</p>}
+  @else{
+    @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+    @if(notice()){<p role="status">{{notice()}}</p>}
+    @if(loading()){<p role="status">Consultando dataset y distritos configurados…</p>}
+    @if(pending();as attempt){
+      <section class="pc-panel pc-stack">
+        <h4>Edición pendiente para distrito {{attempt.entries[0].ubigeo_code}}</h4>
+        <p>Se conserva el mismo expected_version e idempotency_key. Reintentar no envía una segunda tarifa diferente.</p>
+        <div class="pc-actions">
+          <button type="button" (click)="save()" [disabled]="busy()||blocked()">Reintentar igual</button>
+          <button type="button" class="pc-secondary" (click)="load()" [disabled]="busy()">Consultar cobertura vigente</button>
+          <button type="button" class="pc-secondary" (click)="abandon()" [disabled]="busy()">Descartar tras verificar</button>
+        </div>
+      </section>
+    }
+    @if(view();as current){
+      <p>Versión <strong>{{current.row_version}}</strong>.
+        Dataset {{current.dataset_version||'No informado'}}. {{current.items.length}} reglas configuradas.
+        El filtro es local, no consulta todo el catálogo de distritos INEI.
+      </p>
+      <label>Buscar UBIGEO en reglas cargadas
+        <input type="search" [ngModel]="search()" (ngModelChange)="search.set($event)"
+          inputmode="numeric" maxlength="6" placeholder="010101">
+      </label>
+      <ul class="pc-cards">
+        @for(entry of shown();track entry.ubigeo_code){
+          <li class="pc-card pc-row">
+            <div>
+              <strong>{{entry.ubigeo_code}}</strong> · {{entry.enabled?'Habilitado':'Deshabilitado'}}
+              <p>Tarifa registrada S/ {{centsToSoles(entry.fee_cents)}}</p>
+            </div>
+            <button type="button" class="pc-secondary" (click)="choose(entry)"
+              [disabled]="busy()||blocked()||pending()!==null">
+              Editar
+            </button>
+          </li>
+        }
+      </ul>
+      @if(filtered().length>30){
+        <p class="pc-muted">Mostrando 30 de {{filtered().length}} reglas. Filtra por UBIGEO para elegir otra.</p>
+      }
+      <button type="button" class="pc-secondary" (click)="newDistrict()"
+        [disabled]="busy()||blocked()||pending()!==null">Configurar otro distrito del dataset activo</button>
+      @if(freshRequired()){
+        <p class="pc-alert" role="status">El cambio fue aceptado, pero se requiere una nueva lectura R8-51 antes de editar otra regla.</p>
+      }
+      <fieldset class="pc-fieldset pc-form"
+        [disabled]="busy()||blocked()||pending()!==null||freshRequired()">
+        <legend>{{selected()?'Editar regla seleccionada':'Nueva regla de distrito'}}</legend>
+        <label>UBIGEO distrital de seis dígitos
+          <input type="text" inputmode="numeric" maxlength="6" [(ngModel)]="code"
+            [disabled]="selected()!==null">
+        </label>
+        <label>Tarifa en soles (PEN)
+          <input type="text" inputmode="decimal" [(ngModel)]="fee" maxlength="18">
+        </label>
+        <label class="pc-inline-check">
+          <input type="checkbox" [(ngModel)]="enabled">Distrito habilitado para delivery
+        </label>
+        <label class="pc-inline-check">
+          <input type="checkbox" [(ngModel)]="reviewed">
+          Comprobé que el distrito pertenece al dataset INEI activo, su cobertura real y la tarifa del negocio.
+        </label>
+        <p>R8-52 recibe solo esta entrada, conserva las demás y verifica dataset/locks. No equivale a aprobar un importador INEI ficticio ni valida mapas externos.</p>
+      </fieldset>
+      <button type="button" (click)="save()"
+        [disabled]="busy()||blocked()||pending()!==null||freshRequired()">Guardar regla con CAS R8-52</button>
+    }
+  }
+</section>

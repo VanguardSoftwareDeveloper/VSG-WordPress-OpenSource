@@ -1,0 +1,337 @@
+<section class="pc-stack" aria-labelledby="pc-orders-title">
+  <div class="pc-row">
+    <div>
+      <h2 id="pc-orders-title">Pedidos y atención diaria</h2>
+      <p class="pc-muted">Pedido, dinero y cumplimiento son estados distintos. Ninguna acción de esta pantalla sustituye una conciliación o un expediente financiero.</p>
+    </div>
+    <span class="pc-muted">Consulta administrativa por sesión y permiso</span>
+  </div>
+
+  @if(!canRead()){
+    <p class="pc-panel" role="status">La consulta de pedidos no está habilitada para esta sesión. Se requiere el permiso de lectura y un backend operativo.</p>
+  }@else{
+    @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+    @if(notice()){<p class="pc-alert" role="status">{{notice()}}</p>}
+
+    @if(pending();as attempt){
+      <section class="pc-panel pc-stack" aria-label="Intento no confirmado">
+        <h3>Intento pendiente de comprobación</h3>
+        <p>{{attempt.description}}</p>
+        <p class="pc-muted">Se conserva el mismo cuerpo y la misma clave de idempotencia. Un 409 no debe resolverse creando a ciegas otro despacho, cobro, cancelación ni caso.</p>
+        <div class="pc-actions">
+          <button type="button" (click)="submit(attempt.action)"
+            [disabled]="actionBusy()||detailBusy()||listBusy()">
+            Reintentar el mismo intento
+          </button>
+          <button type="button" class="pc-secondary" (click)="reloadDetail(attempt.orderId)"
+            [disabled]="actionBusy()||detailBusy()">Consultar pedido y versiones</button>
+          <button type="button" class="pc-secondary" (click)="abandonPending()"
+            [disabled]="actionBusy()||detailBusy()||listBusy()">
+            Descartar intento tras verificar el resultado
+          </button>
+        </div>
+      </section>
+    }
+
+    <div class="pc-layout">
+      <section class="pc-panel pc-stack" aria-labelledby="pc-order-list-heading">
+        <div class="pc-row">
+          <h3 id="pc-order-list-heading">Lista de pedidos</h3>
+          <button type="button" class="pc-secondary" (click)="loadOrders()"
+            [disabled]="listBusy()||actionBusy()">Actualizar</button>
+        </div>
+        <div class="pc-grid">
+          <label>Estado del pedido
+            <select [(ngModel)]="filter" (ngModelChange)="changeFilter()"
+              [disabled]="listBusy()||detailBusy()||actionBusy()||pending()!==null">
+              @for(option of filters;track option.value){
+                <option [value]="option.value">{{option.label}}</option>
+              }
+            </select>
+          </label>
+          <label>Buscar número o ID en esta página
+            <input type="search" [ngModel]="search()"
+              (ngModelChange)="search.set($event)" maxlength="100"
+              placeholder="N.º de pedido o ID">
+          </label>
+        </div>
+        <p class="pc-muted">El filtro de estado y la paginación consultan al servidor; la búsqueda de número funciona sobre la página visible. El listado no expone contactos masivos.</p>
+        @if(listBusy()){<p role="status">Consultando pedidos…</p>}
+        @if(!listBusy()&&visibleOrders().length===0){
+          <p>No hay pedidos en esta página que coincidan con el filtro.</p>
+        }
+        <ul class="pc-cards" aria-label="Pedidos administrativos">
+          @for(order of visibleOrders();track order.id){
+            <li class="pc-card pc-stack">
+              <div class="pc-row">
+                <strong>Pedido {{order.order_number}}</strong>
+                <span>{{order.order_state}}</span>
+              </div>
+              <p class="pc-muted">ID {{order.id}} · {{order.created_at}}</p>
+              <p>Total histórico: <strong>{{money(order.total_cents)}}</strong></p>
+              <p>Indicador de pago: <strong>{{order.payment_indicator}}</strong></p>
+              @if(order.fulfillment_summary){
+                <p>Resumen operativo: {{order.fulfillment_summary}}</p>
+              }
+              <button type="button" class="pc-secondary" (click)="openOrder(order.id)"
+                [disabled]="actionBusy()||detailBusy()||pending()!==null">
+                Ver detalle autorizado
+              </button>
+            </li>
+          }
+        </ul>
+        <div class="pc-actions">
+          <button type="button" class="pc-secondary" (click)="movePage(-1)"
+            [disabled]="page()<=1||listBusy()||detailBusy()||pending()!==null">
+            Anterior
+          </button>
+          <span aria-live="polite">Página {{page()}}</span>
+          <button type="button" class="pc-secondary" (click)="movePage(1)"
+            [disabled]="!hasMore()||listBusy()||detailBusy()||pending()!==null">
+            Siguiente
+          </button>
+        </div>
+      </section>
+
+      <aside class="pc-panel pc-soft pc-sticky pc-stack" aria-labelledby="pc-daily-tasks-heading">
+        <h3 id="pc-daily-tasks-heading">Atención operativa</h3>
+        <p>El estado <strong>CONFIRMADO</strong> puede tener cobro pendiente, líneas sin preparar o una entrega aún no acreditada.</p>
+        <p><strong>DESPACHADO</strong> significa salida física; <strong>ENTREGADO</strong> requiere una transición independiente y evidencia cuando corresponde.</p>
+        <p>El importe histórico del pedido no necesariamente es el efectivo neto cobrable si existen ajustes. Para caja, introduce el neto real y deja que el servidor contraste sus asientos.</p>
+        <p class="pc-muted">No se registran devoluciones externas, correcciones de caja ni resoluciones de casos desde esta pantalla: corresponden a controles financieros posteriores.</p>
+      </aside>
+    </div>
+
+    @if(detailBusy()){<p role="status">Leyendo detalle y versiones de pedido…</p>}
+    @if(detail();as order){
+      <section class="pc-panel pc-stack" aria-labelledby="pc-order-detail-heading">
+        <div class="pc-row">
+          <div>
+            <h3 id="pc-order-detail-heading">Pedido {{order.order_number}}</h3>
+            <p class="pc-muted">ID {{order.id}} · versión del pedido {{order.row_version}} · estado {{order.order_state}}</p>
+          </div>
+          <div class="pc-actions">
+            <button type="button" class="pc-secondary" (click)="reloadDetail()"
+              [disabled]="detailBusy()||actionBusy()">Releer detalle</button>
+            <button type="button" class="pc-secondary" (click)="closeOrder()"
+              [disabled]="actionBusy()||pending()!==null">Cerrar detalle</button>
+          </div>
+        </div>
+
+        <div class="pc-grid">
+          <section class="pc-panel pc-soft" aria-label="Estado comercial y monetario">
+            <h4>Pedido y pago</h4>
+            <p>Estado comercial: <strong>{{order.order_state}}</strong></p>
+            <p>Indicador de pago: <strong>{{order.payment_indicator}}</strong></p>
+            <p>Total pactado: <strong>{{money(order.total_cents)}}</strong></p>
+            <p class="pc-muted">Un indicador no es prueba suficiente de cobro en efectivo, devolución, liquidación ni permiso de cancelar.</p>
+          </section>
+          <section class="pc-panel pc-soft" aria-label="Entrega y contacto operativo">
+            <h4>Entrega y contacto para la tarea</h4>
+            @if(order.delivery_snapshot){<p>{{order.delivery_snapshot}}</p>}
+            @if(order.contact_for_task;as contact){
+              @if(contact.recipient){<p>Destinatario: {{contact.recipient}}</p>}
+              @if(contact.phone){<p>Teléfono autorizado: {{contact.phone}}</p>}
+              @if(contact.email){<p>Correo autorizado: {{contact.email}}</p>}
+              @if(contact.address){<p>Dirección autorizada: {{contact.address}}</p>}
+            }@else{
+              <p>No hay contacto operativo autorizado para esta consulta.</p>
+            }
+          </section>
+        </div>
+
+        <section class="pc-stack" aria-labelledby="pc-order-lines-heading">
+          <h4 id="pc-order-lines-heading">Líneas y cumplimiento</h4>
+          <p class="pc-muted">La cantidad histórica de la línea no cambia tras una reducción. La salida pendiente se calcula desde el compromiso original, las liberaciones y las unidades realmente despachadas.</p>
+          <ul class="pc-cards">
+            @for(line of order.lines;track line.line_id){
+              <li class="pc-card pc-stack">
+                <div class="pc-row">
+                  <strong>{{line.title}}</strong>
+                  <span>{{line.fulfillment_state}}</span>
+                </div>
+                <p class="pc-muted">{{line.kind==='physical'?'Físico':line.kind==='service'?'Servicio':'Digital'}}
+                  · Línea {{line.line_id}} · versión {{line.row_version}}</p>
+                <p>Cantidad histórica pactada: <strong>{{line.quantity}}</strong>.
+                  Precio unitario histórico: {{money(line.unit_price_cents)}}.</p>
+                @if(line.kind==='physical' && line.physical_quantities;as quantities){
+                  <div class="pc-grid" aria-label="Contadores físicos verificados">
+                    <p>Comprometidas originales: <strong>{{quantities.committed_units}}</strong></p>
+                    <p>Liberadas antes de salida: <strong>{{quantities.released_units}}</strong></p>
+                    <p>Salidas físicas acumuladas: <strong>{{quantities.stock_out_units}}</strong></p>
+                    <p>Pendientes de salida: <strong>{{quantities.pending_stock_out_units}}</strong></p>
+                  </div>
+                  <p class="pc-muted">Salidas físicas no equivalen a entregas confirmadas. Una reducción parcial se tramita mediante expediente específico, no reescribiendo quantity.</p>
+                }
+                <button type="button" class="pc-secondary"
+                  (click)="selectLine(line.line_id)" [disabled]="actionBusy()||pending()!==null">
+                  Seleccionar línea para tareas permitidas
+                </button>
+              </li>
+            }
+          </ul>
+        </section>
+
+        @if(selectedLine();as line){
+          <section class="pc-panel pc-stack" aria-labelledby="pc-line-task-heading">
+            <div class="pc-row">
+              <div>
+                <h4 id="pc-line-task-heading">Tareas de línea {{line.line_id}}</h4>
+                <p class="pc-muted">Estado {{line.fulfillment_state}} · versión {{line.row_version}} · pedido {{order.order_state}}</p>
+              </div>
+              <button type="button" class="pc-secondary" (click)="selectedLineId.set(null)"
+                [disabled]="actionBusy()||pending()!==null">Cerrar tareas</button>
+            </div>
+
+            @if(canFulfill() && possibleFulfillment().length>0){
+              <fieldset class="pc-fieldset pc-form" [disabled]="actionBusy()||pending()!==null">
+                <legend>Cambiar cumplimiento físico (R8-22)</legend>
+                <label>Próximo estado permitido por la secuencia básica
+                  <select [(ngModel)]="fulfillmentTarget">
+                    @for(target of possibleFulfillment();track target){
+                      <option [value]="target">
+                        {{target==='DESPACHADO'?'DESPACHADO (solo delivery)':target==='ENTREGADO'?'ENTREGADO (recojo o recepción real)':target}}
+                      </option>
+                    }
+                  </select>
+                </label>
+                <label>Referencia de evidencia de entrega/salida
+                  <input type="text" [(ngModel)]="fulfillmentEvidence"
+                    maxlength="500" autocomplete="off"
+                    placeholder="Obligatoria al despachar o entregar">
+                </label>
+                <p class="pc-muted">El servidor verifica modalidad delivery/recojo, línea, recursos y cantidad pendiente. Una línea LISTO solo se despacha para delivery o se entrega directamente en recojo. ENTREGADO después de despacho no descuenta stock dos veces.</p>
+              </fieldset>
+              <button type="button" (click)="submit('fulfillment')"
+                [disabled]="actionBusy()||detailBusy()||pending()!==null">
+                Registrar transición física
+              </button>
+            }
+
+            @if(canCancelSelected()){
+              <fieldset class="pc-fieldset pc-form" [disabled]="actionBusy()||pending()!==null">
+                <legend>Solicitar cancelación simple de línea completa (R8-23)</legend>
+                <label>Motivo
+                  <textarea [(ngModel)]="cancelReason" maxlength="1000"></textarea>
+                </label>
+                <p class="pc-muted">Solo antes de salida o prestación, y sin dinero histórico que requiera ajuste financiero. La visualización PENDIENTE_COBRO no acredita ausencia de movimientos anteriores; el servidor vuelve a comprobar toda la historia. No es reducción parcial de unidades.</p>
+              </fieldset>
+              <button type="button" class="pc-secondary" (click)="submit('cancel')"
+                [disabled]="actionBusy()||detailBusy()||pending()!==null">
+                Enviar cancelación elegible al servidor
+              </button>
+            }
+
+            @if(canOpenIncident()){
+              <fieldset class="pc-fieldset pc-form" [disabled]="actionBusy()||pending()!==null">
+                <legend>Abrir incidencia de no entrega (R8-55, solo A)</legend>
+                <p class="pc-muted">Se usa para línea física DESPACHADO cuyo recibo no está comprobado. Crear el expediente NO cancela la línea, cambia su estado, reembolsa dinero ni resuelve el caso.</p>
+                <label>Motivo de la incidencia
+                  <textarea [(ngModel)]="incidentReason" maxlength="1000"></textarea>
+                </label>
+                <label>Referencia privada de evidencia (sin URL pública)
+                  <input type="text" [(ngModel)]="incidentEvidence"
+                    maxlength="500" autocomplete="off">
+                </label>
+              </fieldset>
+              <button type="button" class="pc-secondary" (click)="submit('incident')"
+                [disabled]="actionBusy()||detailBusy()||pending()!==null">
+                Abrir expediente para revisión administrativa
+              </button>
+            }
+
+            @if(line.kind==='digital'||line.kind==='service'){
+              <p class="pc-muted">Las acciones de derechos digitales, citas y disputas tienen contratos separados. No se ejecutan desde un botón genérico de cumplimiento.</p>
+            }
+          </section>
+        }
+
+        @if(canRecordCash()){
+          <section class="pc-panel pc-stack" aria-labelledby="pc-cash-title">
+            <h4 id="pc-cash-title">Registrar efectivo realmente recibido (R8-24)</h4>
+            <p>Esta operación se aplica únicamente a pedidos contraentrega en PEN, confirmados y sin cargo inicial previo. El servidor coteja el importe neto completo, considerando ajustes; aquí no se supone que el total histórico sea el saldo efectivo.</p>
+            <fieldset class="pc-fieldset pc-form" [disabled]="actionBusy()||pending()!==null">
+              <label>Importe neto efectivamente recibido en soles
+                <input type="text" inputmode="decimal" [(ngModel)]="cashAmount"
+                  maxlength="18" placeholder="Ej. 23.90">
+              </label>
+              <label>
+                <input type="checkbox" [(ngModel)]="cashAttestation">
+                He verificado que el pedido es contraentrega, recibí físicamente ese importe y corresponde al neto íntegro sin cobro previo.
+              </label>
+              <p class="pc-muted">No se registra monto de billetes ni vuelto. No se acredita pago por marcar la casilla: R8-24 comprueba modalidad, saldo, versión e historial.</p>
+            </fieldset>
+            <button type="button" (click)="submit('cash')"
+              [disabled]="!cashAttestation||actionBusy()||detailBusy()||pending()!==null">
+              Registrar recepción de efectivo verificada
+            </button>
+          </section>
+        }
+
+        @if(employee().role_label==='A' && order.order_state==='CONFIRMADO'
+          && order.delivery_snapshot?.startsWith('delivery:')
+          && employee().ui_capabilities.includes('perucommerce_orders_financial_adjust')){
+          <p class="pc-muted" role="status">
+            Los cambios de dirección que A aprueba pueden ajustar la tarifa. Su aprobación se mantiene fuera de esta vista operativa hasta disponer de revisión financiera contextual en IMP-64.
+          </p>
+        }
+
+        @if(canChangeDelivery()){
+          <section class="pc-panel pc-stack" aria-labelledby="pc-delivery-title">
+            <h4 id="pc-delivery-title">Cambio de dirección de delivery (R8-28)</h4>
+            <p class="pc-muted">Solo el operador O propone cambios sobre delivery con artículo físico pendiente. La propuesta no altera dirección ni tarifa; la aprobación de A, que puede producir efectos económicos, se gestiona en el panel de casos y finanzas (IMP-64) con revisión adecuada.</p>
+            <fieldset class="pc-fieldset pc-form" [disabled]="actionBusy()||pending()!==null">
+              <label>Nuevo UBIGEO distrital
+                <input type="text" inputmode="numeric" pattern="[0-9]{6}"
+                  maxlength="6" [(ngModel)]="deliveryUbigeo">
+              </label>
+              <label>Nueva dirección
+                <textarea [(ngModel)]="deliveryAddress" maxlength="500"></textarea>
+              </label>
+              <label>Motivo y acuerdo verificado
+                <textarea [(ngModel)]="deliveryReason" maxlength="1000"></textarea>
+              </label>
+            </fieldset>
+            <button type="button" class="pc-secondary" (click)="submit('delivery')"
+              [disabled]="actionBusy()||detailBusy()||pending()!==null">
+              Registrar propuesta de nueva dirección
+            </button>
+          </section>
+        }
+
+        @if(employee().role_label==='A' && order.cases?.length){
+          <section class="pc-panel pc-stack" aria-labelledby="pc-related-cases-heading">
+            <h4 id="pc-related-cases-heading">Expedientes asociados (consulta administrativa)</h4>
+            <p class="pc-muted">Estos datos solo se presentan cuando R8-21 los proyecta con autorización A. Resolver una incidencia o un ajuste financiero corresponde a un flujo distinto.</p>
+            <ul class="pc-cards">
+              @for(item of order.cases;track item.case_id){
+                <li class="pc-card">
+                  <strong>Caso {{item.case_id}} · {{item.case_type}}</strong>
+                  <p>Fase {{item.case_phase}} · versión {{item.row_version}}</p>
+                  <p class="pc-muted">Motivo categórico: {{item.reason_code}}</p>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if(order.operational_events?.length){
+          <details class="pc-panel">
+            <summary>Historial de eventos operativos autorizados</summary>
+            <ul class="pc-cards">
+              @for(event of order.operational_events||[];track $index){
+                <li class="pc-card">{{event.event}} — {{event.at}}</li>
+              }
+            </ul>
+          </details>
+        }
+        <details class="pc-panel">
+          <summary>Condiciones y privacidad pactadas en el pedido</summary>
+          <p class="pc-muted">Versiones originales: condiciones {{order.agreed_notices.policy_version}}, privacidad {{order.agreed_notices.privacy_version}}. No se reescriben con los textos vigentes del negocio.</p>
+          <p class="pc-legal">{{order.agreed_notices.policy_notice}}</p>
+          <p class="pc-legal">{{order.agreed_notices.privacy_notice}}</p>
+        </details>
+      </section>
+    }
+  }
+</section>

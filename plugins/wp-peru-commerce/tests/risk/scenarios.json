@@ -1,0 +1,826 @@
+{
+  "schema": "perucommerce-imp69-scenarios-v1",
+  "source_contract": "docs/openapi/peru-commerce-v1.openapi.draft.json",
+  "status": "DESIGNED_NOT_EXECUTED",
+  "cases": [
+    {
+      "id": "R69-01",
+      "area": "money",
+      "kind": "unit",
+      "operations": [],
+      "fixtures": [
+        "cash-physical"
+      ],
+      "setup": "Precio físico 1599 céntimos, cantidad 2 y entrega 600 céntimos.",
+      "action": "Cotizar sin usar números de coma flotante.",
+      "expected": [
+        "Subtotal 3198, entrega 600 y total exacto 3798 céntimos PEN.",
+        "La versión para proveedor representa 37.98; nunca 37.979999.",
+        "Importe de carrito vacío o cantidad fuera de 1..100000 se rechaza."
+      ],
+      "observe": "Valores exactos de Money y payload final, no sólo formato visual.",
+      "criteria": [
+        "A-120",
+        "A-168"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-02",
+      "area": "money",
+      "kind": "unit",
+      "operations": [],
+      "fixtures": [],
+      "setup": "Valores -0, 01, 1e3, 12.345, NaN, 9223372036854775808 y límite de BIGINT.",
+      "action": "Parsear MoneyCents y SignedCents con cada valor.",
+      "expected": [
+        "Rechazar texto no canónico, decimales de más de dos dígitos y overflow.",
+        "No aceptar float ni redondear nunca."
+      ],
+      "observe": "Excepción de producción y ninguna operación SQL.",
+      "criteria": [
+        "A-120"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-03",
+      "area": "money",
+      "kind": "unit",
+      "operations": [],
+      "fixtures": [],
+      "setup": "Precio normal 1599 y oferta 1600, o precio final cero.",
+      "action": "Resolver precio efectivo para venta.",
+      "expected": [
+        "Oferta superior a regular o precio efectivo 0 se rechazan.",
+        "Para oferta 1200 precio efectivo 1200 céntimos."
+      ],
+      "observe": "Valor y excepción de Money::effectiveUnitPrice.",
+      "criteria": [
+        "A-120"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-04",
+      "area": "money",
+      "kind": "provider",
+      "operations": [
+        "R8-06"
+      ],
+      "fixtures": [
+        "mp-mixed-pickup"
+      ],
+      "setup": "Carrito mixto válido, cuenta Perú habilitada y MP Orders de pruebas verificable.",
+      "action": "Confirmar checkout, observar payload saliente y consultar order oficial.",
+      "expected": [
+        "Un solo pago inicial PEN de 9498 céntimos, sin float ni segundo cargo.",
+        "Un servicio como máximo y dos derechos por versiones históricas de archivos tras crédito verificado.",
+        "No crear derechos/citas confirmadas por callback visual."
+      ],
+      "observe": "Orden real verificada, ledger, commitments, cita, rights y dos archivos originales.",
+      "criteria": [
+        "A-120",
+        "A-168",
+        "A-175"
+      ],
+      "expected_status": [
+        200,
+        202
+      ]
+    },
+    {
+      "id": "R69-05",
+      "area": "payments",
+      "kind": "integration",
+      "operations": [
+        "R8-07"
+      ],
+      "fixtures": [
+        "invalid-cash-digital"
+      ],
+      "setup": "Digital comprado usando método efectivo en carrito sin físicos elegibles.",
+      "action": "Enviar confirmación de contraentrega.",
+      "expected": [
+        "Rechazo sin pedido, dinero, hold, cita ni derechos.",
+        "No confundir email del digital con permiso de pagar en efectivo."
+      ],
+      "observe": "Conteo antes/después de orders/payment_events/digital_rights.",
+      "criteria": [
+        "A-168"
+      ],
+      "expected_status": [
+        400,
+        403,
+        409,
+        422,
+        423
+      ]
+    },
+    {
+      "id": "R69-06",
+      "area": "inventory",
+      "kind": "concurrent",
+      "operations": [
+        "R8-07"
+      ],
+      "fixtures": [
+        "cash-physical"
+      ],
+      "setup": "Stock real UNA unidad en una fila variante InnoDB; dos checkout independientes simultáneos.",
+      "action": "Abrir dos sesiones y confirmar cantidad 1 al mismo tiempo.",
+      "expected": [
+        "Solo un pedido confirmado y un compromiso de 1 unidad.",
+        "La segunda operación rechaza o exige recotizar; nunca stock disponible negativo.",
+        "Ningún lock se infiere de una simulación sin SQL concurrente."
+      ],
+      "observe": "Dos conexiones SQL independientes, locks y sumas ledger/commitments.",
+      "criteria": [
+        "A-127",
+        "A-128"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-07",
+      "area": "appointments",
+      "kind": "concurrent",
+      "operations": [
+        "R8-07"
+      ],
+      "fixtures": [
+        "mp-mixed-pickup"
+      ],
+      "setup": "Un recurso, día vacío materializado, mismo intervalo 18:30-19:00 UTC y buffers 10 minutos.",
+      "action": "Dos usuarios confirman el último turno con solape efectivo.",
+      "expected": [
+        "Una sola cita asignada al recurso/día y sin buffers solapados.",
+        "Un fallo de cita revierte toda asignación de inventario del segundo pedido."
+      ],
+      "observe": "Dos conexiones SQL, filas pc_calendar_days/appointments e inventario.",
+      "criteria": [
+        "A-127"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-08",
+      "area": "idempotency",
+      "kind": "integration",
+      "operations": [
+        "R8-07"
+      ],
+      "fixtures": [
+        "cash-physical"
+      ],
+      "setup": "Cookie/origen HTTPS válidos, misma clave+scope+payload, pedido confirmado y primera respuesta perdida.",
+      "action": "Reenviar petición idéntica después del primer COMMIT.",
+      "expected": [
+        "No se crea segundo pedido, compromiso, cita ni evento financiero.",
+        "Replay seguro del mismo pedido, sin repetir tracking_url_once ni secreto."
+      ],
+      "observe": "Claves operación original, IDs persistidos y conteos antes/después.",
+      "criteria": [
+        "A-168",
+        "A-190"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-09",
+      "area": "idempotency",
+      "kind": "integration",
+      "operations": [
+        "R8-07"
+      ],
+      "fixtures": [
+        "cash-physical"
+      ],
+      "setup": "Misma cookie/scope/clave de intento previo; cuerpo alterado en cantidad/entrega.",
+      "action": "Reintentar con payload distinto.",
+      "expected": [
+        "Conflicto 409 sin crear otro pedido.",
+        "Datos de la respuesta no exponen un pedido de otro contexto."
+      ],
+      "observe": "HTTP 409, historial idempotente y cero efectos nuevos.",
+      "criteria": [
+        "A-168"
+      ],
+      "expected_status": [
+        409
+      ]
+    },
+    {
+      "id": "R69-10",
+      "area": "payments",
+      "kind": "provider",
+      "operations": [
+        "R8-06"
+      ],
+      "fixtures": [
+        "mp-mixed-pickup"
+      ],
+      "setup": "Orders POST externo pudo confirmar; conexión SQL o HTTP pierde respuesta antes de capturar ID de order.",
+      "action": "Reintentar con mismo scope y clave tras timeout/COMMIT ambiguo.",
+      "expected": [
+        "No reenviar ciegamente segundo POST al proveedor.",
+        "Responder 202 sin URL mientras el GET de conciliación sea ambiguo.",
+        "Buscar mismo external_reference/order con credencial histórica."
+      ],
+      "observe": "Conteo de POST en proxy de pruebas y raíces idempotentes, inspección GET.",
+      "criteria": [
+        "A-128",
+        "A-168"
+      ],
+      "expected_status": [
+        202
+      ]
+    },
+    {
+      "id": "R69-11",
+      "area": "payments",
+      "kind": "integration",
+      "operations": [
+        "R8-06"
+      ],
+      "fixtures": [
+        "mp-mixed-pickup"
+      ],
+      "setup": "Navegador regresa de MP con etiqueta «approved» sin evidencia GET/webhook.",
+      "action": "Procesar retorno visual.",
+      "expected": [
+        "Sin movimiento initial_charge, rights ni estado pagado.",
+        "La UI informa pendiente de verificación, nunca éxito."
+      ],
+      "observe": "Ledger local antes/después, root de confirmación y texto UI.",
+      "criteria": [
+        "A-176",
+        "A-196"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-12",
+      "area": "payments",
+      "kind": "integration",
+      "operations": [
+        "R8-17"
+      ],
+      "fixtures": [],
+      "setup": "Notificación sin HMAC, firma alterada, ts fuera de ±300 s, tipo distinto o body manipulado.",
+      "action": "Enviar cada webhook falso a la ruta firmada.",
+      "expected": [
+        "No recibe ACK de aceptación ni crea inbox/ledger.",
+        "No confiar en amount/status del body sin GET oficial."
+      ],
+      "observe": "HTTP y filas pc_webhook_inbox/pc_payment_events tras cada caso.",
+      "criteria": [
+        "A-132",
+        "A-176"
+      ],
+      "expected_status": [
+        400,
+        401,
+        403,
+        409,
+        422,
+        423,
+        503
+      ]
+    },
+    {
+      "id": "R69-13",
+      "area": "payments",
+      "kind": "provider",
+      "operations": [
+        "R8-17"
+      ],
+      "fixtures": [],
+      "setup": "Firma correcta y GET Orders pagado acreditado, con dos avisos iguales y otro desordenado.",
+      "action": "Entregar avisos paralelos y repetir tras respuesta HTTP perdida.",
+      "expected": [
+        "ACK solo después de persistencia durable.",
+        "Un crédito initial_charge y un solo efecto de recursos, sin duplicación.",
+        "Inconsistencia o hold vencido conduce a conciliación, no pago ficticio."
+      ],
+      "observe": "Inbox por event_dedup_hash, ledger, attempts, recursos y GET.",
+      "criteria": [
+        "A-132",
+        "A-176"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-14",
+      "area": "payments",
+      "kind": "provider",
+      "operations": [
+        "R8-30"
+      ],
+      "fixtures": [
+        "mp-mixed-pickup"
+      ],
+      "setup": "Pago MP real llega después de vencimiento de hold o tras pérdida de pedido local.",
+      "action": "Consultar proveedor y procesar recuperación administrativa autorizada.",
+      "expected": [
+        "Asiento financiero único si está probado; no reactivar hold viejo.",
+        "Sin nuevos recursos disponibles, caso de conciliación abierto.",
+        "No segundo cargo ni refund API automático."
+      ],
+      "observe": "Historial MP, eventos, casos y compromisos nuevos bajo locks.",
+      "criteria": [
+        "A-85",
+        "A-90",
+        "A-175"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-15",
+      "area": "payments",
+      "kind": "integration",
+      "operations": [
+        "R8-25"
+      ],
+      "fixtures": [
+        "cash-physical"
+      ],
+      "setup": "Cobro efectivo documentado 3798 céntimos, event_id original y ajuste -3799.",
+      "action": "Registrar corrección mayor que bruto.",
+      "expected": [
+        "Rechazo: saldo neto no puede ser negativo.",
+        "No alterar initial_charge ni borrar evento anterior."
+      ],
+      "observe": "ledger firmado, source_payment_event_id y deduplicación.",
+      "criteria": [
+        "A-120"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-16",
+      "area": "payments",
+      "kind": "integration",
+      "operations": [
+        "R8-27"
+      ],
+      "fixtures": [],
+      "setup": "Refund externo solo declarado en texto o documento; sin comprobación externa ni cargo original.",
+      "action": "Intentar R8-27 con referencia repetida o superior al bruto.",
+      "expected": [
+        "Rechazo de duplicado o exceso; no llamar a API refund.",
+        "Mantener registro append-only si existiera un refund realmente comprobado."
+      ],
+      "observe": "Conteo de eventos refund, cuenta/ambiente y prueba externa.",
+      "criteria": [
+        "A-120"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-17",
+      "area": "orders",
+      "kind": "integration",
+      "operations": [
+        "R8-26",
+        "R8-69",
+        "R8-70"
+      ],
+      "fixtures": [
+        "cash-physical"
+      ],
+      "setup": "Caso manual parcial open_review de una línea física no despachada, 2 unidades originales y 1 solicitada.",
+      "action": "Aplicar R8-26 con expected_case_version original, luego intentar R8-70 o replay.",
+      "expected": [
+        "Ajuste comercial y cierre closed_adjusted en el mismo COMMIT.",
+        "R8-70 no reabre el caso ni devuelve dinero o stock salido.",
+        "Una carrera de dos administradores produce un solo cierre."
+      ],
+      "observe": "case_events, adjustments, row_version y compromisos.",
+      "criteria": [
+        "A-190",
+        "A-191"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-18",
+      "area": "permissions",
+      "kind": "integration",
+      "operations": [
+        "R8-21"
+      ],
+      "fixtures": [],
+      "setup": "Actor operador O con sesión WordPress válida frente a caso de conciliación, notas refund y evidencia ARCO.",
+      "action": "Solicitar detalle y mutación reservados a A.",
+      "expected": [
+        "O no ve notas privadas, movimientos financieros restringidos ni expedientes A.",
+        "403 o proyección sin datos sensibles, sin filtrar por ocultación Angular."
+      ],
+      "observe": "Permisos WP, JSON bruto, SQL sin cambios.",
+      "criteria": [
+        "A-200"
+      ],
+      "expected_status": [
+        200,
+        403,
+        404
+      ]
+    },
+    {
+      "id": "R69-19",
+      "area": "privacy",
+      "kind": "integration",
+      "operations": [
+        "R8-09"
+      ],
+      "fixtures": [],
+      "setup": "Cookie de seguimiento del pedido 701 presentada para pedir pedido 702/ID ajeno o tras revocación.",
+      "action": "Consultar GET privado con contexto cruzado.",
+      "expected": [
+        "Rechazo sin revelar existencia ni datos de otro pedido.",
+        "No aceptar order_id de browser como autoridad."
+      ],
+      "observe": "Status/headers/cache, JSON y auditoría sin secretos.",
+      "criteria": [
+        "A-190",
+        "A-191"
+      ],
+      "expected_status": [
+        401,
+        403,
+        404,
+        410,
+        423
+      ]
+    },
+    {
+      "id": "R69-20",
+      "area": "privacy",
+      "kind": "integration",
+      "operations": [
+        "R8-11",
+        "R8-12"
+      ],
+      "fixtures": [],
+      "setup": "OTP de 8 dígitos caducado tras 10 min o ya consumido; grant de finalidad distinta o de 5 min vencido.",
+      "action": "Verificar, reutilizar o cambiar finalidad/orden.",
+      "expected": [
+        "Máximo cinco intentos; grant un solo uso para pedido/sesión/finalidad correctos.",
+        "Ningún segundo caso ni correo/OTP retornado en JSON."
+      ],
+      "observe": "pc_otp_challenges, grants/casos y sanitización respuesta.",
+      "criteria": [
+        "A-190",
+        "A-191"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-21",
+      "area": "digital",
+      "kind": "integration",
+      "operations": [
+        "R8-14"
+      ],
+      "fixtures": [
+        "mp-mixed-pickup"
+      ],
+      "setup": "Orden pagada y derecho histórico a archivos 501 y 502; variante ahora apunta a archivo 503 nuevo.",
+      "action": "Descargar por cada derecho original y después revocar enlace.",
+      "expected": [
+        "Los bytes servidos son de versiones históricas, con hash correcto.",
+        "Revocación impide nueva sesión, no borra derecho histórico ni archivo vendido.",
+        "Ninguna ruta pública contiene filesystem."
+      ],
+      "observe": "Hashes SHA-256 reales, contador y headers no-store.",
+      "criteria": [
+        "A-187"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-22",
+      "area": "digital",
+      "kind": "concurrent",
+      "operations": [
+        "R8-14"
+      ],
+      "fixtures": [
+        "mp-mixed-pickup"
+      ],
+      "setup": "Derecho válido con último uso de descarga permitido; dos peticiones paralelas con misma sesión.",
+      "action": "Abrir dos streams en conexiones independientes.",
+      "expected": [
+        "Como máximo un stream autorizado y contador incrementado una sola vez.",
+        "Prohibido enviar bytes antes de confirmar reserva de uso."
+      ],
+      "observe": "Contador antes/después, status, longitud y binarios históricos.",
+      "criteria": [
+        "A-187"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-23",
+      "area": "privacy",
+      "kind": "integration",
+      "operations": [
+        "R8-14"
+      ],
+      "fixtures": [],
+      "setup": "Parámetro right_id ajeno y clave de archivo estilo ../, symlink o root público.",
+      "action": "Intentar descarga/sesión fuera de instalación.",
+      "expected": [
+        "No hay lectura de ruta arbitraria, PII ni archivo privado.",
+        "No aumentar contador ni crear token en denegación."
+      ],
+      "observe": "Filesystem, evento de acceso, status y cabeceras.",
+      "criteria": [
+        "A-187"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-24",
+      "area": "legal",
+      "kind": "integration",
+      "operations": [
+        "R8-15"
+      ],
+      "fixtures": [],
+      "setup": "Persona sin cuenta ni compra usa formulario legal con datos exigidos por norma; origen CSRF alterado como variante.",
+      "action": "Solicitar Libro de Reclamaciones y una segunda solicitud con Origin falso.",
+      "expected": [
+        "Solicitud legítima obtiene constancia y expediente con dato protegido.",
+        "CSRF falsa no crea caso; no exige cuenta o compra.",
+        "No divulgar folio privado a terceros."
+      ],
+      "observe": "Case legal, receipt y headers/no-store, evidencia de requisito por comercio.",
+      "criteria": [
+        "A-201"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-25",
+      "area": "privacy",
+      "kind": "integration",
+      "operations": [
+        "R8-50"
+      ],
+      "fixtures": [],
+      "setup": "Solicitud ARCO con order_id/verified_identity declarados sin verificador independiente de identidad.",
+      "action": "Intentar exportación protegida.",
+      "expected": [
+        "No genera exportación accesible sin legitimación probada.",
+        "No utiliza GET genérico WordPress para servir archivos ni expone evidencia en O."
+      ],
+      "observe": "Estado del caso, storage privado y acceso HTTP A/no A.",
+      "criteria": [
+        "A-200"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-26",
+      "area": "recovery",
+      "kind": "environment",
+      "operations": [],
+      "fixtures": [],
+      "setup": "Backup de WordPress que excluye storage privado, claves externas o corte MP/caja.",
+      "action": "Invocar verificador de respaldo antes de migrar.",
+      "expected": [
+        "La evidencia verified=false; no ejecutar ALTER ni abrir comercio.",
+        "No aceptar click de admin como prueba de restaurabilidad."
+      ],
+      "observe": "Manifiesto/hashes reales por componente y marcadores de mantenimiento.",
+      "criteria": [
+        "A-128"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-27",
+      "area": "migration",
+      "kind": "environment",
+      "operations": [],
+      "fixtures": [],
+      "setup": "Instalación real schema 1.0.0/1.0.1 con evidencia de backup y crash después del primer ALTER confirmado.",
+      "action": "Reanudar instalador con misma versión y journal desde otro request.",
+      "expected": [
+        "No repetir columna ni inventar rollback SQL.",
+        "Estado complete solo después de inspección de 39 tablas, 56 FK y marcas.",
+        "Dos migradores no operan simultáneamente."
+      ],
+      "observe": "information_schema, checksum por versión, lock owner y marcador final.",
+      "criteria": [
+        "A-128"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-28",
+      "area": "recovery",
+      "kind": "environment",
+      "operations": [],
+      "fixtures": [],
+      "setup": "Restauración de una BD vieja con marcador open y un token revocado DESPUÉS del corte.",
+      "action": "Rotar recovery epoch externa antes de exponer WP restaurado.",
+      "expected": [
+        "El estado antiguo queda bloqueado y token revocado no vuelve a autorizar.",
+        "No reconstruir secreto desde HMAC ni renovar holds/OTP/tokens por restore."
+      ],
+      "observe": "Digest epoch, control de revocaciones, GET denegado y UTC efectivo.",
+      "criteria": [
+        "A-85",
+        "A-187"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-29",
+      "area": "recovery",
+      "kind": "provider",
+      "operations": [
+        "R8-29"
+      ],
+      "fixtures": [],
+      "setup": "MP acreditó una order luego del corte y el backup local no conserva pedido o attempt.",
+      "action": "Restaurar conjunto, buscar evento en proveedor y abrir conciliación.",
+      "expected": [
+        "Un solo crédito externo documentado, ninguna orden inventada.",
+        "No repetir POST de pago ni asignar stock/cita sin nueva verificación.",
+        "Mantener nuevas ventas bloqueadas si falta correlación confiable."
+      ],
+      "observe": "GET externo por referencia, ledger/caso/stock e idempotencia.",
+      "criteria": [
+        "A-90",
+        "A-175"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-30",
+      "area": "notifications",
+      "kind": "integration",
+      "operations": [
+        "R8-40"
+      ],
+      "fixtures": [],
+      "setup": "Worker SMTP devolvió timeout tras aceptar mensaje y el job quedó ambiguo.",
+      "action": "Reintento manual concurrente con cron.",
+      "expected": [
+        "No emitir dos avisos sensibles a ciegas.",
+        "Conservar idempotencia y evidencia de entrega NO probada.",
+        "No persistir ni retransmitir enlaces one-time en outbox."
+      ],
+      "observe": "Outbox/lease/attempt y captura SMTP del entorno.",
+      "criteria": [
+        "A-190"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-31",
+      "area": "ux",
+      "kind": "manual-ux",
+      "operations": [
+        "R8-05"
+      ],
+      "fixtures": [
+        "cash-physical",
+        "mp-mixed-pickup"
+      ],
+      "setup": "Móvil de 320px y escritorio de 1440px, teclado/zoom y físicos vs mixto.",
+      "action": "Recorrer cart/checkout con teclado, lector de pantalla y pantalla táctil.",
+      "expected": [
+        "Físico puro no exige email; mixto sí pide datos aplicables.",
+        "Todos los controles táctiles independientes ≥44×44 CSS px.",
+        "No hay scroll horizontal, CTA tapada ni pérdida de foco con zoom."
+      ],
+      "observe": "Mediciones de bounding rect, DOM foco y registro WCAG 2.2 AA.",
+      "criteria": [
+        "A-194",
+        "A-201"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-32",
+      "area": "ux",
+      "kind": "manual-ux",
+      "operations": [
+        "R8-06"
+      ],
+      "fixtures": [
+        "mp-mixed-pickup"
+      ],
+      "setup": "Doble click en pagar, timeout y retorno visual MP sin acreditación comprobada.",
+      "action": "Comparar UX de estados pending, 409 y éxito real.",
+      "expected": [
+        "No se muestra «Pagado» sin fuente servidor verificable.",
+        "Feedback conserva selección segura y desactiva segundo intento ambiguo.",
+        "Alternativas y errores son accesibles por teclado/lector."
+      ],
+      "observe": "Capturas de navegador autorizadas, logs del servidor y ensayo con lector.",
+      "criteria": [
+        "A-196",
+        "A-198",
+        "A-201"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-33",
+      "area": "ux",
+      "kind": "manual-ux",
+      "operations": [
+        "R8-21"
+      ],
+      "fixtures": [],
+      "setup": "Operador O y Administrador A usan panel de pedidos y expedientes.",
+      "action": "Recorrer teclado, filtros, navegación y responsive de ambos roles.",
+      "expected": [
+        "O no ve botones ni campos solo A; el backend deniega aunque se fuerce ruta.",
+        "Filtros, foco y errores disponibles sin ratón; valores monetarios coherentes."
+      ],
+      "observe": "Secuencia foco/DOM accesible y respuesta HTTP real por actor.",
+      "criteria": [
+        "A-200",
+        "A-201"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-34",
+      "area": "delivery",
+      "kind": "environment",
+      "operations": [
+        "R8-05"
+      ],
+      "fixtures": [
+        "cash-physical"
+      ],
+      "setup": "UBIGEO de prueba válido pero dataset INEI/versión de cobertura no está verificado.",
+      "action": "Cotizar delivery y cambiar coverage durante confirmación.",
+      "expected": [
+        "No se usa tarifa del navegador ni mapa como autoridad.",
+        "Si coverage/version cambia, 409/422/423 y recotización.",
+        "No emitir pedido con tarifa desactualizada."
+      ],
+      "observe": "Versión coverage, reglas de distrito y cotizaciones bajo lock.",
+      "criteria": [
+        "A-128"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-35",
+      "area": "distribution",
+      "kind": "environment",
+      "operations": [],
+      "fixtures": [],
+      "setup": "Plugin PHP activo sin assets Angular válidos, hash/manifest/lockfile obsoletos o ZIP anterior a schema instalado.",
+      "action": "Solicitar pantalla checkout y recuperación de una instalación existente.",
+      "expected": [
+        "No encolar bundle viejo ni permitir frontend incompatible.",
+        "ZIP antiguo no revierte schema/ledger; no abrir checkout hasta restablecer compatibilidad.",
+        "No publicar credenciales, backups o fuente privada innecesaria en ZIP."
+      ],
+      "observe": "pc-assets.json, hashes, script enqueue, estados schema/mantenimiento.",
+      "criteria": [
+        "A-196"
+      ],
+      "expected_status": []
+    },
+    {
+      "id": "R69-36",
+      "area": "permissions",
+      "kind": "rest-denial",
+      "operations": [
+        "R8-47"
+      ],
+      "fixtures": [],
+      "setup": "Sesión anónima, sin cookie WordPress, nonce, capacidad ni token real.",
+      "action": "Solicitar configuración de credenciales mediante JSON vacío.",
+      "expected": [
+        "No se escribe ni se obtiene credencial MP.",
+        "HTTP no exitoso y sin secretos ni rutas internas en respuesta."
+      ],
+      "observe": "Status/headers, wp_options cifrado sin cambios.",
+      "criteria": [
+        "A-200"
+      ],
+      "expected_status": [
+        400,
+        401,
+        403,
+        404,
+        422,
+        423,
+        503
+      ]
+    }
+  ]
+}

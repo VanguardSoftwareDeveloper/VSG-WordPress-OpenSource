@@ -1,0 +1,28 @@
+<main class="pc-shell" id="pc-main">
+  <header class="pc-header">
+    <strong>PeruCommerce</strong>
+    <span class="pc-subtitle">Comercio en Perú</span>
+  </header>
+  @switch (config.scene) {
+    @case ('cart') {
+      @defer (on immediate) { <pc-cart/> }
+      @loading { <p role="status">Cargando carrito…</p> }
+      @error { <p role="alert">No se pudo cargar el carrito. Recarga la página.</p> }
+    }
+    @case ('checkout') {
+      @defer (on immediate) { <pc-checkout/> }
+      @loading { <p role="status">Cargando checkout…</p> }
+      @error { <p role="alert">No se pudo cargar checkout. Revisa tu pedido antes de reintentar.</p> }
+    }
+    @case ('return') {
+      @defer (on immediate) { <pc-return/> }
+      @loading { <p role="status">Consultando retorno…</p> }
+      @error { <p role="alert">No se pudo cargar el retorno. No interpretes el regreso como pago.</p> }
+    }
+    @case ('admin') {
+      @defer (on immediate) { <pc-admin/> }
+      @loading { <p role="status">Cargando administración…</p> }
+      @error { <p role="alert">No se pudo cargar el panel. Recarga la página y verifica permisos.</p> }
+    }
+  }
+</main>

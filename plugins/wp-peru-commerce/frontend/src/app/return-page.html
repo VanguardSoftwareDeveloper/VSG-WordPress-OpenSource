@@ -1,0 +1,28 @@
+<section class="pc-stack" aria-labelledby="return-title">
+  <h1 id="return-title">Estado de tu pedido</h1>
+  <p role="status" class="pc-alert">{{status()}}</p>
+  <p class="pc-muted">Volver desde Mercado Pago no confirma fondos. La información se obtiene únicamente de WordPress mediante una sesión privada.</p>
+  @if(order();as purchase){
+    <div class="pc-panel pc-stack">
+      <h2>Pedido {{purchase.order_number}}</h2>
+      <p>Pedido: {{purchase.order_state}}</p>
+      <p>Pago: {{purchase.payment_summary.status_label}}</p>
+      @if(purchase.payment_summary.amount_paid_cents!==undefined){
+        <p>Importe registrado: {{money(purchase.payment_summary.amount_paid_cents)}}</p>
+      }
+      @if(purchase.payment_summary.amount_outstanding_cents!==undefined){
+        <p>Pendiente: {{money(purchase.payment_summary.amount_outstanding_cents)}}</p>
+      }
+      <ul class="pc-cards">
+        @for(line of purchase.lines;track line.line_id){
+          <li class="pc-card">{{line.title}} — {{line.fulfillment_state}}
+            @if(line.physical_quantities){
+              <p>Unidades pendientes de salida: {{line.physical_quantities.pending_stock_out_units}}</p>
+            }
+          </li>
+        }
+      </ul>
+    </div>
+  }
+  <button class="pc-secondary" type="button" [disabled]="busy()" (click)="refresh()">Actualizar estado</button>
+</section>

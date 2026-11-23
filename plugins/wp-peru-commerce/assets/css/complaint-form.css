@@ -1,0 +1,53 @@
+/**
+ * IMP-65 — Libro nativo WordPress. Solo estilos de la superficie legal
+ * pública. La constancia se imprime desde ComplaintReceiptCopy, no
+ * mediante consulta pública por folio ni recreación desde settings.
+ */
+.pc-libro{max-width:860px;margin:1rem auto;padding:clamp(14px,3vw,32px);
+  font-family:inherit;line-height:1.5}
+.pc-libro *{box-sizing:border-box}
+.pc-libro fieldset{min-width:0;margin:1.25rem 0;padding:1rem;
+  border:1px solid #b9c4cf;border-radius:10px}
+.pc-libro legend{font-weight:700}
+.pc-libro label{display:block;margin:.75rem 0;font-weight:600}
+.pc-libro label:has(input[type="checkbox"]){display:flex;align-items:flex-start;gap:.6rem}
+.pc-libro input:not([type="checkbox"]),.pc-libro textarea,.pc-libro select{
+  display:block;width:100%;max-width:100%;min-height:44px;margin:.25rem 0;
+  padding:.6rem;border:1px solid #65798b;border-radius:6px;color:inherit;
+  background:transparent;font:inherit}
+.pc-libro textarea{min-height:110px;resize:vertical}
+.pc-libro input[type="checkbox"]{min-width:20px;min-height:20px;margin-top:.2rem}
+.pc-libro button{min-height:44px;padding:.6rem 1rem;margin:.5rem 0;border-radius:6px;
+  cursor:pointer}
+.pc-libro button:disabled{cursor:wait;opacity:.65}
+.pc-libro [role="status"]{white-space:pre-wrap;overflow-wrap:anywhere}
+.pc-libro [data-pc-complaint-receipt]{background:#fff;color:#111;
+  padding:1.25rem;border:2px solid #222;border-radius:8px}
+.pc-libro [data-pc-complaint-receipt] dl{
+  display:grid;grid-template-columns:minmax(120px,35%) minmax(0,1fr);
+  margin:1rem 0;gap:.35rem .75rem}
+.pc-libro [data-pc-complaint-receipt] dt{font-weight:700;overflow-wrap:anywhere}
+.pc-libro [data-pc-complaint-receipt] dd{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.pc-libro [data-pc-complaint-receipt] h3{margin-top:0}
+.pc-libro :is(input,select,textarea,button):focus-visible{
+  outline:3px solid currentColor;outline-offset:2px}
+@media(max-width:600px){
+  .pc-libro{padding:12px}
+  .pc-libro [data-pc-complaint-receipt] dl{grid-template-columns:1fr}
+  .pc-libro [data-pc-complaint-receipt] dt{margin-top:.5rem}
+}
+@media print{
+  @page{size:auto;margin:12mm}
+  body *{visibility:hidden!important}
+  .pc-libro [data-pc-complaint-receipt],
+  .pc-libro [data-pc-complaint-receipt] *{visibility:visible!important}
+  .pc-libro [data-pc-complaint-receipt]{
+    position:absolute;top:0;left:0;width:100%;padding:0;
+    border:0;border-radius:0;color:#000!important;background:#fff!important}
+  .pc-libro [data-pc-complaint-print]{display:none!important}
+  .pc-libro [data-pc-complaint-receipt] dl{
+    display:block}
+  .pc-libro [data-pc-complaint-receipt] dt{font-weight:bold;margin-top:.6rem}
+  .pc-libro [data-pc-complaint-receipt] dd{margin:.1rem 0 .6rem}
+  .pc-libro [data-pc-complaint-receipt] dl>*{break-inside:avoid}
+}

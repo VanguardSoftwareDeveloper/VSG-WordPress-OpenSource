@@ -1,0 +1,174 @@
+<section class="pc-panel pc-stack" aria-labelledby="pc-admin-complaints-title">
+  <div class="pc-row">
+    <div>
+      <h3 id="pc-admin-complaints-title">Libro de Reclamaciones — expedientes privados</h3>
+      <p class="pc-muted">Solo A con permisos del Libro. El formulario público WordPress funciona sin compra, usuario o registro. Un folio no permite buscar expedientes públicamente.</p>
+    </div>
+    <button type="button" class="pc-secondary" (click)="load()"
+      [disabled]="listing()||busy()">Consultar lista</button>
+  </div>
+  @if(!allowed()){
+    <p>No tienes autorización efectiva para consultar los expedientes del Libro.</p>
+  }@else{
+    @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+    @if(notice()){<p role="status">{{notice()}}</p>}
+    @if(listing()){<p role="status">Consultando resúmenes del Libro…</p>}
+    @if(!listing()&&entries().length===0){<p>No hay expedientes en esta página.</p>}
+    <ul class="pc-cards" aria-label="Listado mínimo del Libro">
+      @for(item of entries();track item.id){
+        <li class="pc-card">
+          <div class="pc-row">
+            <strong>Folio {{item.receipt_number}}</strong>
+            <span>{{item.kind==='reclamo'?'Reclamo':'Queja'}}</span>
+          </div>
+          <p class="pc-muted">ID interno {{item.id}} · recibido {{date(item.submitted_at)}}</p>
+          @if(item.responded_at){
+            <p>Respuesta registrada {{date(item.responded_at)}} (verificar constancia de entrega por separado).</p>
+          }@else{
+            <p>Sin fecha de respuesta acreditada en el resumen.</p>
+          }
+          <button type="button" class="pc-secondary" (click)="select(item)"
+            [disabled]="listing()||detailBusy()||busy()||blocked()||pending()!==null">
+            Leer expediente protegido R8-65
+          </button>
+        </li>
+      }
+    </ul>
+    <div class="pc-actions">
+      <button type="button" class="pc-secondary" (click)="pageMove(-1)"
+        [disabled]="page()<=1||listing()||busy()||pending()!==null">Anterior</button>
+      <span>Página {{page()}}</span>
+      <button type="button" class="pc-secondary" (click)="pageMove(1)"
+        [disabled]="!more()||listing()||busy()||pending()!==null">Siguiente</button>
+    </div>
+
+    @if(pending();as attempt){
+      <section class="pc-panel pc-stack" aria-labelledby="pc-complaint-pending">
+        <h4 id="pc-complaint-pending">Respuesta con resultado pendiente</h4>
+        <p>Expediente {{attempt.id}}, versión {{attempt.body.expected_version}}. Se retiene cuerpo e idempotencia sin generar una respuesta diferente por un 409/error de red.</p>
+        <div class="pc-actions">
+          <button type="button" (click)="respond()" [disabled]="busy()||detailBusy()||blocked()">
+            Reintentar el mismo intento
+          </button>
+          <button type="button" class="pc-secondary" (click)="loadDetail(attempt.id)"
+            [disabled]="busy()||detailBusy()">Consultar respuesta vigente</button>
+          <button type="button" class="pc-secondary" (click)="abandon()"
+            [disabled]="busy()||detailBusy()">Descartar solo tras comprobar</button>
+        </div>
+      </section>
+    }
+
+    @if(detailBusy()){<p role="status">Leyendo el expediente legal con autorización y auditoría…</p>}
+    @if(detail();as item){
+      <section class="pc-panel pc-stack" aria-labelledby="pc-complaint-detail-heading">
+        <div class="pc-row">
+          <div>
+            <h4 id="pc-complaint-detail-heading">{{item.kind==='reclamo'?'Reclamo':'Queja'}} {{item.receipt_number}}</h4>
+            <p class="pc-muted">ID {{item.id}} · versión {{item.row_version}} · presentado {{date(item.submitted_at)}}.</p>
+          </div>
+          <button type="button" class="pc-secondary" (click)="close()"
+            [disabled]="busy()||detailBusy()||pending()!==null">Cerrar detalle</button>
+        </div>
+        @if(item.due_at){
+          <p>Fecha límite informada: <strong>{{date(item.due_at)}}</strong>. El cómputo legal y el canal real se verifican según instalación.</p>
+        }
+        @if(item.merchant;as merchant){
+          <p>Proveedor registrado al ingreso: {{merchant.name||'Sin nombre'}}
+            @if(merchant.tax_id){ · RUC {{merchant.tax_id}} }
+            @if(merchant.address){ · {{merchant.address}} }
+          </p>
+        }
+        <div class="pc-grid">
+          <div class="pc-panel pc-soft pc-stack">
+            <h4>Persona reclamante</h4>
+            <p>Nombre: {{item.claimant.full_name}}</p>
+            @if(item.claimant.identification_kind){<p>Documento: {{item.claimant.identification_kind}} {{item.claimant.identification_value||''}}</p>}
+            @if(item.claimant.address){<p>Domicilio: {{item.claimant.address}}</p>}
+            @if(item.claimant.phone){<p>Teléfono: {{item.claimant.phone}}</p>}
+            @if(item.claimant.email){<p>Correo: {{item.claimant.email}}</p>}
+          </div>
+          @if(item.representative;as rep){
+            <div class="pc-panel pc-soft pc-stack">
+              <h4>Representante, si aplica</h4>
+              <p>Nombre: {{rep.full_name}}</p>
+              @if(rep.identification_value){<p>Documento: {{rep.identification_kind||''}} {{rep.identification_value}}</p>}
+              @if(rep.address){<p>Domicilio: {{rep.address}}</p>}
+              @if(rep.phone){<p>Teléfono: {{rep.phone}}</p>}
+              @if(rep.email){<p>Correo: {{rep.email}}</p>}
+            </div>
+          }
+        </div>
+        <section class="pc-panel pc-soft pc-stack">
+          <h4>Contenido original</h4>
+          <p>Tipo de asunto: {{item.subject}}</p>
+          @if(item.subject_description){<p>Bien o servicio: {{item.subject_description}}</p>}
+          @if(item.claimed_amount_cents){<p>Monto referido (céntimos PEN originales): {{item.claimed_amount_cents}}</p>}
+          <p><strong>Descripción presentada:</strong></p>
+          <p class="pc-preserve">{{item.description}}</p>
+          <p><strong>Solicitud concreta:</strong></p>
+          <p class="pc-preserve">{{item.request}}</p>
+          @if(item.privacy_notice_version){<p class="pc-muted">Versión original de aviso de privacidad: {{item.privacy_notice_version}}</p>}
+        </section>
+        @if(item.attachments?.length){
+          <section class="pc-stack" aria-label="Evidencias privadas del reclamo">
+            <h4>Referencias de evidencia protegida</h4>
+            <ul class="pc-cards">
+              @for(ref of item.attachments||[];track ref){
+                <li class="pc-card pc-row">
+                  <span>Referencia {{ref}}</span>
+                  <button type="button" class="pc-secondary"
+                    (click)="downloadEvidence(ref)" [disabled]="downloadBusy()||busy()||blocked()">
+                    Descargar por R8-67 (auditoría)
+                  </button>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+        @if(item.response_text){
+          <section class="pc-panel pc-soft">
+            <h4>Respuesta administrativa registrada</h4>
+            <p class="pc-preserve">{{item.response_text}}</p>
+            @if(item.responded_at){<p>Respondida: {{date(item.responded_at)}}.</p>}
+            @if(item.response_channel){<p>Canal: {{item.response_channel}}.</p>}
+            @if(item.delivery_confirmed_at){<p>Entrega comprobada en: {{date(item.delivery_confirmed_at)}}.</p>}
+            @if(item.response_evidence_ref;as ref){
+              <button type="button" class="pc-secondary" (click)="downloadEvidence(ref,'legal_response_evidence')"
+                [disabled]="downloadBusy()||busy()||blocked()">
+                Descargar evidencia de entrega protegida
+              </button>
+            }
+            @if(!item.delivery_confirmed_at){
+              <p class="pc-muted">La respuesta escrita no acredita recepción del consumidor. No interpretar «correo enviado» o borrador como entrega legal.</p>
+            }
+          </section>
+        }
+        @if(freshRequired()){
+          <p class="pc-alert">Se necesita releer el caso después de registrar la respuesta; no se enviará otra mientras falte una lectura válida.</p>
+        }
+        @if(!item.responded_at&&!freshRequired()){
+          <fieldset class="pc-fieldset pc-form"
+            [disabled]="busy()||detailBusy()||pending()!==null||blocked()">
+            <legend>Preparar respuesta o registrar evidencia de entrega (R8-42)</legend>
+            <p>Sin prueba válida de entrega, el servidor solo prepara la respuesta. Para acreditar recepción, se necesita una referencia privada del MISMO expediente, del canal y texto exactos, además de su verificador de entrega instalado.</p>
+            <label>Texto jurídico de la respuesta
+              <textarea [(ngModel)]="response" maxlength="20000" rows="5"></textarea>
+            </label>
+            <label>Referencia privada de evidencia de notificación (opcional)
+              <input type="text" [(ngModel)]="responseEvidence"
+                maxlength="128" autocomplete="off" placeholder="A-Za-z0-9_- de 16–128 caracteres">
+            </label>
+            <label>
+              <input type="checkbox" [(ngModel)]="responseAttested">
+              Revisé el contenido del expediente, el plazo legal y el canal real; entiendo que un borrador o un email enviado no demuestra recepción.
+            </label>
+          </fieldset>
+          <button type="button" (click)="respond()"
+            [disabled]="busy()||detailBusy()||pending()!==null||blocked()">
+            Registrar respuesta con versión {{item.row_version}}
+          </button>
+        }
+      </section>
+    }
+  }
+</section>

@@ -1,10 +1,10 @@
-# VSG WordPress — open-source planning catalog
+# VSG WordPress — open-source catalog and PeruCommerce development
 
 This public catalog describes 131 planned WordPress plugin categories with provisional VSG product names.
 **It does not contain 131 functional plugins, builds, releases, MCP servers or translated interfaces.**
 
-PeruCommerce VSG is developed separately, with a planned POS and pending final verification.
-**No PeruCommerce PHP/Angular source, internal contracts or private history are included here.**
+PeruCommerce VSG PHP/Angular source is now in [plugins/wp-peru-commerce](plugins/wp-peru-commerce/README.md). POS and final verification are still pending.
+**Development source is published as untested work in progress, not an installable release. The former private Git history was not copied.**
 
 The aim is free-by-default software that operates on site-owner-managed WordPress hosting.
 Where third-party services charge fees, site owners should normally use and pay for their own accounts.
@@ -18,3 +18,5 @@ Where third-party services charge fees, site owners should normally use and pay 
 - [Contributing](CONTRIBUTING.md) / [Security](SECURITY.md) / [License scope](LICENSE-SCOPE.md)
 
 This is independent work; not an Anthropic, OpenAI or WordPress.org endorsement.
+
+[Consolidation status](docs/SOURCE-CONSOLIDATION.md).

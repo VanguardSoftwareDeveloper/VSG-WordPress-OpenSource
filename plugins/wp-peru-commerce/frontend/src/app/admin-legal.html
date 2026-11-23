@@ -1,0 +1,35 @@
+<section class="pc-stack" aria-labelledby="pc-admin-legal-title">
+  <div>
+    <h2 id="pc-admin-legal-title">Libro de Reclamaciones y privacidad</h2>
+    <p class="pc-muted">Gestión jurídica de expedientes individuales en la instalación del comercio. El operador no obtiene acceso a estos datos ni por compartir interfaz ni por conocer un folio.</p>
+  </div>
+  <nav class="pc-actions" aria-label="Gestión de expedientes legales">
+    <button type="button" [attr.aria-pressed]="section()==='complaints'"
+      (click)="select('complaints')"
+      [disabled]="!canComplaints()||complaintPending()||privacyPending()">
+      Libro de Reclamaciones
+    </button>
+    <button type="button" [attr.aria-pressed]="section()==='privacy'"
+      (click)="select('privacy')"
+      [disabled]="!canPrivacy()||complaintPending()||privacyPending()">
+      Derechos ARCO
+    </button>
+  </nav>
+  @if(!canComplaints()&&!canPrivacy()){
+    <p role="status">No hay capacidades A para gestionar expedientes legales.</p>
+  }
+  @if(canComplaints()){
+    <section [hidden]="section()!=='complaints'" aria-label="Expedientes de reclamaciones">
+      <pc-admin-complaints [employee]="employee()"
+        [blocked]="privacyPending()"
+        (pendingChange)="onPending('complaints',$event)"/>
+    </section>
+  }
+  @if(canPrivacy()&&privacyVisited()){
+    <section [hidden]="section()!=='privacy'" aria-label="Expedientes de privacidad">
+      <pc-admin-privacy [employee]="employee()"
+        [blocked]="complaintPending()"
+        (pendingChange)="onPending('privacy',$event)"/>
+    </section>
+  }
+</section>

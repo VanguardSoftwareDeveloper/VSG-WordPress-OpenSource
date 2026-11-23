@@ -1,0 +1,92 @@
+<section class="pc-stack" aria-labelledby="pc-cart-title">
+  <div class="pc-row">
+    <div><h1 id="pc-cart-title">Carrito y catálogo</h1>
+      <p class="pc-muted">Los precios y las franjas se verifican nuevamente al comprar.</p></div>
+    <span>Artículos: {{cart.lines().length}}</span>
+  </div>
+  @if(error()){<p class="pc-alert" role="alert">{{error()}}</p>}
+  @if(busy()){<p role="status">Consultando disponibilidad…</p>}
+  <div class="pc-layout">
+    <section class="pc-stack" aria-label="Productos">
+      <div class="pc-grid">
+        @for (product of products(); track product.id){
+          <article class="pc-card pc-stack">
+            <div><h2>{{product.title}}</h2>
+              <p class="pc-muted">{{product.kind==='service'?'Servicio':product.kind==='digital'?'Digital':'Físico'}}</p>
+            </div>
+            @if(product.variants?.length){
+              <label>Presentación
+                <select [value]="selected()[product.id]||''" (change)="chooseVariant(product.id,$any($event.target).value)">
+                  @for(v of product.variants||[];track v.id){
+                    <option [value]="v.id" [disabled]="!v.can_order">{{v.label}} — {{money(v.sale_active&&v.sale_price_cents?v.sale_price_cents:v.price_cents)}}</option>
+                  }
+                </select>
+              </label>
+            }
+            @if(product.kind==='service'){
+              <p class="pc-muted">Una cita por pedido; cantidad 1.</p>
+            }@else{
+              <label>Cantidad
+                <input type="number" min="1" max="100000" step="1"
+                  [value]="amounts()[product.id]||1" (input)="setAmount(product.id,$any($event.target).value)">
+              </label>
+            }
+            <button type="button" (click)="add(product)" [disabled]="!product.can_order">
+              {{product.kind==='service'?'Elegir horario':'Añadir al carrito'}}
+            </button>
+            @if(!product.can_order){<p class="pc-muted">No disponible para comprar.</p>}
+          </article>
+        }
+      </div>
+      <div class="pc-actions">
+        <button class="pc-secondary" type="button" (click)="changePage(page-1)" [disabled]="page===1||busy()">Anterior</button>
+        <span aria-live="polite">Página {{page}}</span>
+        <button class="pc-secondary" type="button" (click)="changePage(page+1)" [disabled]="!hasMore||busy()">Siguiente</button>
+      </div>
+      @if(service()){
+        <div class="pc-panel pc-stack" aria-label="Seleccionar cita">
+          <h2>Horario para {{service()?.title}}</h2>
+          <label>Fecha de atención
+            <input type="date" [(ngModel)]="serviceDate" name="slot-date">
+          </label>
+          <button type="button" (click)="lookupSlots()" [disabled]="!serviceDate||busy()">Consultar franjas</button>
+          @if(slotError()){<p role="status">{{slotError()}}</p>}
+          <div class="pc-actions">
+            @for(slot of slots();track slot.starts_at_utc){
+              <button type="button" class="pc-secondary" (click)="chooseSlot(slot)">
+                {{slot.starts_at_utc}} – {{slot.ends_at_utc}}
+              </button>
+            }
+          </div>
+          <button type="button" class="pc-secondary" (click)="service.set(null)">Cancelar selección</button>
+        </div>
+      }
+    </section>
+    <aside class="pc-panel pc-soft pc-sticky" aria-labelledby="items-title">
+      <h2 id="items-title">Tu selección</h2>
+      @if(cart.lines().length===0){<p>Tu carrito está vacío.</p>}
+      <ul class="pc-cards">
+        @for(line of cart.lines();track line.sellable_id){
+          <li class="pc-card pc-stack">
+            <strong>{{line.title||'Presentación '+line.sellable_id}}</strong>
+            <p class="pc-muted">{{line.kind==='digital'?'Digital':line.kind==='service'?'Servicio':'Físico'}}</p>
+            @if(line.kind!=='service'){
+              <label>Cantidad
+                <input type="number" min="1" max="100000"
+                  [value]="line.quantity" (change)="setCartAmount(line.sellable_id,$any($event.target).value)">
+              </label>
+            }@else{
+              <p>Una cita</p>
+            }
+            @if(line.slot){<p>Cita seleccionada: {{line.slot.starts_at_utc}}. Se verificará al pagar.</p>}
+            <button class="pc-secondary" type="button" (click)="cart.remove(line.sellable_id)">Retirar</button>
+          </li>
+        }
+      </ul>
+      <p class="pc-muted">El total definitivo se calcula en el servidor, después de verificar stock, cita y entrega.</p>
+      <button type="button" (click)="openCheckout()" [disabled]="cart.lines().length===0">
+        Continuar a checkout
+      </button>
+    </aside>
+  </div>
+</section>
