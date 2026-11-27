@@ -19,6 +19,7 @@ const fail = (file, msg) => failures.push(`${rel(file)}: ${msg}`);
 const read = (p) => readFileSync(p, 'utf8').replace(/^﻿/, '');
 const bytes = (p) => statSync(p).size;
 const dirs = (p) => (existsSync(p) ? readdirSync(p, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name) : []);
+const links = (p) => (existsSync(p) ? readdirSync(p, { withFileTypes: true }).filter((d) => d.isSymbolicLink()).map((d) => d.name) : []);
 const files = (p, ext) => (existsSync(p) ? readdirSync(p).filter((n) => n.endsWith(ext)).map((n) => join(p, n)) : []);
 
 function check(cond, file, msg) {
@@ -119,6 +120,23 @@ for (const name of wrappers) {
   check(portable.has(name), join(ROOT, '.claude', 'skills', name), 'wrapper without a portable skill in .agents/skills');
 }
 
+// Local links (junctions or symlinks) in .claude/skills may only expose official upstream skills,
+// must be ignored by Git and must resolve to a SKILL.md whose name matches the link.
+const OFFICIAL = /^(wp-[a-z0-9-]+|wordpress-router|blueprint|wpds|angular-[a-z0-9-]+)$/;
+const gitignore = join(ROOT, '.gitignore');
+const ignored = (existsSync(gitignore) ? read(gitignore).split(/\r?\n/) : [])
+  .map((l) => /^\/\.claude\/skills\/([A-Za-z0-9*_-]+)$/.exec(l.trim())?.[1])
+  .filter(Boolean)
+  .map((g) => new RegExp(`^${g.replace(/\*/g, '[A-Za-z0-9_-]*')}$`));
+for (const name of links(join(ROOT, '.claude', 'skills'))) {
+  const link = join(ROOT, '.claude', 'skills', name);
+  check(OFFICIAL.test(name) && !portable.has(name), link, 'only official WordPress or Angular skills may be linked here, never a vsg-wp-* skill');
+  check(ignored.some((re) => re.test(name)), link, 'linked skill is not ignored by an anchored /.claude/skills/ pattern in .gitignore');
+  const skill = join(link, 'SKILL.md');
+  if (!check(existsSync(skill), link, 'link does not resolve to a folder with SKILL.md')) continue;
+  check((frontmatter(read(skill)) ?? {}).name === name, skill, `linked skill name must equal the link name "${name}"`);
+}
+
 // 4. Client controls: valid JSON that calls the shared guard.
 const guard = join(ROOT, 'tools', 'agent-policy', 'guard.mjs');
 check(existsSync(guard), guard, 'missing policy guard');
@@ -141,6 +159,32 @@ for (const file of files(codexRules, '.rules')) {
   const text = read(file);
   check(/prefix_rule\(/.test(text), file, 'no prefix_rule found');
   check(!/decision\s*=\s*"(?!allow"|prompt"|forbidden")/.test(text), file, 'decision must be "allow", "prompt" or "forbidden"');
+}
+
+// 5. Development tools: committed MCP configuration without secrets or personal paths, Angular read-only,
+// and every Angular CLI pin (config and setup guide) on the same major as the Angular target in the standard.
+const standard = join(ROOT, 'docs', 'ESTANDAR-TECNICO-131.md');
+const target = existsSync(standard) ? /^\| Angular \| \*\*(\d+)\./m.exec(read(standard))?.[1] : undefined;
+const toolsGuide = join(ROOT, 'docs', 'HERRAMIENTAS-DESARROLLO-IA.md');
+if (existsSync(toolsGuide)) {
+  checkLinks(toolsGuide);
+  for (const m of read(toolsGuide).matchAll(/@angular\/cli@(\d+)/g)) {
+    check(Boolean(target) && m[1] === target, toolsGuide, `command pins @angular/cli@${m[1]} but the Angular target major is "${target ?? ''}" in docs/ESTANDAR-TECNICO-131.md`);
+  }
+}
+const codexConfig = join(ROOT, '.codex', 'config.toml');
+if (existsSync(codexConfig)) {
+  const text = read(codexConfig).split(/\r?\n/).filter((l) => !l.trim().startsWith('#')).join('\n');
+  check(!/^\s*(env|env_vars|http_headers|env_http_headers|bearer_token\w*|token\w*|api_key\w*|password\w*)\s*=/im.test(text) && !/^\s*\[mcp_servers\.[^\]]+\.env\]/m.test(text),
+    codexConfig, 'must not set env, headers, tokens or keys; credentials stay in each client\'s own store');
+  check(!/[A-Za-z]:\\|\/Users\/|\/home\//.test(text), codexConfig, 'must not contain absolute or personal paths');
+  const angular = /^\s*\[mcp_servers\.["']?angular-cli["']?\]\s*$([\s\S]*?)(?=^\s*\[|(?![\s\S]))/m.exec(text)?.[1];
+  if (angular !== undefined) {
+    const args = /^\s*args\s*=\s*\[([^\]]*)\]/m.exec(angular)?.[1] ?? '';
+    check(/"--read-only"/.test(args), codexConfig, 'angular-cli MCP must run with --read-only');
+    const pinned = /"@angular\/cli@(\d+)"/.exec(args)?.[1];
+    check(Boolean(target) && pinned === target, codexConfig, `angular-cli MCP major "${pinned ?? ''}" must equal the Angular target major "${target ?? ''}" in docs/ESTANDAR-TECNICO-131.md`);
+  }
 }
 
 // Report.

@@ -14,6 +14,12 @@ coverage/
 *.key
 
 # Personal agent and editor configuration.
+# Local links to the official skills installed at user scope (see docs/HERRAMIENTAS-DESARROLLO-IA.md).
+/.claude/skills/wp-*
+/.claude/skills/wordpress-router
+/.claude/skills/blueprint
+/.claude/skills/wpds
+/.claude/skills/angular-*
 .claude/settings.local.json
 CLAUDE.local.md
 AGENTS.override.md

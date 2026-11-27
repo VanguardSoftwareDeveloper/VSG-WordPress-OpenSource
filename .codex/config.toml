@@ -1,0 +1,12 @@
+# Project configuration for Codex in VSG-WordPress-OpenSource.
+# Codex reads it only after the owner trusts this project. Never add secrets, tokens, env values or personal paths.
+# Scope, per-client setup and per-plugin tools: docs/HERRAMIENTAS-DESARROLLO-IA.md
+
+# Official Angular CLI MCP server, read-only (best practices, documentation search, workspace discovery).
+# Keep the major in step with the Angular target in docs/ESTANDAR-TECNICO-131.md; the instruction check compares them.
+[mcp_servers.angular-cli]
+command = "npx"
+args = ["-y", "@angular/cli@22", "mcp", "--read-only"]
+startup_timeout_sec = 60
+# Prompt for any tool that the server does not mark read-only.
+default_tools_approval_mode = "writes"

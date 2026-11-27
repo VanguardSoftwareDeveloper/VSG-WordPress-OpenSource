@@ -2,6 +2,8 @@
 
 **Decisión de planificación (22/11/2026):** mantener la posibilidad de conectar los plugins a asistentes mediante el estándar abierto Model Context Protocol (MCP), **sin crear todavía 131 servidores MCP** ni convertirlo en requisito de instalación. No se ha construido, configurado ni verificado ningún servidor MCP de estos plugins.
 
+Este documento trata del MCP **de producto**. Las skills y los MCP del **entorno de desarrollo** (Angular CLI, GitHub, documentación) están en [HERRAMIENTAS-DESARROLLO-IA.md](HERRAMIENTAS-DESARROLLO-IA.md).
+
 ## Qué es y qué no es
 
 - **Claude Code y Codex son clientes potenciales de MCP**. El servidor MCP es una integración aparte que traduce las herramientas disponibles a consultas/operaciones autorizadas del plugin. Un README o archivo `.mcp.json` por sí solo **no implementa** esas herramientas.

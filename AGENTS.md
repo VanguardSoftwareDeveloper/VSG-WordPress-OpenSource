@@ -68,6 +68,6 @@ Portable skills live in `.agents/skills/`; Claude Code wrappers in `.claude/skil
 - `vsg-wp-publicacion-autorizada`: release steps, only on an explicit owner order.
 - `vsg-wp-continuidad`: handoff to the tracking issue.
 
-Official WordPress and Angular agent skills are installed at user scope, not vendored here.
+Official WordPress and Angular agent skills live once at user scope and the Angular CLI MCP runs read-only; how each client reaches them, and which specializations a plugin links on demand after scope approval, is in [docs/HERRAMIENTAS-DESARROLLO-IA.md](docs/HERRAMIENTAS-DESARROLLO-IA.md). Never vendor them or create per-plugin copies.
 
 Native client rules are the primary barrier: deny/ask in `.claude/settings.json` and forbidden/prompt in `.codex/rules/vsg.rules`. The policy hook `tools/agent-policy/guard.mjs` is a second layer for variants that prefix rules miss; it fails closed when it cannot load (Claude Code `onFailure: "block"`; the Codex and Antigravity loaders deny). Neither layer is an authorization. Start every session at the repository root so these controls load; Codex also needs the project trusted and its hook approved in `/hooks`.
