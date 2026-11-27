@@ -12,11 +12,13 @@
 
 **CORTE HISTÓRICO tras D-199/DOC-QA30 (18-11-2026):** OpenAPI `0.11.0-draft` contiene **69 entradas R8 (68 REST + R8-18 página WP), 65 rutas y 136 esquemas**, con **56 PER** y 39 tablas. La apertura manual de caso R8-69 usa capacidades existentes de A; R8-21 mantiene casos privados y R8-26 exige caso vinculado y validación propia. Las cifras 67 REST/64 rutas/134 DTO son corte histórico de 0.10.0-draft. `docs/42` documenta el cierre y los casos de aceptación futuros.
 
-**PRECEDENCIA ÚNICA ACTUAL DOC-QA31/D-200 (18-11-2026):** la fuente vigente es OpenAPI **`0.12.0-draft`**: **70 entradas R8 (69 operaciones REST + R8-18 página WP), 66 rutas, 138 DTO y 56 PER**, con 39 tablas y 200 decisiones. Los títulos de «matriz vigente» de cortes previos son HISTORIA: nunca usarlos para generar controladores. **R8-70** permite finalizar una solicitud administrativa física parcial sin ajuste (reject o buyer_withdrawn con nueva legitimación) usando permiso A `orders_read` Y `orders_financial_adjust`, caso/instalación/línea/finalidad y expected_case_version. **R8-26** exige `expected_case_version` para `affected_units` y termina caso como `closed_adjusted` dentro de la misma transacción que libera compromiso y registra ajuste. No hay refund externo, cambio comercial E-01, permiso adicional O ni tabla nueva. El resultado de R8-26 usa su contrato `MutationResult`; para conocer la versión/estado actualizado del caso, A consulta R8-21 con `case_id`. **Solo documentación; no pruebas ni código.**
+**CORTE HISTÓRICO DOC-QA31/D-200 (18-11-2026):** la fuente de ese corte fue OpenAPI **`0.12.0-draft`**: **70 entradas R8 (69 operaciones REST + R8-18 página WP), 66 rutas, 138 DTO y 56 PER**, con 39 tablas y 200 decisiones. Los títulos de «matriz vigente» de cortes previos son HISTORIA: nunca usarlos para generar controladores. **R8-70** permite finalizar una solicitud administrativa física parcial sin ajuste (reject o buyer_withdrawn con nueva legitimación) usando permiso A `orders_read` Y `orders_financial_adjust`, caso/instalación/línea/finalidad y expected_case_version. **R8-26** exige `expected_case_version` para `affected_units` y termina caso como `closed_adjusted` dentro de la misma transacción que libera compromiso y registra ajuste. No hay refund externo, cambio comercial E-01, permiso adicional O ni tabla nueva. El resultado de R8-26 usa su contrato `MutationResult`; para conocer la versión/estado actualizado del caso, A consulta R8-21 con `case_id`. **Solo documentación; no pruebas ni código.**
+
+**PRECEDENCIA ÚNICA ACTUAL DOC-QA32/D-210 (27-11-2026):** la fuente vigente es OpenAPI **`0.13.0-draft`**: **83 entradas R8 (82 operaciones REST + R8-18 página WP), 78 rutas, 162 DTO y 62 PER**, con 41 tablas y 210 decisiones. Añade el POS V1 ratificado: **R8-71…R8-83** (13 operaciones en 12 rutas nuevas, 24 esquemas nuevos), **PER-57…PER-62** y cinco capacidades nuevas (D-204), más enmiendas aditivas de R8-20/21/24/25/27/45/46 y `ErrorResponse.data.details.reason`. El contrato detallado está en [docs/48](48-CONTRATO-POS-V1-P2.md). Las operaciones nuevas están **DOCUMENTADAS/NO IMPLEMENTADAS**, con revisión del propietario pendiente antes de P3; el código y las pruebas offline siguen en 0.12.0-draft (docs/48 §15). **Solo documentación; no pruebas ni código.**
 
 ## Invariantes de la API
 
-Namespace `/wp-json/peru-commerce/v1`. Hay **69 operaciones REST en 66 rutas URL**, más **R8-18 página WordPress**, no REST, conforme D-189/D-198 y OpenAPI 0.12.0-draft. El contrato histórico R8-01…R8-52 mantiene sus 51 REST originales; D-176…D-187 incorporan 12 adicionales R8-53…R8-64 y D-189 suma las dos consultas privadas R8-65/66. Prohibido inventar endpoint de reembolso ejecutor, cobro por línea, segunda API logística o endpoint público de borrado.
+Namespace `/wp-json/peru-commerce/v1`. Hay **82 operaciones REST en 78 rutas URL**, más **R8-18 página WordPress**, no REST, conforme D-189/D-198/D-210 y OpenAPI 0.13.0-draft. El contrato histórico R8-01…R8-52 mantiene sus 51 REST originales; D-176…D-187 incorporan 12 adicionales R8-53…R8-64, D-189 suma las dos consultas privadas R8-65/66 y D-210 añade las 13 operaciones POS R8-71…R8-83. Prohibido inventar endpoint de reembolso ejecutor, cobro por línea, segunda API logística o endpoint público de borrado.
 
 Autenticación y autorización: PUBLIC sin cuenta, limitación de abuso; invitado cookie privada HttpOnly/Secure/SameSite y enlace secreto 256 bits 90 días para SOLO lectura; OTP 8 dígitos/10 min/5 intentos para acción sensible y correo registrado, comprador solo teléfono con verificación manual; token digital independiente 256 bits/24 h y derecho de archivo; empleados por WordPress cookie + `X-WP-Nonce` contra CSRF, `current_user_can` y acceso por **recurso, operación y campo**; MP webhook con HMAC, no nonce. WordPress nonce NO autentica al invitado ni concede permisos. Los roles O/A son límites iniciales: no autorizan por sí solos.
 
@@ -24,7 +26,7 @@ Autenticación y autorización: PUBLIC sin cuenta, limitación de abuso; invitad
 
 Errores E08-M: `{code,message,data:{status,retryable,request_id,details?}}` vía WP_Error; 400 pc_invalid_input; 401 pc_auth_required; 403 pc_forbidden; 404 pc_not_found, también recurso ajeno; 409 pc_quote_changed/pc_stock_unavailable/pc_slot_unavailable/pc_state_conflict/pc_idempotency_conflict; 410 pc_link_expired; 422 pc_business_ineligible; 423 pc_operation_in_progress; 429 pc_rate_limited; 500 pc_internal_error; 503 pc_provider_unavailable. 202 pc_pending_reconciliation NO es pago acreditado.
 
-## Matriz acumulada R8-01…R8-70 actualizada D-200 (69 REST + R8-18 página WP)
+## Matriz acumulada R8-01…R8-83 actualizada D-210 (82 REST + R8-18 página WP)
 
 Abreviaturas de capabilities a partir de E08-N: `orders_read` significa `perucommerce_orders_read`. Todas las capacidades son propuestas sujetas a autorización por fila/campo/estado. R8 con capacidades compuestas tienen guardas distintas para operador y administrador, nunca privilegio sumado.
 
@@ -100,11 +102,24 @@ Abreviaturas de capabilities a partir de E08-N: `orders_read` significa `perucom
 | R8-68 | GET `/admin/privacy-requests/{id}/evidence/{evidence_ref}` | PER-50 | A: perucommerce_privacy_manage | `— → PrivateBinary`: evidencia ARCO del caso/instalación, finalidad y legitimación; nunca URL pública/PII a O |
 | **R8-69** | **POST `/admin/orders/{id}/cases`** | **PER-38/39 sin nuevas operaciones** | **Solo A: perucommerce_orders_read Y perucommerce_orders_financial_adjust** | `AdminManualCaseCreate → AdminManualCaseOpened`: apertura manual verificada de caso de reducción física parcial, sin ajuste, refund, cancelación ni permiso O. 201 nuevo/200 replay; relectura R8-21 y decisión por R8-26 |
 | **R8-70** | **POST `/admin/orders/{id}/cases/{case_id}/close`** | **PER-38/39 sin nuevos permisos** | **Solo A: perucommerce_orders_read Y perucommerce_orders_financial_adjust** | `AdminManualCaseCloseRequest → AdminManualCaseClosed`: rechazar o registrar retiro verificado de expediente físico parcial `open_review`, CAS `expected_case_version`, idempotencia/evento/auditoría; `closed_rejected`/`closed_withdrawn`. **No dinero/stock/estados E-01, no acceso O** |
+| R8-71 | GET `/admin/pos/catalog` | PER-57 | A/O: pos_sell | `q,page,per_page → PosCatalogPage`: vendibles físicos publicados con precio y stock del servidor; sin costo ni datos de proveedor. Puerta `pos.read` (D-210, DOCUMENTADO/NO IMPLEMENTADO) |
+| R8-72 | POST `/admin/pos/sales` | PER-57 | A/O: pos_sell y sesión propia abierta | `PosSaleCommit → 201 PosSaleResult`: O-10 atómico (pedido `pos` FINALIZADO, líneas ENTREGADO, salida de stock, `initial_charge` por R, `cash_rounding` 0–9, `sale_cash`); idempotencia durable; 409 `pc_quote_changed` si los totales mostrados difieren. Puerta `pos.write` |
+| R8-73 | POST `/admin/pos/sessions` | PER-58 | A/O: cash_session_operate | `CashSessionOpen → 201 CashSession`: abre sesión con fondo inicial; una abierta por caja y por persona (409 `pc_conflict`, `reason = pos_register_busy` o `pos_session_already_open`). Puerta `pos.sessions` |
+| R8-74 | GET `/admin/pos/sessions/current` | PER-58 | A/O: cash_session_operate | `→ CashSession`: sesión abierta propia, **sin esperado ni diferencia** (arqueo ciego). Puerta `pos.read` |
+| R8-75 | POST `/admin/pos/sessions/{id}/movements` | PER-60 | Solo A: cash_movements_record | `CashMovementCreate → MutationResult`: `pay_in`/`pay_out` con motivo, CAS `expected_version`; sesión cerrada 409 `pc_conflict` (`reason = pos_session_closed`). **Sin acceso O en V1**. Puerta `pos.sessions` |
+| R8-76 | POST `/admin/pos/sessions/{id}/close` | PER-58 | A/O: cash_session_operate y sesión propia | `CashSessionClose → CashSessionCloseResult`: arqueo ciego; el servidor fija esperado/contado/diferencia inmutables; esperado y diferencia solo con `cash_session_review`. Puerta `pos.sessions` |
+| R8-77 | GET `/admin/pos/sessions` | PER-59 | Solo A: cash_session_review | `page,per_page,state,register_code,business_date → CashSessionPage`: resumen con esperado/contado/diferencia. Puerta `pos.read` |
+| R8-78 | GET `/admin/pos/sessions/{id}` | PER-59 | Solo A: cash_session_review | `→ CashSessionDetail`: sesión y movimientos inmutables. Puerta `pos.read` |
+| R8-79 | POST `/admin/pos/sessions/{id}/force-close` | PER-59 | Solo A: cash_session_review | `CashSessionForceClose → CashSessionCloseResult`: cierre de sesión ajena con motivo; sin conteo, diferencia pendiente de revisión. Puerta `pos.sessions` |
+| R8-80 | GET `/admin/pos/documents/pending` | PER-61 | A/O: external_documents_record | `page,per_page → PosDocumentPendingPage`: pedidos `pos` sin comprobante de venta o con nota de crédito pendiente; **sin número de documento del adquirente**. Puerta `pos.read` |
+| R8-81 | POST `/admin/pos/orders/{id}/external-documents` | PER-61 | A/O: external_documents_record; `nota_credito` además refunds_record_external (solo A en V1) | `PosExternalDocumentRecord → 201 C2312Response`: referencia del comprobante **emitido externamente** (D-206), importe igual a T o al reembolso del expediente; solo `buyer_id_type`. No emite ni valida SUNAT. Puerta `pos.write` |
+| R8-82 | GET `/admin/pos/orders/{id}/receipt` | PER-57 | A/O: pos_sell Y orders_read; O solo su propia sesión | `→ PosOperationReceipt`: constancia «no es comprobante de pago», solo pedidos `pos`. Puerta `pos.read` |
+| R8-83 | POST `/admin/pos/orders/{id}/returns` | PER-62 | Solo A: orders_read Y refunds_record_external Y stock_manage | `PosReturnRecord → 201 PosReturnResult`: devolución o anulación atómica (expediente por línea, reingreso solo `fit_for_sale`, reembolso en efectivo ≤ R − previos, `refund_cash` solo con `cash_session_id`); línea sigue ENTREGADO y pedido FINALIZADO. Revisión del propietario antes de P3. Puerta `pos.write` |
 
 
 **Extensión ratificada D-176…D-187:** estas 12 entradas fueron incorporadas al contrato E-08 como D-176…D-187; requisitos de implementación y validación pendientes.
 
-## Matriz inversa de las 56 operaciones PER
+## Matriz inversa de las 62 operaciones PER
 
 Una correspondencia expresa relación funcional, **no autorización**. PER-36 ejecutar reembolso por API sigue PROHIBIDO. Operaciones sin R8 (roles/ZIP/desinstalación/cuenta WP o efectos solo automáticos) no justifican endpoint nuevo. PER-20 marcar servicio realizado y PER-42 cerrar pedido son huecos de mutación explícita, no se implementarán a través de un `set_status` genérico no aprobado.
 
@@ -166,6 +181,12 @@ Una correspondencia expresa relación funcional, **no autorización**. PER-36 ej
 | PER-54 | Solicitar reenvío de notificación transaccional | R8-10/11/12/39/40 |
 | PER-55 | Activar/desactivar módulos de pago/mapa/reclamaciones | R8-45/46 |
 | PER-56 | Gestionar cuenta y sesión propia WordPress | WordPress nativo / R8-19 |
+| PER-57 | Vender en caja presencial y reimprimir la constancia (D-210, DOCUMENTADO/NO IMPLEMENTADO) | R8-71 / R8-72 / R8-82 |
+| PER-58 | Operar la propia sesión de caja: abrir, consultar y cerrar con arqueo ciego | R8-73 / R8-74 / R8-76 |
+| PER-59 | Revisar sesiones de caja y forzar su cierre (solo A) | R8-77 / R8-78 / R8-79 |
+| PER-60 | Registrar ingresos y retiros justificados de caja (solo A en V1) | R8-75 |
+| PER-61 | Registrar la referencia del comprobante emitido externamente para pedidos POS | R8-80 / R8-81 |
+| PER-62 | Registrar devolución o anulación presencial POS (solo A) | R8-83 |
 
 ## Proyección de campos por actor
 
@@ -202,12 +223,14 @@ Persistencia: catálogo WP/pc_sellables; checkout pc_orders,pc_order_lines,pc_id
 
 Era **pendiente en el corte histórico completar OpenAPI 3.1 por operación** con `requestBody`, `required`, tipos, límites, respuestas y errores, además del permiso por campo/estado en rutas duales, DDl y la matriz J-01…J-05. Ningún controlador podrá generarse como si esta matriz sustituyera esos contratos.
 
-**Estado vigente D-200:** 70/70 entradas R8 documentadas, 69 REST (R8-18 no REST) y 56/56 PER rastreados; los 12 C23 incorporados por D-176…D-187. Los campos legales, DDL y seguridad siguen pendientes de validación, y NO existe API implementada.
+**Estado histórico D-200 (18-11-2026):** 70/70 entradas R8 documentadas, 69 REST (R8-18 no REST) y 56/56 PER rastreados; los 12 C23 incorporados por D-176…D-187.
+
+**Estado vigente D-210 (27-11-2026):** 83/83 entradas R8 documentadas, 82 REST (R8-18 no REST) y 62/62 PER rastreados; R8-71…R8-83 y PER-57…PER-62 del POS V1 incorporados por D-210 como **DOCUMENTADO/NO IMPLEMENTADO**. Los campos legales, DDL y seguridad siguen pendientes de validación, y NO existe API implementada.
 
 
-## Matriz acumulada de DTO y permisos R8 (actualizada D-200; filas C23 originales históricas)
+## Matriz acumulada de DTO y permisos R8 (actualizada D-210; filas C23 originales históricas)
 
-**Estado vigente D-200:** Contrato DOCUMENTAL, no implementación. Fuente estructurada: `docs/openapi/peru-commerce-v1.openapi.draft.json`. Esta tabla acumulada incluye las **69 operaciones REST** (R8-18 sigue fuera del OpenAPI), con los 12 R8-53…64 ratificados en cobertura. Es una vista humana de **propiedades superiores**; para tipos, requeridos, objetos anidados, proyección y errores consultar el esquema correspondiente. Los DTO legales están identificados como sujetos a ratificación J-01…J-05.
+**Estado vigente D-210:** Contrato DOCUMENTAL, no implementación. Fuente estructurada: `docs/openapi/peru-commerce-v1.openapi.draft.json` `0.13.0-draft`. Esta tabla acumulada incluye las **82 operaciones REST** (R8-18 sigue fuera del OpenAPI), con los 12 R8-53…64 ratificados en cobertura y las 13 R8-71…83 del POS V1 pendientes de revisión del propietario antes de P3 ([docs/48](48-CONTRATO-POS-V1-P2.md)). Es una vista humana de **propiedades superiores**; para tipos, requeridos, objetos anidados, proyección y errores consultar el esquema correspondiente. Los DTO legales están identificados como sujetos a ratificación J-01…J-05.
 
 | R8 | PER vigente | Esquema request → response | Campos entrada (nivel superior) | Campos salida (nivel superior) | Capability/actor |
 | --- | --- | --- | --- | --- | --- |
@@ -280,6 +303,19 @@ Era **pendiente en el corte histórico completar OpenAPI 3.1 por operación** co
 | R8-68 | PER-50 | `— → PrivateBinary` | `id` y `evidence_ref` en path, `purpose` en query | binario privado de ARCO solo del caso y finalidad | perucommerce_privacy_manage (solo A) |
 | **R8-69** | **PER-38/39** | **`AdminManualCaseCreate → AdminManualCaseOpened`** | line_id, purpose físico parcial, requested_affected_units, reason, verification, expected_order_version, expected_line_version, idempotency_key | case_id, order_id/line_id, row_version, case_phase=open_review, operation_id y fecha, sin PII | **A con orders_read Y orders_financial_adjust** (sin O), mismo comercio/pedido, CSRF y auditoría |
 | **R8-70** | **PER-38/39** | **`AdminManualCaseCloseRequest → AdminManualCaseClosed`** | `case_id` en path, decision reject/buyer_withdrawn, reason, expected_case_version, idempotency_key; withdrawal_verification obligatoria para retiro | case_id, order_id/line_id, case_phase terminal, nueva row_version, operation_id y fecha, sin PII | Solo A, orders_read Y orders_financial_adjust, pertenencia/estado/caso/campo verificados |
+| R8-71 | PER-57 | `— → PosCatalogPage` | query q, page, per_page | items[sellable_id, name, price_cents, available_units, sku?, variant_label?], page, per_page, has_more; sin costo ni proveedor | A/O, pos_sell; puerta `pos.read` |
+| R8-72 | PER-57 | `PosSaleCommit → PosSaleResult` | cash_session_id, lines[sellable_id, quantity], expected_total_cents, expected_rounding_cents, expected_cash_due_cents, tendered_cents, idempotency_key | operation_id, order_id, order_number, total_cents, rounding_cents, cash_due_cents, tendered_cents, change_cents, row_version | A/O, pos_sell y sesión propia abierta; puerta `pos.write` |
+| R8-73 | PER-58 | `CashSessionOpen → CashSession` | register_code, opening_float_cents, idempotency_key | id, register_code, status, opening_float_cents, business_date, opened_at, row_version, opened_by_self?, pending_documents_count? | A/O, cash_session_operate; puerta `pos.sessions` |
+| R8-74 | PER-58 | `— → CashSession` | — | igual que R8-73; **sin esperado ni diferencia** | A/O, cash_session_operate, solo sesión propia; puerta `pos.read` |
+| R8-75 | PER-60 | `CashMovementCreate → MutationResult` | `id` en path, kind pay_in/pay_out, amount_cents, reason, expected_version, idempotency_key, order_id? | MutationResult existente (operation_id, result, entity_id?, row_version?) | Solo A, cash_movements_record; puerta `pos.sessions` |
+| R8-76 | PER-58 | `CashSessionClose → CashSessionCloseResult` | `id` en path, counted_cents, expected_version, idempotency_key | session_id, status, counted_cents, pending_documents_count; expected_cents y difference_cents solo con cash_session_review | A/O, cash_session_operate y sesión propia; puerta `pos.sessions` |
+| R8-77 | PER-59 | `— → CashSessionPage` | query page, per_page, state, register_code, business_date | items[id, register_code, status, opened_by_user_id, business_date, opened_at, closed_at?, expected/counted/difference_cents?], page, per_page, has_more | Solo A, cash_session_review; puerta `pos.read` |
+| R8-78 | PER-59 | `— → CashSessionDetail` | `id` en path | id, register_code, status, opened_by_user_id, opening_float_cents, business_date, opened_at, row_version, expected_cents, movements[], counted/difference_cents?, close_reason?, closed_at?, closed_by_user_id?, pending_documents_count? | Solo A, cash_session_review; puerta `pos.read` |
+| R8-79 | PER-59 | `CashSessionForceClose → CashSessionCloseResult` | `id` en path, reason, expected_version, idempotency_key, counted_cents? | igual que R8-76 con esperado y diferencia | Solo A, cash_session_review; puerta `pos.sessions` |
+| R8-80 | PER-61 | `— → PosDocumentPendingPage` | query page, per_page | items[order_id, order_number, created_at, total_cents, pending_kind, case_id?], page, per_page, has_more; sin documento del adquirente | A/O, external_documents_record; puerta `pos.read` |
+| R8-81 | PER-61 | `PosExternalDocumentRecord → C2312Response` | `id` en path, document_kind, series, number, issued_at, amount_cents, buyer_id_type, expected_version, idempotency_key, case_id?, external_reference? | C2312Response existente (operation_id, record_id, external_only) | A/O, external_documents_record; `nota_credito` además refunds_record_external (solo A); puerta `pos.write` |
+| R8-82 | PER-57 | `— → PosOperationReceipt` | `id` en path | order_id, order_number, issued_at, register_code, lines[name, quantity, unit_price_cents, line_total_cents], total_cents, rounding_cents, cash_due_cents, tendered_cents, change_cents, legend, reminder | A/O, pos_sell Y orders_read; O solo pedidos de su propia sesión; puerta `pos.read` |
+| R8-83 | PER-62 | `PosReturnRecord → PosReturnResult` | `id` en path, lines[line_id, returned_units, restock_units, inspection], refund_cents, reason, evidence, expected_version, idempotency_key, cash_session_id? | operation_id, order_id, case_ids, refund_cents, restocked_units, row_version | Solo A, orders_read Y refunds_record_external Y stock_manage; puerta `pos.write`; revisión del propietario antes de P3 |
 
 ### Guardas especiales por campo
 
@@ -290,6 +326,7 @@ Era **pendiente en el corte histórico completar OpenAPI 3.1 por operación** co
 - **R8-08/09 y R8-10/11/12:** seguimiento solo lectura; cookie invitado canjeada HttpOnly/Secure/SameSite expira tras **30 min inactividad** sin superar enlace 90d, grant de propósito **5 min/un uso** y OTP 10min/5 intentos (D-190). CSRF/Origin se impone a operaciones sensibles aunque exista cookie; no expone secreto/OTP.
 - **R8-13/14:** sesión digital distinta del enlace de pedido, archivo en streaming privado sin ruta web ni cabeceras cacheables.
 - **Operador WordPress:** nunca `access_token`, `webhook_secret`, datos fiscales completos, Libro/ARCO íntegros, archivos protegidos ni refund externo; además filtrar por tarea y versión del recurso. Administrador tampoco recibe secretos MP en respuestas.
+- **R8-71…R8-83 (POS V1, D-210, DOCUMENTADO/NO IMPLEMENTADO):** el operador cierra con **arqueo ciego**: R8-74/76 nunca le devuelven `expected_cents` ni `difference_cents`, que solo ve quien tenga `perucommerce_cash_session_review`. El comprobante externo guarda solo `buyer_id_type`, **nunca el número de documento del adquirente**, y R8-80 no lo expone. R8-82 entrega a O solo pedidos `pos` de su propia sesión. Ingresos y retiros (R8-75), revisión y cierre forzado (R8-77…79) y devoluciones (R8-83) son exclusivos de A en V1. Los pedidos `pos` se rechazan en R8-25/27 con 422 `pc_business_ineligible` (`reason = web_channel_required`), y R8-81/83 rechazan pedidos web con `reason = pos_channel_required`. Detalle en [docs/48](48-CONTRATO-POS-V1-P2.md).
 
 ### Anexo C23 — extensión RATIFICADA EN COBERTURA (D-176…D-187)
 

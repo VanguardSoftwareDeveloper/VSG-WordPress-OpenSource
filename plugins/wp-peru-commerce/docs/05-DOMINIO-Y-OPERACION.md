@@ -1,5 +1,7 @@
 # Dominio y operación — PeruCommerce
 
+**PRECEDENCIA VIGENTE D-210 (27-11-2026):** el contrato vigente es OpenAPI **0.13.0-draft (82 REST/78 rutas/162 esquemas)**, con 83 entradas R8, 62 PER, 41 tablas declarativas y 210 decisiones; el POS V1 consta en [docs/48](48-CONTRATO-POS-V1-P2.md) como **DOCUMENTADO/NO IMPLEMENTADO**. Las cifras D-200/0.12.0-draft o anteriores de este archivo quedan como corte histórico; el código y las pruebas siguen alineados con 0.12.0-draft hasta P3.
+
 **PRECEDENCIA VIGENTE (18-11-2026):** este archivo conserva las decisiones de dominio y ejemplos históricos; el contrato técnico fuente de implementación es **OpenAPI 0.8.0-draft (67 REST/64 rutas/134 esquemas)**, con 68 entradas R8, 56 PER, 39 tablas lógicas y cierre docs/41/42. Los textos que llaman «pendiente» a E-02…E-08 o al OpenAPI reflejan fases antiguas. Quedan por comprobar software/hosting/MP/ley/ZIP al desarrollar, no decisiones comerciales nuevas. R8-21 permite leer casos A-only y condiciones pactadas; R8-45/46 configura cuota digital y mapa; R8-12 usa idempotencia durable. No se han creado módulos.
 
 **Estado:** contratos e invariantes propuestos para revisión; sin entidad/esquema definitivo.

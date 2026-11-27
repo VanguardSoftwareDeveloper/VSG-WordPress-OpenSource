@@ -53,6 +53,7 @@ La política está aprobada, pero **el esquema REST físico, los estados comprob
 | O-07 | CONFIRMADO → FINALIZADO | S tras eventos/administración verificados | Todas las líneas resueltas y cero incidencias/devoluciones/ajustes pendientes **en ese momento**; nuevas reclamaciones posteriores se registran aparte sin regresión del pedido |
 | O-08 | VENCIDO → CANCELADO | A/S resuelve expediente | Si existe cobro tardío, dinero reintegrado externamente y resultado comprobado; sin cobro no inventar devolución |
 | O-09 | CONFIRMADO → CONFIRMADO | O/A/S ejecuta cumplimiento o ajuste | Cancelación parcial, cambio de dirección o entrega afectan registros asociados, no estado global automáticamente |
+| O-10 | sin pedido → CONFIRMADO con `channel = pos` (D-208, **DOCUMENTADO/NO IMPLEMENTADO**) | O/A con `pos_sell` y su propia sesión de caja abierta; módulo `pos.write` abierto | En la misma transacción: cotización del servidor; líneas F-01, F-03 y F-05 (recojo en local con salida de stock); `initial_charge` en efectivo por `R` y `cash_rounding` si procede; movimiento `sale_cash`; O-07 FINALIZADO. Si un paso falla no queda nada; la venta nace FINALIZADA o no existe ([docs/48](48-CONTRATO-POS-V1-P2.md) §9) |
 
 **Prohibido:** CONFIRMADO → PENDIENTE_PAGO; FINALIZADO/CANCELADO → PENDIENTE_PAGO; VENCIDO → CONFIRMADO sin pago acreditado y recursos comprobados; CANCELADO por cancelar solo una línea; FINALIZADO con incidente o conciliación abierta.
 

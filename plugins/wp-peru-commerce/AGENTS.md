@@ -2,6 +2,8 @@
 
 **Instrucción más reciente del propietario (2026-11-22):** incorporar un POS dentro de PeruCommerce y preparar su fuente para un futuro repositorio público independiente, sin publicar el monorepositorio. Consultar [docs/47](docs/47-POS-INTEGRADO-Y-APERTURA-PUBLICA.md): POS no implementado, contrato y verificaciones pendientes. Esta decisión modifica solo la antigua exclusión de POS y privacidad del repositorio de desarrollo; las demás invariantes D-01…D-200, P-C/P-D y autorizaciones de ejecución siguen vigentes. No interpretar el cierre IMP-01…IMP-71 como cierre del POS.
 
+**Ratificación P1 y contrato P2 del POS (2026-11-27):** el propietario ratificó el alcance POS V1 y D1–D14 con precisiones obligatorias, incorporadas como D-201…D-210. El contrato P2 está en [docs/48](docs/48-CONTRATO-POS-V1-P2.md) y es **DOCUMENTADO/NO IMPLEMENTADO**. Las invariantes vigentes son D-01…D-210. P3 (backend PHP) exige autorización P-B y la revisión del propietario de D-208…D-210.
+
 **Nota de ubicación (2026-11-26):** la fuente ya está consolidada en este repositorio público canónico ([../../docs/SOURCE-CONSOLIDATION.md](../../docs/SOURCE-CONSOLIDATION.md)). Las menciones a un repositorio separado o a no publicar el monorepositorio quedan superadas solo en cuanto a ubicación; las puertas, contratos y autorizaciones siguen vigentes.
 
 **Registro de estado:** el historial IMP-24…IMP-71 y la rectificación vigente D-199/D-200 (DOC-QA30/31), antes en este archivo, están en el anexo final de [docs/43](docs/43-ESTADO-IMPLEMENTACION.md). Consultarlos allí cuando la tarea los necesite; este archivo contiene solo reglas.
@@ -9,15 +11,15 @@
 ## 1. Precedencia obligatoria y fuente vigente
 
 1. Instrucciones explícitas más recientes del propietario para **esta tarea y repositorio**; no extrapolar permisos de otros proyectos.
-2. `docs/01-DECISIONES-Y-ESTADO.md`: **200 decisiones** D-01…D-200. En conflictos comerciales, respetar estas decisiones y no reabrirlas por conveniencia técnica.
+2. `docs/01-DECISIONES-Y-ESTADO.md`: **210 decisiones** D-01…D-210. En conflictos comerciales, respetar estas decisiones y no reabrirlas por conveniencia técnica.
 3. `docs/41-CIERRE-FASE-0-BASELINE-PRECODIGO-V1.md`: estado de puertas P-A (diseño), P-B (código), P-C (verificación) y P-D (habilitación/release).
 4. `docs/42-AUDITORIA-Y-CORRECCIONES-CONTRATOS-PRECODIGO-V1.md`: correcciones de contratos y alcance real de la revisión estática.
-5. `docs/openapi/peru-commerce-v1.openapi.draft.json`: **OpenAPI 3.1 `0.12.0-draft`, 69 operaciones REST/66 rutas/138 esquemas**. `R8-18` es una página WordPress, **no REST**. `docs/24-MATRIZ-REST-PERMISOS-DTO-P0-23-V1.md` relaciona **70 entradas R8** (69 REST + página WP) y **56 operaciones PER**.
-6. Contratos de dominio E-01…E-08 en `docs/14`…`docs/21`; modelo de **39 tablas declarativas** en `docs/23` y tratamientos DB-A01…16 en `docs/36` y `docs/38`; normativa condicional en `docs/25/26/35`; seguridad en `docs/20/37`; Angular y distribución en `docs/30/31/32`; mapas INEI en `docs/33`.
+5. `docs/openapi/peru-commerce-v1.openapi.draft.json`: **OpenAPI 3.1 `0.13.0-draft`, 82 operaciones REST/78 rutas/162 esquemas**. `R8-18` es una página WordPress, **no REST**. `docs/24-MATRIZ-REST-PERMISOS-DTO-P0-23-V1.md` relaciona **83 entradas R8** (82 REST + página WP) y **62 operaciones PER**. Las operaciones POS R8-71…R8-83 y sus enmiendas aditivas siguen el contrato de `docs/48`.
+6. Contratos de dominio E-01…E-08 en `docs/14`…`docs/21`; modelo de **41 tablas declarativas** en `docs/23` (tablas 40–41 en su addendum POS y en `docs/48` §10) y tratamientos DB-A01…16 en `docs/36` y `docs/38`; normativa condicional en `docs/25/26/35`; seguridad en `docs/20/37`; Angular y distribución en `docs/30/31/32`; mapas INEI en `docs/33`.
 7. Figma V1 https://www.figma.com/design/qJaGwnjfaI35gYDjFwzBub: **34 frames editables** (17 móvil / 17 escritorio) como baseline visual de ingeniería D-195, no prueba de navegación ni de WCAG.
 8. Documentación oficial **vigente al momento de implementar** de WordPress, Angular, Mercado Pago y autoridades peruanas, y evidencia real de la instalación/comerciante para habilitación.
 
-**Regla inequívoca de precedencia:** `docs/openapi/peru-commerce-v1.openapi.draft.json` **0.12.0-draft** es el único contrato REST actual. Los cortes **0.3…0.11** y los conteos anteriores quedan como evidencia histórica en `docs/42`, jamás como contratos para generar código. Cualquier frase marcada «vigente/actual» en un antecedente debe interpretarse conforme a la fecha de ese corte, no prevalece sobre esta sección ni el JSON principal. `docs/openapi/*PROPOSAL*` es propuesta histórica, no contrato. No inferir autorización de escribir código por la declaración P-A cerrada.
+**Regla inequívoca de precedencia:** `docs/openapi/peru-commerce-v1.openapi.draft.json` **0.13.0-draft** es el único contrato REST actual. El código y las pruebas siguen alineados con 0.12.0-draft hasta P3; los consumidores que cambiarán constan en `docs/48` §15. Los cortes **0.3…0.12** y los conteos anteriores quedan como evidencia histórica en `docs/42`, jamás como contratos para generar código. Cualquier frase marcada «vigente/actual» en un antecedente debe interpretarse conforme a la fecha de ese corte, no prevalece sobre esta sección ni el JSON principal. `docs/openapi/*PROPOSAL*` es propuesta histórica, no contrato. No inferir autorización de escribir código por la declaración P-A cerrada.
 
 ## 2. Alcance V1 y contratos que no deben reinterpretarse
 
@@ -53,7 +55,7 @@
 
 ## 5. Historial documental y límites
 
-Las rectificaciones históricas 0.5…0.11, sus identificadores DOC-QA y evidencias están conservadas en `docs/42-AUDITORIA-Y-CORRECCIONES-CONTRATOS-PRECODIGO-V1.md`, `docs/01` y las matrices especializadas. No reconstruir permisos, DTO ni rutas a partir de anexos antiguos: usar exclusivamente OpenAPI **0.12.0-draft** y la decisión D-200. Una API documentada no constituye prueba de su funcionamiento. La autorización **original de la documentación** (histórica) se limitó a Markdown. Las instrucciones posteriores autorizaron implementar/publicar IMP-02/03, IMP-04, IMP-05, IMP-06, IMP-07, IMP-08, IMP-09, IMP-10, IMP-11, IMP-12, IMP-13, IMP-14, IMP-15, IMP-16, IMP-17, IMP-18, IMP-19, IMP-20, IMP-21, IMP-22, IMP-23 y, en las solicitudes posteriores, IMP-24, IMP-25, IMP-26, IMP-27, IMP-28, IMP-29, IMP-30 e IMP-31; ninguna autorizó ejecutar pruebas, compilaciones, migraciones, ZIP ni despliegue.
+Las rectificaciones históricas 0.5…0.11, sus identificadores DOC-QA y evidencias están conservadas en `docs/42-AUDITORIA-Y-CORRECCIONES-CONTRATOS-PRECODIGO-V1.md`, `docs/01` y las matrices especializadas. No reconstruir permisos, DTO ni rutas a partir de anexos antiguos: usar exclusivamente OpenAPI **0.13.0-draft** y la decisión D-210. Una API documentada no constituye prueba de su funcionamiento. La autorización **original de la documentación** (histórica) se limitó a Markdown. Las instrucciones posteriores autorizaron implementar/publicar IMP-02/03, IMP-04, IMP-05, IMP-06, IMP-07, IMP-08, IMP-09, IMP-10, IMP-11, IMP-12, IMP-13, IMP-14, IMP-15, IMP-16, IMP-17, IMP-18, IMP-19, IMP-20, IMP-21, IMP-22, IMP-23 y, en las solicitudes posteriores, IMP-24, IMP-25, IMP-26, IMP-27, IMP-28, IMP-29, IMP-30 e IMP-31; ninguna autorizó ejecutar pruebas, compilaciones, migraciones, ZIP ni despliegue.
 
 ## 6. Continuidad e implementación por fases
 

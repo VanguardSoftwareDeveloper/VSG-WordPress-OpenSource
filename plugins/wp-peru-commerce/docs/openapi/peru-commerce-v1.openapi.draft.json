@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "PeruCommerce REST V1 — R8-01…R8-70, contrato documental de diseño",
-    "version": "0.12.0-draft",
-    "description": "Diseño V1: D-189/D-198 protegen detalle y evidencia de Libro/ARCO. Rectificación 2026-11-18 de contratos de checkout/seguimiento, webhook Orders, versiones CAS, catálogo y archivo digital por variante. 67 REST, 64 rutas y 134 DTO; R8-18 es página WordPress no REST. No hay código, tests ni integraciones habilitadas. Rectificación de contratos precódigo 2026-11-18: exposición, políticas editables, versiones de recursos y conciliación MP prepedido. Sin nuevos endpoints, roles, tablas ni estados. Rectificación precódigo 2026-11-18: recuperación privada de detalles de caso y términos históricos, cuota de descarga por comercio, proveedor de tiles opcional, y reintento R8-12 atómico; 67 REST/64 rutas/134 esquemas, sin tablas nuevas. La fuente física de eventos distingue actor_kind y actor_user_id nullable para invitado/sistema sin identidad WP falsa. R8-45 exige map_tiles (al menos enabled=false) y digital_download_limit (null por defecto) para que el panel no adivine configuración.\nDOC-QA22…26: 5 recorridos contractuales completados (cantidad parcial, pago tardío/cita, datos proveedor/correo, privacidad/exportación y cierre de agenda), sin rutas/esquemas/tablas/roles nuevos.\nDOC-QA27…29: quantity conserva la cantidad original; physical_quantities comunica compromisos y salidas físicas por línea, con versiones coherentes. Listas de exposición reconciliadas para remitente/exportaciones. routine_buyer_emails_enabled configura solo avisos físicos rutinarios futuros, sin alterar cola previa, comunicaciones esenciales ni versiones legales. 67 REST/64 rutas/134 esquemas; sin código ni nuevas tablas, roles o estados.\nDOC-QA30/D-199: R8-69 abre expediente manual de solicitud de ajuste parcial físico para comprador sin correo, solo A y sin efecto financiero; R8-26 consume y revalida expediente. Se agregan 1 REST, 1 ruta, 2 DTO, sin nuevas tablas/capabilities/roles.\nDOC-QA31/D-200: R8-70 cierre rechazado o retirado de caso físico parcial de R8-69, R8-26 cierra adjusted de modo atómico. Total 69 REST/66 rutas/138 DTO, 56 PER, 39 tablas, sin código ni prueba."
+    "title": "PeruCommerce REST V1 — R8-01…R8-83, contrato documental de diseño",
+    "version": "0.13.0-draft",
+    "description": "Diseño V1: D-189/D-198 protegen detalle y evidencia de Libro/ARCO. Rectificación 2026-11-18 de contratos de checkout/seguimiento, webhook Orders, versiones CAS, catálogo y archivo digital por variante. 67 REST, 64 rutas y 134 DTO; R8-18 es página WordPress no REST. No hay código, tests ni integraciones habilitadas. Rectificación de contratos precódigo 2026-11-18: exposición, políticas editables, versiones de recursos y conciliación MP prepedido. Sin nuevos endpoints, roles, tablas ni estados. Rectificación precódigo 2026-11-18: recuperación privada de detalles de caso y términos históricos, cuota de descarga por comercio, proveedor de tiles opcional, y reintento R8-12 atómico; 67 REST/64 rutas/134 esquemas, sin tablas nuevas. La fuente física de eventos distingue actor_kind y actor_user_id nullable para invitado/sistema sin identidad WP falsa. R8-45 exige map_tiles (al menos enabled=false) y digital_download_limit (null por defecto) para que el panel no adivine configuración.\nDOC-QA22…26: 5 recorridos contractuales completados (cantidad parcial, pago tardío/cita, datos proveedor/correo, privacidad/exportación y cierre de agenda), sin rutas/esquemas/tablas/roles nuevos.\nDOC-QA27…29: quantity conserva la cantidad original; physical_quantities comunica compromisos y salidas físicas por línea, con versiones coherentes. Listas de exposición reconciliadas para remitente/exportaciones. routine_buyer_emails_enabled configura solo avisos físicos rutinarios futuros, sin alterar cola previa, comunicaciones esenciales ni versiones legales. 67 REST/64 rutas/134 esquemas; sin código ni nuevas tablas, roles o estados.\nDOC-QA30/D-199: R8-69 abre expediente manual de solicitud de ajuste parcial físico para comprador sin correo, solo A y sin efecto financiero; R8-26 consume y revalida expediente. Se agregan 1 REST, 1 ruta, 2 DTO, sin nuevas tablas/capabilities/roles.\nDOC-QA31/D-200: R8-70 cierre rechazado o retirado de caso físico parcial de R8-69, R8-26 cierra adjusted de modo atómico. Total 69 REST/66 rutas/138 DTO, 56 PER, 39 tablas, sin código ni prueba.\nDOC-QA32/D-201…D-210 (27-11-2026): POS V1 R8-71…R8-83, 13 REST/12 rutas/24 DTO nuevos, 5 capabilities, 2 tablas, PER-57…62; enmiendas aditivas R8-20/21/24/25/27/45/46. Total 82 REST/78 rutas/162 DTO, 62 PER, 41 tablas, sin código ni prueba."
   },
   "servers": [
     {
@@ -2285,6 +2285,18 @@
               "type": "string",
               "maxLength": 40
             }
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "web",
+                "pos"
+              ]
+            }
           }
         ],
         "responses": {
@@ -2358,7 +2370,9 @@
           "PER-12"
         ],
         "x-field-exposure": {
-          "input": [],
+          "input": [
+            "channel"
+          ],
           "response": [
             "items",
             "page",
@@ -2524,7 +2538,8 @@
             "digital_rights",
             "cases",
             "agreed_notices",
-            "case_detail"
+            "case_detail",
+            "channel"
           ],
           "denyUnknownInput": true,
           "neverReturn": [
@@ -2856,7 +2871,7 @@
           "admin"
         ],
         "summary": "Monto neto realmente recibido D-105 y idempotencia; no corrección destructiva",
-        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales.",
+        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. D-207: rounding_cents solo floor10 con ajuste 0–9 o importe exacto; D-203: cash_session_id opcional crea web_cash_in solo si se envía, nunca automático.",
         "security": [
           {
             "WordPressSession": []
@@ -2967,7 +2982,9 @@
           "input": [
             "amount_cents",
             "expected_version",
-            "idempotency_key"
+            "idempotency_key",
+            "rounding_cents",
+            "cash_session_id"
           ],
           "response": [
             "operation_id",
@@ -2998,7 +3015,7 @@
           "admin"
         ],
         "summary": "Evento correctivo inmutable, evidencia y motivo, sin editar recepción original",
-        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales.",
+        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. D-205/D-210: rechaza pedidos channel=pos con 422 pc_business_ineligible (reason web_channel_required); usar R8-83.",
         "security": [
           {
             "WordPressSession": []
@@ -3301,7 +3318,7 @@
           "admin"
         ],
         "summary": "Registrar **resultado** externo total/parcial comprobado y conciliado, sin API proveedor refund",
-        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales.",
+        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. D-205/D-210: rechaza pedidos channel=pos con 422 pc_business_ineligible (reason web_channel_required); usar R8-83. cash_session_id opcional solo si el cobro original es cash (refund_cash).",
         "security": [
           {
             "WordPressSession": []
@@ -3414,7 +3431,8 @@
             "external_reference",
             "evidence",
             "expected_version",
-            "idempotency_key"
+            "idempotency_key",
+            "cash_session_id"
           ],
           "response": [
             "operation_id",
@@ -6077,7 +6095,8 @@
             "digital_download_limit",
             "map_tiles",
             "mail_sender",
-            "routine_buyer_emails_enabled"
+            "routine_buyer_emails_enabled",
+            "pos"
           ],
           "denyUnknownInput": true,
           "neverReturn": [
@@ -6229,7 +6248,8 @@
             "digital_download_limit",
             "map_tiles",
             "mail_sender",
-            "routine_buyer_emails_enabled"
+            "routine_buyer_emails_enabled",
+            "pos"
           ],
           "response": [
             "business",
@@ -6246,7 +6266,8 @@
             "digital_download_limit",
             "map_tiles",
             "mail_sender",
-            "routine_buyer_emails_enabled"
+            "routine_buyer_emails_enabled",
+            "pos"
           ],
           "denyUnknownInput": true,
           "neverReturn": [
@@ -9897,6 +9918,2039 @@
         "x-contract-status": "APPROVED_IN_DOCUMENTARY_SCOPE_NOT_IMPLEMENTED",
         "x-case-atomicity": "order→line→case locks; compare expected_case_version and open_review; same request replay uses stored result; update phase+resolved_at+row_version, append case event, audit, idempotency in one transaction. No stock/order/finance mutation"
       }
+    },
+    "/admin/pos/catalog": {
+      "get": {
+        "operationId": "R8-71",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Buscar productos físicos para la caja presencial",
+        "description": "D-210/PER-57: búsqueda por nombre, SKU o código de barras leído como teclado. Solo físicos y variantes publicadas; precio y disponibilidad informativos, el servidor recalcula al cobrar.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de catálogo POS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosCatalogPage"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "staff",
+          "rolesAllowed": [
+            "A",
+            "O"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_pos_sell"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-57"
+        ],
+        "x-field-exposure": {
+          "input": [
+            "q",
+            "page",
+            "per_page"
+          ],
+          "response": [
+            "items",
+            "page",
+            "per_page",
+            "has_more"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.read",
+        "x-policy-refs": [
+          "D-204",
+          "D-205"
+        ]
+      }
+    },
+    "/admin/pos/sales": {
+      "post": {
+        "operationId": "R8-72",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Confirmar venta presencial en efectivo (pedido channel=pos)",
+        "description": "D-208/D-207/D-203: en una transacción crea el pedido channel=pos por O-10 (sin pedido → CONFIRMADO), registra la entrega con stockOutWithin, initial_charge cash por R, cash_rounding por el ajuste si > 0 y el movimiento sale_cash (+R, tendered y change) en la sesión propia abierta. Orden de locks: idempotencia → sesión FOR UPDATE → pedido → líneas → vendibles asc → compromisos de stock. Totales distintos: 409 pc_quote_changed sin escribir. Sesión cerrada: 409 pc_conflict con reason pos_session_closed. Reintento con la misma clave devuelve el mismo resultado o 423.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1
+            },
+            "description": "CSRF WP, no sustituye autenticación ni autorización"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Venta confirmada; también replay idéntico autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosSaleResult"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "staff",
+          "rolesAllowed": [
+            "A",
+            "O"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_pos_sell"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false,
+          "roleConditionalGuard": "Solo la sesión abierta del propio usuario; sin descuentos ni cambio de precio"
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PosSaleCommit"
+              }
+            }
+          }
+        },
+        "x-idempotency": "durable_required",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-57"
+        ],
+        "x-field-exposure": {
+          "input": [
+            "cash_session_id",
+            "lines",
+            "expected_total_cents",
+            "expected_rounding_cents",
+            "expected_cash_due_cents",
+            "tendered_cents",
+            "idempotency_key"
+          ],
+          "response": [
+            "operation_id",
+            "order_id",
+            "order_number",
+            "total_cents",
+            "rounding_cents",
+            "cash_due_cents",
+            "tendered_cents",
+            "change_cents",
+            "row_version"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.write",
+        "x-policy-refs": [
+          "D-202",
+          "D-203",
+          "D-205",
+          "D-207",
+          "D-208"
+        ]
+      }
+    },
+    "/admin/pos/sessions": {
+      "post": {
+        "operationId": "R8-73",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Abrir sesión de caja propia",
+        "description": "D-203/PER-58: abre una sesión con fondo inicial para una caja configurada; máximo una abierta por caja y una por usuario (409 pc_conflict con reason pos_register_busy o pos_session_already_open).",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1
+            },
+            "description": "CSRF WP, no sustituye autenticación ni autorización"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Sesión abierta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashSession"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "staff",
+          "rolesAllowed": [
+            "A",
+            "O"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_cash_session_operate"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false,
+          "roleConditionalGuard": "La sesión queda a nombre del usuario que la abre"
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashSessionOpen"
+              }
+            }
+          }
+        },
+        "x-idempotency": "durable_required",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-58"
+        ],
+        "x-field-exposure": {
+          "input": [
+            "register_code",
+            "opening_float_cents",
+            "idempotency_key"
+          ],
+          "response": [
+            "id",
+            "register_code",
+            "status",
+            "opened_by_self",
+            "opening_float_cents",
+            "business_date",
+            "opened_at",
+            "row_version",
+            "pending_documents_count"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.sessions",
+        "x-policy-refs": [
+          "D-203",
+          "D-204"
+        ]
+      },
+      "get": {
+        "operationId": "R8-77",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Listar sesiones de caja con esperado y diferencia",
+        "description": "D-204/PER-59: solo A con cash_session_review. Filtros por estado, caja y fecha comercial.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open",
+                "closed",
+                "force_closed"
+              ]
+            }
+          },
+          {
+            "name": "register_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9_-]{1,32}$"
+            }
+          },
+          {
+            "name": "business_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de sesiones",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashSessionPage"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "admin_only",
+          "rolesAllowed": [
+            "A"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_cash_session_review"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-59"
+        ],
+        "x-field-exposure": {
+          "input": [
+            "page",
+            "per_page",
+            "state",
+            "register_code",
+            "business_date"
+          ],
+          "response": [
+            "items",
+            "page",
+            "per_page",
+            "has_more"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.read",
+        "x-policy-refs": [
+          "D-203",
+          "D-204"
+        ]
+      }
+    },
+    "/admin/pos/sessions/current": {
+      "get": {
+        "operationId": "R8-74",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Consultar la sesión abierta propia",
+        "description": "D-203/PER-58: devuelve la sesión abierta del usuario, sin esperado ni diferencia (arqueo ciego); 404 si no tiene ninguna.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Sesión propia abierta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashSession"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "staff",
+          "rolesAllowed": [
+            "A",
+            "O"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_cash_session_operate"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false,
+          "roleConditionalGuard": "Solo la sesión del propio usuario"
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-58"
+        ],
+        "x-field-exposure": {
+          "input": [],
+          "response": [
+            "id",
+            "register_code",
+            "status",
+            "opened_by_self",
+            "opening_float_cents",
+            "business_date",
+            "opened_at",
+            "row_version",
+            "pending_documents_count"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.read",
+        "x-policy-refs": [
+          "D-203",
+          "D-204"
+        ]
+      }
+    },
+    "/admin/pos/sessions/{id}": {
+      "get": {
+        "operationId": "R8-78",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Ver detalle de una sesión de caja con sus movimientos",
+        "description": "D-204/PER-59: solo A con cash_session_review; esperado calculado desde movimientos inmutables.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SqlId"
+            },
+            "description": "Sesión de caja de la instalación; nunca permiso por conocer el ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle de sesión",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashSessionDetail"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "admin_only",
+          "rolesAllowed": [
+            "A"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_cash_session_review"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-59"
+        ],
+        "x-field-exposure": {
+          "input": [],
+          "response": [
+            "id",
+            "register_code",
+            "status",
+            "opened_by_user_id",
+            "opening_float_cents",
+            "business_date",
+            "opened_at",
+            "row_version",
+            "expected_cents",
+            "counted_cents",
+            "difference_cents",
+            "close_reason",
+            "closed_at",
+            "closed_by_user_id",
+            "pending_documents_count",
+            "movements"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.read",
+        "x-policy-refs": [
+          "D-203",
+          "D-204"
+        ]
+      }
+    },
+    "/admin/pos/sessions/{id}/movements": {
+      "post": {
+        "operationId": "R8-75",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Registrar ingreso o retiro de efectivo con motivo",
+        "description": "D-203/PER-60: solo A en V1 con cash_movements_record; sesión abierta con CAS expected_version; movimiento inmutable pay_in (+) o pay_out (−).",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1
+            },
+            "description": "CSRF WP, no sustituye autenticación ni autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SqlId"
+            },
+            "description": "Sesión abierta de destino"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Movimiento registrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResult"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "admin_only",
+          "rolesAllowed": [
+            "A"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_cash_movements_record"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashMovementCreate"
+              }
+            }
+          }
+        },
+        "x-idempotency": "durable_required",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-60"
+        ],
+        "x-field-exposure": {
+          "input": [
+            "kind",
+            "amount_cents",
+            "reason",
+            "order_id",
+            "expected_version",
+            "idempotency_key"
+          ],
+          "response": [
+            "operation_id",
+            "entity_id",
+            "row_version",
+            "result"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.sessions",
+        "x-policy-refs": [
+          "D-203",
+          "D-204"
+        ]
+      }
+    },
+    "/admin/pos/sessions/{id}/close": {
+      "post": {
+        "operationId": "R8-76",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Cerrar la sesión propia con arqueo ciego",
+        "description": "D-203/PER-58: fija expected, counted y difference de forma inmutable bajo lock de la sesión; las ventas posteriores reciben 409 pc_conflict con reason pos_session_closed. Comprobantes pendientes no bloquean el cierre.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1
+            },
+            "description": "CSRF WP, no sustituye autenticación ni autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SqlId"
+            },
+            "description": "Sesión propia abierta"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sesión cerrada; también replay idéntico autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashSessionCloseResult"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "staff",
+          "rolesAllowed": [
+            "A",
+            "O"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_cash_session_operate"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false,
+          "roleConditionalGuard": "Solo la sesión propia; expected y difference solo con cash_session_review"
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashSessionClose"
+              }
+            }
+          }
+        },
+        "x-idempotency": "durable_required",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-58"
+        ],
+        "x-field-exposure": {
+          "input": [
+            "counted_cents",
+            "expected_version",
+            "idempotency_key"
+          ],
+          "response": [
+            "session_id",
+            "status",
+            "counted_cents",
+            "pending_documents_count",
+            "expected_cents",
+            "difference_cents"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.sessions",
+        "x-policy-refs": [
+          "D-203",
+          "D-204",
+          "D-206"
+        ]
+      }
+    },
+    "/admin/pos/sessions/{id}/force-close": {
+      "post": {
+        "operationId": "R8-79",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Forzar el cierre de una sesión ajena",
+        "description": "D-203/PER-59: solo A con cash_session_review y motivo; sin conteo, counted y difference quedan null pendientes de revisión. No hay cierre automático.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1
+            },
+            "description": "CSRF WP, no sustituye autenticación ni autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SqlId"
+            },
+            "description": "Sesión abierta de la instalación"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sesión cerrada a la fuerza; también replay idéntico autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CashSessionCloseResult"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "admin_only",
+          "rolesAllowed": [
+            "A"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_cash_session_review"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CashSessionForceClose"
+              }
+            }
+          }
+        },
+        "x-idempotency": "durable_required",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-59"
+        ],
+        "x-field-exposure": {
+          "input": [
+            "reason",
+            "counted_cents",
+            "expected_version",
+            "idempotency_key"
+          ],
+          "response": [
+            "session_id",
+            "status",
+            "counted_cents",
+            "pending_documents_count",
+            "expected_cents",
+            "difference_cents"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.sessions",
+        "x-policy-refs": [
+          "D-203",
+          "D-204"
+        ]
+      }
+    },
+    "/admin/pos/documents/pending": {
+      "get": {
+        "operationId": "R8-80",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Listar comprobantes externos pendientes de registrar",
+        "description": "D-206/PER-61: ventas pos sin comprobante de venta registrado y devoluciones sin nota de crédito. O solo ve los de su propia sesión.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cola de pendientes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosDocumentPendingPage"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "staff",
+          "rolesAllowed": [
+            "A",
+            "O"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_external_documents_record"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false,
+          "roleConditionalGuard": "O solo pedidos de su propia sesión"
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-61"
+        ],
+        "x-field-exposure": {
+          "input": [
+            "page",
+            "per_page"
+          ],
+          "response": [
+            "items",
+            "page",
+            "per_page",
+            "has_more"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key",
+            "buyer_document_number",
+            "identity_document_raw"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.read",
+        "x-policy-refs": [
+          "D-206"
+        ]
+      }
+    },
+    "/admin/pos/orders/{id}/external-documents": {
+      "post": {
+        "operationId": "R8-81",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Registrar referencia del comprobante emitido fuera para un pedido pos",
+        "description": "D-206/PER-61: solo pedidos channel=pos (otro canal: 422 pc_business_ineligible pos_channel_required; el canal web sigue en R8-64). No emite ni valida CPE ni autentica con SUNAT. Importe distinto de T o del reembolso del expediente: 422. Un comprobante de venta por pedido. Nunca recibe ni guarda el número de documento del adquirente.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1
+            },
+            "description": "CSRF WP, no sustituye autenticación ni autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SqlId"
+            },
+            "description": "Pedido channel=pos"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Referencia registrada; también replay idéntico autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/C2312Response"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "staff",
+          "rolesAllowed": [
+            "A",
+            "O"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_external_documents_record"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false,
+          "roleConditionalGuard": "nota_credito exige además perucommerce_refunds_record_external (en V1 solo A)"
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PosExternalDocumentRecord"
+              }
+            }
+          }
+        },
+        "x-idempotency": "durable_required",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-61"
+        ],
+        "x-field-exposure": {
+          "input": [
+            "document_kind",
+            "series",
+            "number",
+            "issued_at",
+            "amount_cents",
+            "buyer_id_type",
+            "case_id",
+            "external_reference",
+            "expected_version",
+            "idempotency_key"
+          ],
+          "response": [
+            "operation_id",
+            "record_id",
+            "external_only"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key",
+            "buyer_document_number",
+            "identity_document_raw"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.write",
+        "x-policy-refs": [
+          "D-206",
+          "J-03"
+        ]
+      }
+    },
+    "/admin/pos/orders/{id}/receipt": {
+      "get": {
+        "operationId": "R8-82",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Reimprimir la constancia de operación de un pedido pos",
+        "description": "D-206/PER-57: solo pedidos channel=pos; constancia con la leyenda «Este documento no es un comprobante de pago», sin desglose de IGV.",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SqlId"
+            },
+            "description": "Pedido channel=pos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Constancia de operación",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosOperationReceipt"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "staff",
+          "rolesAllowed": [
+            "A",
+            "O"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_pos_sell",
+            "perucommerce_orders_read"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false,
+          "roleConditionalGuard": "O solo constancias de su propia sesión; A de todas"
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-57"
+        ],
+        "x-field-exposure": {
+          "input": [],
+          "response": [
+            "order_id",
+            "order_number",
+            "issued_at",
+            "register_code",
+            "lines",
+            "total_cents",
+            "rounding_cents",
+            "cash_due_cents",
+            "tendered_cents",
+            "change_cents",
+            "legend",
+            "reminder"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key",
+            "buyer_document_number",
+            "identity_document_raw"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.read",
+        "x-policy-refs": [
+          "D-206",
+          "D-207"
+        ]
+      }
+    },
+    "/admin/pos/orders/{id}/returns": {
+      "post": {
+        "operationId": "R8-83",
+        "tags": [
+          "admin",
+          "pos"
+        ],
+        "summary": "Registrar devolución o anulación presencial de un pedido pos",
+        "description": "D-205/PER-62: solo A. En una transacción: expediente pc_cases pos_return_after_delivery closed_returned por línea, reingreso pc_stock_movements solo de unidades fit_for_sale, external_refund cash sobre initial_charge y refund_cash solo si se indica cash_session_id de una sesión abierta. La línea sigue ENTREGADO y el pedido FINALIZADO; entra en la cola de notas de crédito. Solo channel=pos (otro canal: 422 pos_channel_required).",
+        "security": [
+          {
+            "WordPressSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-WP-Nonce",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256,
+              "minLength": 1
+            },
+            "description": "CSRF WP, no sustituye autenticación ni autorización"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SqlId"
+            },
+            "description": "Pedido channel=pos"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Devolución registrada; también replay idéntico autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosReturnResult"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "private, no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error400"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error401"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error403"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error404"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error409"
+          },
+          "410": {
+            "$ref": "#/components/responses/Error410"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error422"
+          },
+          "423": {
+            "$ref": "#/components/responses/Error423"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error429"
+          },
+          "500": {
+            "$ref": "#/components/responses/Error500"
+          },
+          "503": {
+            "$ref": "#/components/responses/Error503"
+          }
+        },
+        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-authz": {
+          "actor": "admin_only",
+          "rolesAllowed": [
+            "A"
+          ],
+          "capabilitiesAllOf": [
+            "perucommerce_orders_read",
+            "perucommerce_refunds_record_external",
+            "perucommerce_stock_manage"
+          ],
+          "capabilitiesAnyOf": [],
+          "denyByDefault": true,
+          "requiresWpSession": true,
+          "nonceIsCsrfOnly": true,
+          "installationScope": true,
+          "requiresResourceFieldStateChecks": true,
+          "requiresPurpose": false
+        },
+        "x-legal-constraints": [],
+        "x-source": "docs/48-CONTRATO-POS-V1-P2.md",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PosReturnRecord"
+              }
+            }
+          }
+        },
+        "x-idempotency": "durable_required",
+        "x-cache": "private, no-store",
+        "x-per": [
+          "PER-62"
+        ],
+        "x-field-exposure": {
+          "input": [
+            "lines",
+            "refund_cents",
+            "cash_session_id",
+            "reason",
+            "evidence",
+            "expected_version",
+            "idempotency_key"
+          ],
+          "response": [
+            "operation_id",
+            "order_id",
+            "case_ids",
+            "refund_cents",
+            "restocked_units",
+            "row_version"
+          ],
+          "denyUnknownInput": true,
+          "neverReturn": [
+            "access_token",
+            "webhook_secret",
+            "tracking_secret",
+            "digital_token",
+            "code",
+            "idempotency_key",
+            "raw_provider_payload",
+            "private_storage_key"
+          ],
+          "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
+        },
+        "x-decision-id": "D-210",
+        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-module-gate": "pos.write",
+        "x-policy-refs": [
+          "D-89",
+          "D-105",
+          "D-205",
+          "D-207"
+        ]
+      }
     }
   },
   "components": {
@@ -11371,6 +13425,14 @@
             },
             "required": [],
             "additionalProperties": false
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "web",
+              "pos"
+            ],
+            "description": "D-202: canal de origen; ausente equivale a web en pedidos anteriores a 1.1.0"
           }
         },
         "required": [
@@ -11533,6 +13595,14 @@
           "case_detail": {
             "$ref": "#/components/schemas/AdminCaseDetail",
             "description": "Solo cuando A solicita case_id y tiene orders_read más capability del expediente. O recibe AdminOrder sin case_detail; jamás se inyecta por filtro visual."
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "web",
+              "pos"
+            ],
+            "description": "D-202: canal de origen; ausente equivale a web en pedidos anteriores a 1.1.0"
           }
         },
         "required": [
@@ -11649,6 +13719,15 @@
             "type": "string",
             "maxLength": 128,
             "minLength": 16
+          },
+          "rounding_cents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9,
+            "default": 0
+          },
+          "cash_session_id": {
+            "$ref": "#/components/schemas/SqlId"
           }
         },
         "required": [
@@ -11657,7 +13736,7 @@
           "idempotency_key"
         ],
         "additionalProperties": false,
-        "description": "Importe neto realmente aplicado; sin billetes/vuelto"
+        "description": "Importe neto realmente aplicado; sin billetes/vuelto. D-207: rounding_cents 0 con amount = saldo, o rounding = saldo mod 10 > 0 con amount = saldo − rounding; otra combinación 422 pc_cash_amount_mismatch. D-203: cash_session_id opcional crea web_cash_in solo si se envía; nunca automático"
       },
       "CashCorrection": {
         "type": "object",
@@ -11799,6 +13878,9 @@
             "type": "string",
             "maxLength": 128,
             "minLength": 16
+          },
+          "cash_session_id": {
+            "$ref": "#/components/schemas/SqlId"
           }
         },
         "required": [
@@ -11810,7 +13892,7 @@
           "idempotency_key"
         ],
         "additionalProperties": false,
-        "description": "Registrar evento externo VERIFICADO, nunca ejecución de refund"
+        "description": "Registrar evento externo VERIFICADO, nunca ejecución de refund. D-203: cash_session_id opcional, solo si el cobro original es cash, registra refund_cash en esa sesión abierta"
       },
       "DeliveryChange": {
         "type": "object",
@@ -13086,6 +15168,9 @@
             "type": "boolean",
             "default": true,
             "description": "Siempre presente; true si nunca se configuró. D-134 / DOC-QA29. Un único interruptor para emails informativos físicos PREPARANDO (N6-X32), LISTO (N6-08) y DESPACHADO/ENTREGADO (N6-09), cuando corresponda email. No afecta WEB/PANEL/historial, pagos, incidencias, ajustes/cancelaciones, citas, digitales, Libro/ARCO ni comunicaciones esenciales. Se decide por evento al crear su intención y se conserva valor+versión de settings de forma durable, incluso si se omite EMAIL. Replays no recalculan la decisión; cola y reenvíos existentes la conservan. Reactivar no genera avisos históricos. No implica disponibilidad del correo ni recepción real."
+          },
+          "pos": {
+            "$ref": "#/components/schemas/PosSettings"
           }
         },
         "required": [
@@ -13171,6 +15256,9 @@
           "routine_buyer_emails_enabled": {
             "type": "boolean",
             "description": "Omitir conserva; true habilita y false omite solo nuevos avisos rutinarios elegibles. null no permitido. Solo A bajo CAS de settings. D-134 / DOC-QA29. Un único interruptor para emails informativos físicos PREPARANDO (N6-X32), LISTO (N6-08) y DESPACHADO/ENTREGADO (N6-09), cuando corresponda email. No afecta WEB/PANEL/historial, pagos, incidencias, ajustes/cancelaciones, citas, digitales, Libro/ARCO ni comunicaciones esenciales. Se decide por evento al crear su intención y se conserva valor+versión de settings de forma durable, incluso si se omite EMAIL. Replays no recalculan la decisión; cola y reenvíos existentes la conservan. Reactivar no genera avisos históricos. No implica disponibilidad del correo ni recepción real."
+          },
+          "pos": {
+            "$ref": "#/components/schemas/PosSettings"
           }
         },
         "required": [
@@ -13503,6 +15591,12 @@
                   },
                   "current_quote_required": {
                     "type": "boolean"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "pattern": "^[a-z_]+$",
+                    "maxLength": 60,
+                    "description": "D-210: causa específica sin nuevo código de primer nivel"
                   }
                 },
                 "required": [],
@@ -15856,6 +17950,1054 @@
           "operation_id",
           "resolved_at_utc"
         ]
+      },
+      "PosSettings": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "registers": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9_-]{1,32}$"
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                }
+              },
+              "required": [
+                "code",
+                "label"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "enabled",
+          "registers"
+        ],
+        "additionalProperties": false,
+        "description": "D-204/D-210: solo A con settings_manage. enabled falso por defecto; las cajas son códigos configurados, no identidades de terminal confiables. Las puertas pos.* requieren enabled, esquema 1.1.0 y al menos una caja."
+      },
+      "PosCatalogItem": {
+        "type": "object",
+        "properties": {
+          "sellable_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "sku": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "variant_label": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "price_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "available_units": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "sellable_id",
+          "name",
+          "price_cents",
+          "available_units"
+        ],
+        "additionalProperties": false,
+        "description": "Solo productos físicos y variantes publicadas (D-205: sin digitales, servicios ni citas). Precio y disponibilidad informativos; el servidor recalcula al cobrar."
+      },
+      "PosCatalogPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/PosCatalogItem"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "per_page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "per_page",
+          "has_more"
+        ],
+        "additionalProperties": false,
+        "description": "Página de catálogo POS"
+      },
+      "PosSaleLine": {
+        "type": "object",
+        "properties": {
+          "sellable_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999
+          }
+        },
+        "required": [
+          "sellable_id",
+          "quantity"
+        ],
+        "additionalProperties": false,
+        "description": "Sin precio ni descuento del cliente"
+      },
+      "PosSaleCommit": {
+        "type": "object",
+        "properties": {
+          "cash_session_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/PosSaleLine"
+            }
+          },
+          "expected_total_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "expected_rounding_cents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9
+          },
+          "expected_cash_due_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "tendered_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 16
+          }
+        },
+        "required": [
+          "cash_session_id",
+          "lines",
+          "expected_total_cents",
+          "expected_rounding_cents",
+          "expected_cash_due_cents",
+          "tendered_cents",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "D-207: el servidor calcula T, ajuste = T mod 10 y R = T − ajuste; si los importes esperados no coinciden responde 409 pc_quote_changed sin escribir. tendered_cents ≥ R. La clave nace al pulsar Cobrar; editar el carrito genera otra."
+      },
+      "PosSaleResult": {
+        "type": "object",
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "order_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "order_number": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "total_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "rounding_cents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9
+          },
+          "cash_due_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "tendered_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "change_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "row_version": {
+            "$ref": "#/components/schemas/SqlId"
+          }
+        },
+        "required": [
+          "operation_id",
+          "order_id",
+          "order_number",
+          "total_cents",
+          "rounding_cents",
+          "cash_due_cents",
+          "tendered_cents",
+          "change_cents",
+          "row_version"
+        ],
+        "additionalProperties": false,
+        "description": "Pedido channel=pos CONFIRMADO (O-10) y entregado en la misma transacción; total original, ajuste y efectivo debido por separado; tendered − change = cash_due."
+      },
+      "CashSessionOpen": {
+        "type": "object",
+        "properties": {
+          "register_code": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{1,32}$"
+          },
+          "opening_float_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 16
+          }
+        },
+        "required": [
+          "register_code",
+          "opening_float_cents",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "Máximo una sesión abierta por caja y una por usuario (409 pc_conflict con reason pos_register_busy o pos_session_already_open). Fecha comercial America/Lima."
+      },
+      "CashSession": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "register_code": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{1,32}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed",
+              "force_closed"
+            ]
+          },
+          "opened_by_self": {
+            "type": "boolean"
+          },
+          "opening_float_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "business_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "row_version": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "pending_documents_count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "register_code",
+          "status",
+          "opening_float_cents",
+          "business_date",
+          "opened_at",
+          "row_version"
+        ],
+        "additionalProperties": false,
+        "description": "Vista operativa: nunca incluye esperado ni diferencia (arqueo ciego)."
+      },
+      "CashMovementCreate": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pay_in",
+              "pay_out"
+            ]
+          },
+          "amount_cents": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$",
+            "description": "PEN céntimos, mayor que cero; el signo lo da kind"
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "order_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "expected_version": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 16
+          }
+        },
+        "required": [
+          "kind",
+          "amount_cents",
+          "reason",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "D-203: movimiento manual inmutable de una sesión abierta; order_id opcional para citar un pedido (p. ej. vuelto omitido). Nunca vincula cobros MP, cash_rounding ni correcciones R8-25."
+      },
+      "CashSessionClose": {
+        "type": "object",
+        "properties": {
+          "counted_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "expected_version": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 16
+          }
+        },
+        "required": [
+          "counted_cents",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "Arqueo ciego: quien cierra declara el conteo sin conocer el esperado. Comprobantes pendientes no bloquean el cierre."
+      },
+      "CashSessionForceClose": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "counted_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "expected_version": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 16
+          }
+        },
+        "required": [
+          "reason",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "Cierre de sesión ajena por A con motivo; sin conteo, counted y difference quedan null pendientes de revisión."
+      },
+      "CashSessionCloseResult": {
+        "type": "object",
+        "properties": {
+          "session_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "closed",
+              "force_closed"
+            ]
+          },
+          "counted_cents": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "description": "PEN céntimos; null si el cierre forzado no tuvo conteo"
+          },
+          "pending_documents_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expected_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "difference_cents": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "description": "counted − expected; null mientras no haya conteo"
+          }
+        },
+        "required": [
+          "session_id",
+          "status",
+          "counted_cents",
+          "pending_documents_count"
+        ],
+        "additionalProperties": false,
+        "description": "expected_cents y difference_cents solo para quien tenga cash_session_review; inmutables tras el cierre."
+      },
+      "CashSessionSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "register_code": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{1,32}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed",
+              "force_closed"
+            ]
+          },
+          "opened_by_user_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "business_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "expected_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "counted_cents": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "description": "PEN céntimos; null si el cierre forzado no tuvo conteo"
+          },
+          "difference_cents": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "description": "counted − expected; null mientras no haya conteo"
+          }
+        },
+        "required": [
+          "id",
+          "register_code",
+          "status",
+          "opened_by_user_id",
+          "business_date",
+          "opened_at"
+        ],
+        "additionalProperties": false,
+        "description": "Solo A con cash_session_review"
+      },
+      "CashSessionPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/CashSessionSummary"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "per_page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "per_page",
+          "has_more"
+        ],
+        "additionalProperties": false,
+        "description": "Página de sesiones de caja (A)"
+      },
+      "CashSessionMovement": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "sale_cash",
+              "web_cash_in",
+              "pay_in",
+              "pay_out",
+              "refund_cash"
+            ]
+          },
+          "amount_cents": {
+            "$ref": "#/components/schemas/SignedCents"
+          },
+          "order_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "case_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "tendered_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "change_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "actor_user_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "amount_cents",
+          "actor_user_id",
+          "occurred_at"
+        ],
+        "additionalProperties": false,
+        "description": "Movimiento inmutable: entrada (+) o salida (−) real de efectivo del cajón. tendered/change solo en sale_cash y no son ingresos."
+      },
+      "CashSessionDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "register_code": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{1,32}$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed",
+              "force_closed"
+            ]
+          },
+          "opened_by_user_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "opening_float_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "business_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "row_version": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "expected_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "counted_cents": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^(0|[1-9][0-9]*)$",
+            "description": "PEN céntimos; null si el cierre forzado no tuvo conteo"
+          },
+          "difference_cents": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^(0|-?[1-9][0-9]*)$",
+            "description": "counted − expected; null mientras no haya conteo"
+          },
+          "close_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "closed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "closed_by_user_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "pending_documents_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "movements": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "$ref": "#/components/schemas/CashSessionMovement"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "register_code",
+          "status",
+          "opened_by_user_id",
+          "opening_float_cents",
+          "business_date",
+          "opened_at",
+          "row_version",
+          "expected_cents",
+          "movements"
+        ],
+        "additionalProperties": false,
+        "description": "Solo A. Esperado = fondo + Σ movimientos, calculado en servidor."
+      },
+      "PosDocumentPendingItem": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "order_number": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "total_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "pending_kind": {
+            "type": "string",
+            "enum": [
+              "sale",
+              "credit_note"
+            ]
+          },
+          "case_id": {
+            "$ref": "#/components/schemas/SqlId"
+          }
+        },
+        "required": [
+          "order_id",
+          "order_number",
+          "created_at",
+          "total_cents",
+          "pending_kind"
+        ],
+        "additionalProperties": false,
+        "description": "Pedido pos sin referencia de comprobante de venta, o expediente de devolución sin nota de crédito registrada. O solo ve los de su propia sesión."
+      },
+      "PosDocumentPendingPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/PosDocumentPendingItem"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "per_page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "has_more": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "page",
+          "per_page",
+          "has_more"
+        ],
+        "additionalProperties": false,
+        "description": "Cola de comprobantes externos pendientes"
+      },
+      "PosExternalDocumentRecord": {
+        "type": "object",
+        "properties": {
+          "document_kind": {
+            "type": "string",
+            "enum": [
+              "boleta",
+              "factura",
+              "ticket",
+              "nota_credito"
+            ]
+          },
+          "series": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "number": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "issued_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "amount_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "buyer_id_type": {
+            "type": "string",
+            "enum": [
+              "dni",
+              "ce",
+              "ruc",
+              "pasaporte",
+              "otro",
+              "none"
+            ]
+          },
+          "case_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "external_reference": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "expected_version": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 16
+          }
+        },
+        "required": [
+          "document_kind",
+          "series",
+          "number",
+          "issued_at",
+          "amount_cents",
+          "buyer_id_type",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "D-206: referencia de un comprobante emitido fuera de PeruCommerce; no emite ni valida CPE. Nunca acepta el número de documento del adquirente, solo su tipo. Venta: amount_cents = T (total original antes del redondeo D-207), uno por pedido. nota_credito: exige case_id pos_return_after_delivery del mismo pedido y amount_cents = reembolso del expediente."
+      },
+      "PosReceiptLine": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999
+          },
+          "unit_price_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "line_total_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          }
+        },
+        "required": [
+          "name",
+          "quantity",
+          "unit_price_cents",
+          "line_total_cents"
+        ],
+        "additionalProperties": false
+      },
+      "PosOperationReceipt": {
+        "type": "object",
+        "properties": {
+          "order_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "order_number": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+          },
+          "issued_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "register_code": {
+            "type": "string",
+            "pattern": "^[a-z0-9_-]{1,32}$"
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/PosReceiptLine"
+            }
+          },
+          "total_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "rounding_cents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9
+          },
+          "cash_due_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "tendered_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "change_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "legend": {
+            "type": "string",
+            "const": "Este documento no es un comprobante de pago"
+          },
+          "reminder": {
+            "type": "string",
+            "const": "Emita el comprobante de pago en su sistema de emisión"
+          }
+        },
+        "required": [
+          "order_id",
+          "order_number",
+          "issued_at",
+          "register_code",
+          "lines",
+          "total_cents",
+          "rounding_cents",
+          "cash_due_cents",
+          "tendered_cents",
+          "change_cents",
+          "legend",
+          "reminder"
+        ],
+        "additionalProperties": false,
+        "description": "Constancia de operación imprimible, no comprobante de pago: sin desglose de IGV, serie ni número SUNAT."
+      },
+      "PosReturnLine": {
+        "type": "object",
+        "properties": {
+          "line_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "returned_units": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9999
+          },
+          "restock_units": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999
+          },
+          "inspection": {
+            "type": "string",
+            "enum": [
+              "fit_for_sale",
+              "not_fit",
+              "warranty_external"
+            ]
+          }
+        },
+        "required": [
+          "line_id",
+          "returned_units",
+          "restock_units",
+          "inspection"
+        ],
+        "additionalProperties": false,
+        "description": "restock_units ≤ returned_units ≤ entregadas − ya devueltas; restock_units > 0 solo con inspection fit_for_sale"
+      },
+      "PosReturnRecord": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/PosReturnLine"
+            }
+          },
+          "refund_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "cash_session_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/TextReason"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/EvidenceRef"
+          },
+          "expected_version": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 16
+          }
+        },
+        "required": [
+          "lines",
+          "refund_cents",
+          "reason",
+          "evidence",
+          "expected_version",
+          "idempotency_key"
+        ],
+        "additionalProperties": false,
+        "description": "D-205: refund_cents ≤ R − reembolsos previos y ≤ Σ(precio × unidades devueltas); cash_rounding nunca se reembolsa (422 pc_business_ineligible refund_exceeds_cash). refund_cash solo si se indica cash_session_id de una sesión abierta."
+      },
+      "PosReturnResult": {
+        "type": "object",
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "order_id": {
+            "$ref": "#/components/schemas/SqlId"
+          },
+          "case_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/SqlId"
+            }
+          },
+          "refund_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "restocked_units": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "row_version": {
+            "$ref": "#/components/schemas/SqlId"
+          }
+        },
+        "required": [
+          "operation_id",
+          "order_id",
+          "case_ids",
+          "refund_cents",
+          "restocked_units",
+          "row_version"
+        ],
+        "additionalProperties": false,
+        "description": "Expedientes closed_returned por línea; la línea sigue ENTREGADO y el pedido FINALIZADO (F-10 prohibido); el pedido entra en la cola de notas de crédito."
       }
     },
     "securitySchemes": {
@@ -16022,7 +19164,9 @@
     "docs/39",
     "docs/40",
     "docs/41",
-    "docs/42"
+    "docs/42",
+    "docs/47",
+    "docs/48"
   ],
   "x-known-blockers": [
     "J-01 define legalmente campos definitivos del Libro, plazos y constancias; J-03 documentos fiscales, J-04/05 identidad, retención y privacidad por comercio",
@@ -16036,7 +19180,11 @@
     "DB-A01/03/08/12/16 reconciliados en diseño 39 tablas; DDL/InnoDB/CAS cache reales sin verificación",
     "D-198 acceso a binarios jurídicos R8-67/68 exige storage privado y control por caso, pruebas IDOR/PII/no-store pendientes",
     "x-authz esquema v2 normaliza 67 operaciones; no es comprobación de runtime ni puede saltarse reglas rol/campo/estado",
-    "R8-69 abrir caso por teléfono: contrato estático, verificación manual/protección PII, concurrencia, cache e idempotencia sin pruebas reales; mantener desactivado hasta implementación/autorización"
+    "R8-69 abrir caso por teléfono: contrato estático, verificación manual/protección PII, concurrencia, cache e idempotencia sin pruebas reales; mantener desactivado hasta implementación/autorización",
+    "POS V1 (D-210): P3 requiere autorización P-B expresa del propietario para escribir PHP/Angular/migración",
+    "POS V1: revisión del propietario de D-208…D-210, en especial R8-83, antes de P3",
+    "POS V1: P-C requiere un entorno WordPress/base de datos local autorizado para concurrencia, idempotencia y migración 1.0.2→1.1.0",
+    "POS V1: antes de P-D, el contador del comercio valida el redondeo D-207 y se comprueba la configuración del emisor externo D-206"
   ],
   "x-contract-extension": {
     "baseline": "R8-01…R8-52 (51 REST + R8-18 página WordPress)",
@@ -16078,6 +19226,31 @@
       "source": "docs/42",
       "noNewRolesCapsTables": true,
       "status": "documented_not_implemented"
+    },
+    "pos": {
+      "operations": "R8-71…R8-83",
+      "decisions": "D-201…D-210",
+      "source": "docs/48-CONTRATO-POS-V1-P2.md",
+      "roles": "A/O según x-authz de cada operación",
+      "newCapabilities": [
+        "perucommerce_pos_sell",
+        "perucommerce_cash_session_operate",
+        "perucommerce_cash_session_review",
+        "perucommerce_cash_movements_record",
+        "perucommerce_external_documents_record"
+      ],
+      "newTables": [
+        "pc_cash_sessions",
+        "pc_cash_session_movements"
+      ],
+      "schemaMigration": "1.0.2→1.1.0 documental",
+      "status": "documented_not_implemented",
+      "ownerReviewBeforeP3": [
+        "D-208",
+        "D-209",
+        "D-210",
+        "R8-83"
+      ]
     }
   },
   "x-paths-are-relative-to-server": true,
@@ -16123,17 +19296,17 @@
   "x-phase0-design-freeze": {
     "status": "DESIGN_BASELINE_CORRECTED_NOT_IMPLEMENTED",
     "date": "2026-11-17",
-    "decisions": "D-01…D-200",
+    "decisions": "D-01…D-210",
     "source": "docs/42-AUDITORIA-Y-CORRECCIONES-CONTRATOS-PRECODIGO-V1.md",
     "api": {
-      "rest": 69,
-      "routes": 66,
-      "schemas": 138
+      "rest": 82,
+      "routes": 78,
+      "schemas": 162
     },
-    "note": "No supone compatibilidad de cuenta Mercado Pago, cumplimiento legal por comerciante, DDL ejecutado ni aprobación para compilar/ejecutar. El campo api es la fotografía documental vigente al 18-11-2026, no del corte original de 17-11.",
+    "note": "No supone compatibilidad de cuenta Mercado Pago, cumplimiento legal por comerciante, DDL ejecutado ni aprobación para compilar/ejecutar. El campo api es la fotografía documental vigente al 18-11-2026, no del corte original de 17-11. Desde 27-11-2026 incluye POS V1 D-201…D-210 (docs/48).",
     "priorApiSchemasAtInitialClosure": 125,
-    "latestContract": "0.12.0-draft",
-    "updatedAt": "2026-11-18"
+    "latestContract": "0.13.0-draft",
+    "updatedAt": "2026-11-27"
   },
   "x-authz-contract": {
     "version": "2",
@@ -16146,17 +19319,52 @@
       "staff",
       "admin_only"
     ],
-    "capabilities": "Fully qualified WordPress perucommerce_ capabilities; capabilitiesAllOf AND; capabilitiesAnyOf OR in addition to actor/role/condition/resource scope",
-    "roles": "A administrador, O operador; staff sin rol válido queda denegado",
+    "capabilities": "Fully qualified WordPress perucommerce_ capabilities; capabilitiesAllOf AND; capabilitiesAnyOf OR in addition to actor/role/condition/resource scope D-204 (0.13.0-draft) adds 5 POS capabilities listed in posCapabilitiesD204; existing 19 unchanged.",
+    "roles": "A administrador, O operador; staff sin rol válido queda denegado POS: O solo opera su propia sesión, sin esperado/diferencia ni movimientos, cierres forzados, devoluciones o notas de crédito (D-204).",
     "staffGuard": "Una sola sesión WP + X-WP-Nonce anti-CSRF; nonce nunca concede permiso; permission_callback valida rol/capability y recurso/finalidad",
     "conditional": "roleConditionalGuard exige reglas adicionales de estado/campo por actor aun si la capability básica coincide",
-    "implementation": "no auth middleware ni código generado; esquema documental"
+    "implementation": "no auth middleware ni código generado; esquema documental",
+    "posCapabilitiesD204": {
+      "perucommerce_pos_sell": {
+        "roles": [
+          "A",
+          "O"
+        ],
+        "scope": "Catálogo POS, venta en la sesión propia abierta y reimpresión de constancia"
+      },
+      "perucommerce_cash_session_operate": {
+        "roles": [
+          "A",
+          "O"
+        ],
+        "scope": "Abrir, consultar y cerrar la sesión propia con arqueo ciego"
+      },
+      "perucommerce_cash_session_review": {
+        "roles": [
+          "A"
+        ],
+        "scope": "Listar y ver sesiones con esperado y diferencia; cierre forzado"
+      },
+      "perucommerce_cash_movements_record": {
+        "roles": [
+          "A"
+        ],
+        "scope": "Ingresos pay_in y retiros pay_out con motivo (O excluido en V1)"
+      },
+      "perucommerce_external_documents_record": {
+        "roles": [
+          "A",
+          "O"
+        ],
+        "scope": "Referencia del comprobante externo de pedidos pos; nota_credito exige además refunds_record_external"
+      }
+    }
   },
   "x-contract-consumer-reconciliation": {
-    "date": "2026-11-18",
+    "date": "2026-11-27",
     "status": "documentation_only_not_implemented",
-    "previous": "0.5.0-draft/117 DTO (D-198)",
-    "current": "0.12.0-draft/138 DTO",
+    "previous": "0.12.0-draft/138 DTO (D-200)",
+    "current": "0.13.0-draft/162 DTO",
     "topics": [
       "pre-HTTP MP",
       "Webhook Orders",
@@ -16170,14 +19378,16 @@
       "exposición de remitente y operaciones de exportación",
       "preferencia prospectiva de avisos rutinarios",
       "apertura manual de expediente físico sin email por administrador R8-69 y consumo R8-26, con verificación/idempotencia separadas",
-      "cierre de caso físico parcial R8-70 reject/withdraw y terminal adjusted atómico R8-26"
+      "cierre de caso físico parcial R8-70 reject/withdraw y terminal adjusted atómico R8-26",
+      "POS V1 R8-71…R8-83: canal pos, sesión de caja, redondeo D-207, comprobante externo D-206, devolución atómica R8-83; enmiendas R8-20/21/24/25/27/45/46"
     ],
-    "rest": 69,
-    "paths": 66,
-    "per": 56,
-    "tables": 39,
-    "newCapabilities": false,
+    "rest": 82,
+    "paths": 78,
+    "per": 62,
+    "tables": 41,
+    "newCapabilities": true,
     "historicalCut": "0.6.0-draft/125 DTO",
-    "note": "topics conserva antecedentes de integración y añade QA27…29. Los cortes 0.6/0.7/0.8/0.9 son históricos; current e info.version identifican el contrato vigente, sin cambiar rutas, roles ni tablas."
+    "note": "topics conserva antecedentes de integración y añade QA27…29. Los cortes 0.6/0.7/0.8/0.9 son históricos; current e info.version identifican el contrato vigente, sin cambiar rutas, roles ni tablas.",
+    "codeAlignment": "Código PHP/TS y pruebas offline IMP-69 siguen en 0.12.0-draft (69/66/138) hasta P3; desalineación prevista, docs/48 §15"
   }
 }

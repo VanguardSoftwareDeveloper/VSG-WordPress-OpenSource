@@ -18,7 +18,7 @@ Este documento trata del **entorno de desarrollo**. Las integraciones MCP que al
 |---|---|---|---|
 | Skills propias `vsg-wp-*` | Contenedores en `.claude/skills/` (existente) | `.agents/skills/` (existente) | `.agents/skills/` (existente) |
 | Skills oficiales WordPress y Angular | Enlaces locales ignorados en `.claude/skills/` (**incorporado**) | `~/.agents/skills` (existente) | Catálogo de usuario enlazado a `~/.agents/skills` (existente) |
-| MCP Angular CLI, solo lectura | Ámbito local del proyecto, fuera de Git (**incorporado**) | `.codex/config.toml` del proyecto (**incorporado**; carga cuando el proyecto es de confianza) | Entrada global existente, sin `--read-only` (ver recomendación) |
+| MCP Angular CLI, solo lectura | Ámbito local del proyecto, fuera de Git (**incorporado**) | `.codex/config.toml` del proyecto (**incorporado**; carga cuando el proyecto es de confianza) | Entrada global con `--read-only` (existente; verificada el 27/11/2026) |
 | GitHub | `gh` y MCP `github` de usuario (existente) | `gh`; el MCP `github` de usuario sigue deshabilitado | `gh` |
 | Documentación técnica | `context7`, `microsoftLearn` (existente) | `context7`, `microsoftLearn`, `openaiDeveloperDocs` (existente) | `context7`, `microsoftLearn` (existente) |
 
@@ -58,7 +58,7 @@ Se enlazan cuando un plugin con alcance aprobado las necesita y se registran en 
 | Entorno local WordPress | `wp-env`, `wp-playground`, `blueprint` | Autorización expresa para ejecutar el entorno |
 | Rendimiento | `wp-performance` | Problema de rendimiento medido |
 | Workspace Angular nuevo | `angular-new-app` | Alcance aprobado; nunca un workspace anticipado |
-| PeruCommerce: SUNAT | `sunat-documentacion-oficial` (skill de usuario existente) | Trabajo fiscal |
+| PeruCommerce: SUNAT | Fuentes oficiales: [orientación SUNAT](https://orientacion.sunat.gob.pe/), [CPE](https://cpe.sunat.gob.pe/) y [legislación](https://www.sunat.gob.pe/legislacion/). Opcional: la skill de usuario `sunat-documentacion-oficial`, fuera del repositorio | Solo consulta documental. No es dependencia del plugin ni acredita cumplimiento tributario |
 | PeruCommerce: pagos | `search_documentation` del MCP `mercadopago` de usuario; documentación oficial de PayPal por `context7` o la web | Solo documentación. El resto de herramientas de los MCP `mercadopago` y `paypal` opera cuentas reales y queda fuera |
 
 No aplican a estos plugins `wp-block-themes`, `wp-patterns`, `wpds` ni `wp-wpcli-and-ops`.
@@ -95,7 +95,7 @@ En macOS o Linux se omite `cmd /c`. Compruébalo con `claude mcp get angular-cli
 
 **Codex.** Las skills ya se leen de `~/.agents/skills`. Codex carga `.codex/config.toml`, sus reglas y el hook del proyecto solo si el proyecto es de confianza. Al abrir Codex por primera vez en la raíz, acepta la confianza y aprueba el hook en `/hooks`; después, `codex mcp list` debe mostrar `angular-cli`. El asistente no modifica `~/.codex/`.
 
-**Antigravity.** Las skills llegan por el catálogo de usuario enlazado a `~/.agents/skills`. Su MCP de Angular es global y hoy arranca sin `--read-only`. **Recomendación al propietario:** añadir `--read-only` a esa entrada en la configuración MCP de Antigravity. Si quiere conservar el modo completo en otros proyectos, la alternativa es deshabilitar `run_target`, `devserver_start` y `devserver_stop`.
+**Antigravity.** Las skills llegan por el catálogo de usuario enlazado a `~/.agents/skills`. Su MCP de Angular es global y arranca con `--read-only` y el mismo major que fija el estándar técnico (comprobado en la configuración MCP del cliente el 27/11/2026). Si el propietario necesitara el modo completo en otro proyecto, debe hacerlo en una entrada aparte, sin quitar `--read-only` a esta.
 
 ## Almacenamiento
 
@@ -105,8 +105,7 @@ En macOS o Linux se omite `cmd /c`. Compruébalo con `claude mcp get angular-cli
 
 ## Pendientes y decisiones del propietario
 
-- **Deriva de `angular-developer`.** La copia de usuario difiere de angular/skills en `SKILL.md` y `references/components.md`: le falta la guía sobre expresiones costosas en plantillas. Actualizarla con `npx skills update` afecta a otros proyectos; decide el propietario.
-- **Antigravity:** aplicar o no la recomendación de solo lectura.
+- **Resuelto (27/11/2026):** la copia de usuario de `angular-developer` ya incluye la guía sobre trabajo costoso en plantillas, y el MCP de Angular de Antigravity arranca con `--read-only`.
 - **Codex:** confiar el proyecto para que cargue su configuración.
 - **WordPress local:** `wp-env`, Playground y MCP Adapter, solo con autorización expresa.
 

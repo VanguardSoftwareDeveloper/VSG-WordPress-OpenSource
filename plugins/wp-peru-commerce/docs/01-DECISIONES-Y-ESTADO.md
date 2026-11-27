@@ -1,6 +1,6 @@
 # Registro de decisiones y estado — PeruCommerce
 
-**Corte: actualización contractual 2026-11-18 · Estado:** Fase 0 cerrada en decisiones D-01…D-200; API 0.12.0-draft (69 REST/66 rutas/138 esquemas), con R8-69 apertura administrativa y R8-70 cierre sin ajuste, sin código ni pruebas autorizadas.
+**Corte: actualización contractual 2026-11-27 · Estado:** Fase 0 cerrada en decisiones D-01…D-200; POS V1 ratificado y contratado documentalmente en D-201…D-210 ([docs/48](48-CONTRATO-POS-V1-P2.md)); API 0.13.0-draft (82 REST/78 rutas/162 esquemas), con R8-71…R8-83 DOCUMENTADAS/NO IMPLEMENTADAS, sin código ni pruebas autorizadas. Corte anterior: 2026-11-18, D-200 y 0.12.0-draft (69 REST/66 rutas/138 esquemas).
 
 ## Convenciones
 
@@ -9,7 +9,7 @@
 - **PENDIENTE:** no decidido o requiere comprobación.
 - **EXCLUIDO:** fuera de la V1 salvo cambio de alcance.
 
-## 200 decisiones registradas (incluida la rectificación técnica D-200)
+## 210 decisiones registradas (incluidas la rectificación técnica D-200 y el POS V1 D-201…D-210)
 
 | ID | Decisión | Estado |
 | --- | --- | --- |
@@ -213,6 +213,16 @@
 | D-198 | Corrección técnica por encargo de cerrar huecos antes de programar: incorporar R8-67/68 para consultar únicamente evidencias binarias privadas de casos Libro/ARCO como A con misma capability, caso, instalación y finalidad, y dar constancia imprimible `ComplaintReceiptCopy` desde R8-15 con idempotencia del formulario; normalizar seguridad REST y restricciones físicas de las 39 tablas, sin añadir PER, roles, uploads públicos ni código ejecutable | RATIFICADO COMO RECTIFICACIÓN DOCUMENTAL, NO IMPLEMENTADO |
 | D-199 | DOC-QA30: completar la apertura de un expediente administrativo para reducción parcial de unidades físicas solicitada por comprador atendido manualmente (incluido pedido sin email), reutilizando caso/pedido/línea y permisos existentes. R8-69 POST `/admin/orders/{id}/cases` solo A con `orders_read` Y `orders_financial_adjust`, verificación proporcional del teléfono registrado y segundo dato no público, documento original mínimo, CAS, auditoría e idempotencia. La apertura no libera stock, ajusta dinero, cancela, emite reembolso ni valida automáticamente identidad; R8-26 realiza la decisión posterior bajo sus propias guardas. Sin PER, rol ni tabla nuevos. | RATIFICADA COMO CORRECCIÓN DOCUMENTAL POR ENCARGO; NO IMPLEMENTADA |
 | D-200 | DOC-QA31: cerrar completamente el ciclo de vida del expediente físico parcial creado por R8-69. R8-70 POST `/admin/orders/{id}/cases/{case_id}/close` permite solo a A con `orders_read` Y `orders_financial_adjust` rechazar con motivo o registrar retiro del comprador tras nueva verificación proporcional, usando `expected_case_version`, idempotencia y evento inmutable; estados internos `closed_rejected`/`closed_withdrawn`. R8-26 requiere versión del caso para `affected_units` y, si ejecuta ajuste autorizado, cierra el expediente atómicamente como `closed_adjusted`, sin confundir ajuste con reembolso externo. Ninguna ruta modifica dinero/stock al rechazar o retirar; sin roles, capabilities, PER, tablas o estados comerciales nuevos. | RATIFICADA COMO RECTIFICACIÓN DOCUMENTAL, NO IMPLEMENTADA |
+| D-201 | Ratificar el alcance POS V1 (M1–M6) y las decisiones D1–D14 de la propuesta P1, con las precisiones D-202…D-207 ([docs/48](48-CONTRATO-POS-V1-P2.md) §1) | CONFIRMADO (2026-11-27) |
+| D-202 | D2: sin aceptaciones ficticias; el canal web conserva íntegros sus contratos y obligaciones (docs/48 §3) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO |
+| D-203 | D4: solo se vinculan a una sesión de caja los movimientos de efectivo que entran o salen realmente de ese cajón; nunca se asignan cobros web automáticamente (docs/48 §5) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO |
+| D-204 | D5: cinco capacidades específicas nuevas `perucommerce_pos_sell`, `_cash_session_operate`, `_cash_session_review`, `_cash_movements_record` y `_external_documents_record` (19 → 24), sin ampliar las existentes (docs/48 §4) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO |
+| D-205 | D6: errores, anulaciones, reembolsos y devoluciones con invariantes de inventario, dinero y pedido, y procedimientos operativos seguros para las exclusiones de V1 (docs/48 §7) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO |
+| D-206 | D13: flujo operativo de emisión externa del comprobante, identificación del adquirente cuando corresponda (solo `buyer_id_type`) y registro de su referencia; no emite ni declara cumplimiento SUNAT (docs/48 §8) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO |
+| D-207 | D14/P1b: redondeo del efectivo a favor del consumidor a la decena de céntimos inferior, separando total original, ajuste `cash_rounding` y efectivo recibido (docs/48 §6) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO; validación contable antes de P-D |
+| D-208 | Transición O-10 «sin pedido → CONFIRMADO» con `channel = pos`, seguida de O-07 FINALIZADO en la misma transacción, sin estados E-01 nuevos (docs/48 §9) | DOCUMENTADO/NO IMPLEMENTADO; revisión del propietario antes de P3 |
+| D-209 | Persistencia POS: tablas `pc_cash_sessions` y `pc_cash_session_movements` (39 → 41), columnas aditivas y migración 1.0.2 → 1.1.0 solo documental (docs/48 §10) | DOCUMENTADO/NO IMPLEMENTADO; revisión del propietario antes de P3 |
+| D-210 | REST R8-71…R8-83, enmiendas aditivas de R8-20/21/24/25/27/45/46 y OpenAPI `0.13.0-draft` (82 REST/78 rutas/162 esquemas; 62 PER) (docs/48 §11) | DOCUMENTADO/NO IMPLEMENTADO; revisión del propietario antes de P3 |
 
 ## Dirección de producto fijada en la conversación (sin confundir con especificación exhaustiva)
 
@@ -303,7 +313,9 @@
 
 **Antecedente histórico D-199 / DOC-QA30 (18-11-2026):** OpenAPI `0.11.0-draft` con **68 operaciones REST, 65 rutas y 136 esquemas**; **69 entradas R8** al contar R8-18 página WordPress; 56 PER, 39 tablas y 34 frames Figma sin modificaciones. D-199 cierra únicamente el origen administrativo del `case_id` requerido por R8-26 tras verificación manual del comprador. Docs/42 describe guarda, idempotencia y privacidad. Las cifras de 0.10.0-draft o anteriores son históricas. Esto NO autoriza código, pruebas ni release.
 
-**Última fuente vigente D-200 / DOC-QA31 (18-11-2026):** OpenAPI **`0.12.0-draft`: 69 REST, 66 rutas y 138 esquemas** (70 entradas R8 con la página WordPress R8-18), **200 decisiones**, 56 PER y 39 tablas. R8-70 registra rechazo/retiro del expediente físico parcial sin ajuste; R8-26 solo finaliza el caso como `closed_adjusted` al confirmar el ajuste parcial en transacción atómica con `expected_case_version`. `docs/42` conserva el detalle y la evidencia estática. Los cortes anteriores son historia y no se generan controladores desde ellos. P-B/P-C/P-D sin autorización/ejecución.
+**Fuente vigente D-210 / DOC-QA32 (27-11-2026):** OpenAPI **`0.13.0-draft`: 82 REST, 78 rutas y 162 esquemas** (83 entradas R8 con la página WordPress R8-18), **210 decisiones**, 62 PER, 24 capacidades y 41 tablas. El propietario ratificó el POS V1 (D-201) con precisiones D-202…D-207; D-208…D-210 concretan la transición O-10, la persistencia y las operaciones R8-71…R8-83, y quedan **DOCUMENTADAS/NO IMPLEMENTADAS** con revisión del propietario pendiente antes de P3. El contrato detallado está en [docs/48](48-CONTRATO-POS-V1-P2.md). El código y las pruebas offline siguen en 0.12.0-draft (docs/48 §15). P-B/P-C/P-D sin autorización/ejecución.
+
+**Fuente histórica D-200 / DOC-QA31 (18-11-2026):** OpenAPI **`0.12.0-draft`: 69 REST, 66 rutas y 138 esquemas** (70 entradas R8 con la página WordPress R8-18), **200 decisiones**, 56 PER y 39 tablas. R8-70 registra rechazo/retiro del expediente físico parcial sin ajuste; R8-26 solo finaliza el caso como `closed_adjusted` al confirmar el ajuste parcial en transacción atómica con `expected_case_version`. `docs/42` conserva el detalle y la evidencia estática. Los cortes anteriores son historia y no se generan controladores desde ellos. P-B/P-C/P-D sin autorización/ejecución.
 
 ## Propuestas técnicas no aprobadas
 

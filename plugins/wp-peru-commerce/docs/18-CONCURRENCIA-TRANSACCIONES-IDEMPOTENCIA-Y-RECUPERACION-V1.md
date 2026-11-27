@@ -1,5 +1,7 @@
 # E-05 — Concurrencia, transacciones, idempotencia y recuperación V1
 
+**Enmienda POS V1 (27-11-2026):** la idempotencia, el orden de bloqueos y la serialización de la sesión de caja constan en el addendum final, como DOCUMENTADOS/NO IMPLEMENTADOS.
+
 **Progreso posterior P0-18 (2026-11-17):** `docs/23-MODELO-FISICO-DE-DATOS-E-INDICES-V1.md` propone columnas, tipos, índices y locks; **no es SQL aprobado ni sustituye E-05**. Requiere revisión DDL/hosting y autorización específica para ejecutar.
 
 **Estado: E-05 APROBADO EN POLÍTICA TÉCNICA (D-109…D-122).** El propietario aprobó expresamente las catorce opciones A E05-A…N el 2026-11-17. **No están cerrados el esquema SQL P0-18, motor/hosting P0-19, el contrato Mercado Pago E-08, la recuperación ZIP P0-26 ni la verificación de funcionamiento**. Revisión de referencias: 2026-11-17. Fase 0 documental. **No autoriza código, compilación, pruebas, SQL, instalación, credenciales ni despliegue.**
@@ -296,3 +298,29 @@ La fase A de E05-D debe guardar **antes** del HTTP a Mercado Pago una operación
 La solicitud `POST /guest/requests` R8-12 queda vinculada a `GuestActionRequest.idempotency_key` (16…128 caracteres), además de cookie de sesión invitada, propósito y grant OTP/identificación de **un uso, 5 minutos**. Antes de una mutación, comprobar scope y payload en `pc_idempotency` bajo lock; un resultado previo de la MISMA sesión/pedido/propósito/clave/payload puede recuperar `CaseAccepted.case_id` aunque el grant de esa operación se consumiera. A otra sesión/propósito/payload o con sesión revocada, no se expone caso ni revive el permiso; misma clave con otro payload →409. Si la clave es nueva y el grant fue consumido → denegar y exigir nueva verificación legítima.
 
 La PRIMERA ejecución usa una transacción corta única para insertar `pc_cases` con snapshot original, primer `pc_case_events` (con `actor_kind='guest'`, actor_user_id NULL), persistir resultado de `pc_idempotency` y marcar `pc_action_grants.consumed_at`; commit todo o nada, nunca correo/webhook fuera de SQL. Un 202 contiene case_id pero significa solicitud en revisión, **no** cancelación, cambio de dirección ni reembolso ejecutado. Ante pérdida de respuesta o caída PHP, repetir exactamente el intento lógico; no crear caso adicional, no duplicar alertas outbox. Si el contenido no puede reconstruirse o se revocó la sesión, aplicar recuperación autorizada sin exponer PII.
+
+## Addendum POS V1 — idempotencia y concurrencia de caja (D-208/D-210; 27-11-2026; DOCUMENTADO/NO IMPLEMENTADO)
+
+Fuente vigente: [docs/48](48-CONTRATO-POS-V1-P2.md) §9 y §12 y OpenAPI `0.13.0-draft`. Extiende E-05 sin invertir su orden de bloqueos ni cambiar D-109…D-122.
+
+- **Idempotencia.** Cada mutación R8-71…R8-83 usa la raíz `pc_idempotency` existente, con ámbito por actor e instalación:
+  - la misma clave con otro cuerpo devuelve 409 `pc_idempotency_conflict`;
+  - la misma clave con el mismo cuerpo devuelve el resultado guardado, o 423 si sigue en curso.
+
+  La clave de venta nace al pulsar «Cobrar» y editar el carrito genera otra. Un resultado incierto se reintenta con la misma clave, nunca con una nueva.
+- **Orden global de bloqueos:**
+  1. raíz de idempotencia;
+  2. sesión de caja `FOR UPDATE`;
+  3. `pc_orders`;
+  4. líneas;
+  5. expedientes;
+  6. vendibles en orden ascendente de id;
+  7. compromisos de stock;
+  8. inserción de eventos, movimientos y auditoría;
+  9. resultado de idempotencia.
+- **Atomicidad de O-10.** La venta POS corre en una sola transacción mediante un coordinador hermano, sin ampliar `prepareWithin` del checkout. Nace FINALIZADA o no existe ([docs/14](14-MAQUINAS-DE-ESTADO-EXACTAS-V1.md), O-10).
+- **Serialización de la sesión.** Venta y cierre de una misma sesión se serializan por el bloqueo de la sesión. Una venta posterior al cierre recibe 409 `pc_conflict` (`reason = pos_session_closed`).
+- **Última unidad.** La decide el bloqueo de los vendibles: dos cajas no venden la misma unidad.
+- **Sin HTTP ni impresión** dentro de una transacción.
+- **Nonce en turnos largos.** Si el nonce caduca (403 `rest_cookie_invalid_nonce`), la pantalla lo renueva con la acción `rest-nonce` del núcleo de WordPress y reintenta una vez con la misma clave, sin perder el carrito.
+- **Control de consistencia.** Las violaciones de las invariantes I2–I6 ([docs/48](48-CONTRATO-POS-V1-P2.md) §7) alimentan la conciliación R8-29 y A las resuelve con R8-30. No se corrige nada automáticamente.

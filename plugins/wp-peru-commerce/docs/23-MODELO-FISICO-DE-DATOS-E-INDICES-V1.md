@@ -1,6 +1,8 @@
 # P0-18 — Modelo físico declarativo, integridad, índices y migraciones V1
 
-**FUENTE VIGENTE D-200 (18-11-2026):** OpenAPI **0.12.0-draft (69 REST/66 rutas/138 esquemas)**, 200 decisiones, 56 PER, **39 tablas**. D-199 abre caso físico parcial por teléfono y D-200 completa su cierre R8-70 y finalización atómica por R8-26. El párrafo sobre el corte 0.10.0 a continuación es HISTÓRICO, no contrato actual.
+**FUENTE VIGENTE D-210 (27-11-2026):** OpenAPI **0.13.0-draft (82 REST/78 rutas/162 esquemas)**, 210 decisiones, 62 PER y **41 tablas declarativas**. Las tablas 40 y 41 y las columnas POS constan en el addendum final y en [docs/48](48-CONTRATO-POS-V1-P2.md) §10, como DOCUMENTADAS/NO IMPLEMENTADAS. El párrafo D-200 siguiente queda como base de las tablas 1…39.
+
+**FUENTE D-200 (18-11-2026; base de las tablas 1…39):** OpenAPI **0.12.0-draft (69 REST/66 rutas/138 esquemas)**, 200 decisiones, 56 PER, **39 tablas**. D-199 abre caso físico parcial por teléfono y D-200 completa su cierre R8-70 y finalización atómica por R8-26. El párrafo sobre el corte 0.10.0 a continuación es HISTÓRICO, no contrato actual.
 
 **CORTE HISTÓRICO anterior a D-199:** el OpenAPI principal actual es **0.10.0-draft (67 REST/64 rutas/134 esquemas)**; versiones anteriores en anexos son cortes históricos. DOC-QA27 precisa la lectura de cantidades y DOC-QA29 la preferencia de avisos sobre persistencia existente. El modelo continúa con **39 tablas lógicas**, no SQL ejecutado.
 
@@ -750,3 +752,37 @@ Estas precisiones NO implican DDL probado, motor disponible, configuración real
 
 
 **IMP-50 (2026-11-20, fuente estática ARCO):** `pc_privacy_requests` persiste `applicant_reference` privado con `site_id/site_digest/source_key`, contacto y origen WordPress-confirmado o manual validado; `request_snapshot` conserva tipo, petición y estado de ingreso, **sin equiparar email confirmado con identidad verificada**. `identity_evidence_ref` y `verified_at` solo se fijan desde verificación P-C con manifest vinculado, actor A, CAS y auditoría. `evidence_manifest` es JSON versión 1 `items` (máximo 20) con: `ref`, `privacy_request_id`, `site_id`, `site_digest`, `purpose`, `source`, `storage_key`, `sha256`, `byte_size`, `mime`, `filename`, `added_at_utc`, `delivery_channel`, `delivered_at_utc`, `resolution_hash`; `storage_key` nunca sale en DTO, no hay endpoint público de carga. `result_reference` reserva JSON `version=1`, `resolution` (nula, preparada o evidenciada) y `export_operations=[]` para el contrato posterior R8-50/68, sin sobrescribir solicitud original. El R8-44 registra `legal_basis_code` de un verificador P-C de retención por categoría, no ejecuta borrado de filas financieras/Libro. `due_at` es valor contractual base 20/10 días hábiles con proveedor de feriados ratificado o NULL; ampliaciones/suspensiones legales NO se autoimplementan. `pc_audit_log` contiene eventos `privacy_request_received`, `privacy_identity_verified`, `privacy_evidence_linked`, `privacy_resolution_prepared/evidenced` asociados al caso y un índice categórico `privacy_incident_recorded` de sitio (hash únicamente); ningún detalle de incidente o contacto va a auditoría. Continuamos con **39 tablas**, sin DDL ni P-C ejecutada.
+
+## Addendum POS V1 — tablas 40 y 41, columnas aditivas y migración 1.1.0 (D-209; 27-11-2026; DOCUMENTADO/NO IMPLEMENTADO)
+
+Fuente vigente: [docs/48](48-CONTRATO-POS-V1-P2.md) §10, donde constan todas las columnas, y OpenAPI `0.13.0-draft`. El modelo pasa de **39 a 41 tablas declarativas**. No es SQL aprobado ni ejecutado, y `includes/schema.php` no contiene este DDL.
+
+| N.º | Tabla | Propósito | Claves e índices |
+| --- | --- | --- | --- |
+| 40 | `pc_cash_sessions` | Sesión de caja con fondo inicial, arqueo ciego y cierre normal o forzado (`open`, `closed`, `force_closed`) | PK id; UQ(open_register_code); UQ(open_user_id); IX(business_date, register_code); IX(opened_by, opened_at) |
+| 41 | `pc_cash_session_movements` | Movimientos inmutables de efectivo de una sesión: `sale_cash`, `web_cash_in`, `pay_in`, `pay_out` y `refund_cash` | PK id; IX(session_id, id); UQ(payment_event_id); IX(order_id) |
+
+**Restricciones:**
+
+- `open_register_code` y `open_user_id` se vacían al cerrar. Así los UQ con NULL admiten varias sesiones cerradas y una sola abierta por caja y por usuario.
+- `opening_float_cents ≥ 0`. Los campos de cierre son inmutables cuando `status ≠ open`.
+- Los movimientos nunca se actualizan ni se borran. `amount_cents` es distinto de 0 y lleva el signo de su tipo.
+- `pay_in` y `pay_out` exigen motivo. `sale_cash`, `web_cash_in` y `refund_cash` exigen `payment_event_id`. `tendered_cents` y `change_cents` solo existen en `sale_cash`.
+- El vínculo entre evento y sesión vive en la tabla 41. Así `pc_payment_events` sigue inmutable y no se recalcula ninguna huella de deduplicación.
+
+**Columnas y valores aditivos en tablas existentes:**
+
+- `pc_orders`: `channel` VARCHAR(8) NN DEFAULT 'web', `pos_session_id` N e IX(channel, created_at, id). `policy_version_id` y `privacy_version_id` admiten NULL a nivel de columna, con la regla de servicio de D-202.
+- `pc_payment_events`: nuevo `kind` `cash_rounding`.
+- `pc_external_documents`: `buyer_id_type` VARCHAR(16) N.
+- `pc_cases`: nuevo `case_type` `pos_return_after_delivery`, con `returned_units` y `restocked_units` solo para ese tipo y `restocked_units ≤ returned_units`.
+- `pc_stock_movements`: nuevo `source_type` `case`.
+
+**Migración 1.0.2 → 1.1.0** (solo documental):
+
+1. Expandir: crear las dos tablas y añadir columnas con valores por defecto, sin bloquear el canal web.
+2. Rellenar `channel = 'web'` en los pedidos existentes.
+3. Verificar físicamente columnas, índices y restricciones con `schema-inspector.php`.
+4. Registrar `schema_version = 1.1.0` en `pc_migrations`, bajo bloqueo y solo tras la verificación.
+
+El módulo POS sigue cerrado hasta completar el paso 4. La migración es solo hacia adelante e idempotente, y una migración parcial no se marca como exitosa. La desinstalación conservadora conserva las tablas nuevas, igual que las demás.

@@ -1,5 +1,7 @@
 # PeruCommerce — contrato documental de integridad: BD, concurrencia y recuperación V1
 
+**PRECEDENCIA VIGENTE D-210 (27-11-2026):** el contrato vigente es OpenAPI **0.13.0-draft (82 REST/78 rutas/162 esquemas)**, con 83 entradas R8, 62 PER, 41 tablas declarativas y 210 decisiones; el POS V1 consta en [docs/48](48-CONTRATO-POS-V1-P2.md) como **DOCUMENTADO/NO IMPLEMENTADO**. Las cifras D-200/0.12.0-draft o anteriores de este archivo quedan como corte histórico; el código y las pruebas siguen alineados con 0.12.0-draft hasta P3.
+
 **Corte:** 2026-11-17. **Estado:** invariantes lógicas y 16 tratamientos **RATIFICADOS EN DISEÑO D-191**, no DDL ejecutable, migraciones, instalación, prueba ni compatibilidad de motor comprobada. Documento subordinado a D-168/E-01/E-04/E-05/E-07/E-08, docs/23 (39 tablas) y docs/28/36 (16 observaciones). No declara 16 defectos corregidos en una base de datos inexistente ni incorpora nuevas tablas por inferencia.
 
 ## 1. Convenciones y límites

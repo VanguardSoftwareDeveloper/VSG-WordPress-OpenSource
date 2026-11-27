@@ -1,3 +1,5 @@
+**PRECEDENCIA VIGENTE D-210 (27-11-2026):** el contrato vigente es OpenAPI **0.13.0-draft (82 REST/78 rutas/162 esquemas)**, con 83 entradas R8, 62 PER, 41 tablas declarativas y 210 decisiones; el POS V1 consta en [docs/48](48-CONTRATO-POS-V1-P2.md) como **DOCUMENTADO/NO IMPLEMENTADO**. Las cifras D-200/0.12.0-draft o anteriores de este archivo quedan como corte histórico; el código y las pruebas siguen alineados con 0.12.0-draft hasta P3.
+
 **PRECEDENCIA VIGENTE D-200 (18-11-2026):** OpenAPI `0.12.0-draft` con **69 REST/66 rutas/138 esquemas**. Este contrato conserva requisitos legales J-01…J-05 sin certificación automática; R8-69/70 son expedientes **comerciales físicos parciales**, no reclamaciones del Libro ni ARCO y no suprimen derechos legales del comprador. El cierre R8-70 solo registra rechazo/retiro de esa solicitud comercial sin refund ni ajuste. Las referencias antiguas 0.3…0.11 permanecen históricas; ver docs/42. Sin código/pruebas.
 
 # P0-23/P0-25 — Contrato de datos legales, proyecciones y autorización por finalidad (J-01/J-03/J-04/J-05)

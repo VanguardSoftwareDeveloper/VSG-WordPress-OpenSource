@@ -9,6 +9,8 @@
 
 **FUENTE REST VIGENTE D-200 (18-11-2026):** OpenAPI `0.12.0-draft` (69 REST/66 rutas/138 esquemas). R8-64 sigue registrando documentos emitidos externamente; R8-70 solo cierra expediente físico parcial sin emisión, devolución ni efecto fiscal por sí mismo. Los textos del corte 0.5 no vuelven a ser fuentes vigentes. Sin emisión SUNAT ni pruebas.
 
+**FUENTE REST VIGENTE D-210 (27-11-2026):** OpenAPI `0.13.0-draft` (82 REST/78 rutas/162 esquemas). R8-64 queda sin cambios para el canal web. El POS V1 añade R8-80/81 para registrar la referencia del comprobante emitido externamente por cada pedido `pos` (D-206) y R8-83 para la devolución presencial ([docs/48](48-CONTRATO-POS-V1-P2.md) §7, §8 y §11). Ambas siguen sin emitir, validar ni declarar CPE; solo se guarda `buyer_id_type`, nunca el número de documento. **DOCUMENTADO/NO IMPLEMENTADO**; sin pruebas.
+
 ## 1. Frontera irrevocable de V1
 
 1. Un comercio y local por instalación WordPress; puede vender productos físicos, digitales y servicios presenciales, con un pedido mixto.
@@ -19,6 +21,8 @@
 6. La V1 **no implementa motor de liquidación fiscal** (IGV mensual, Renta, retenciones, percepciones, detracciones, crédito fiscal, prorrateo y redondeo tributario, emisión/validación CPE, guías). Si un dato fiscal exacto es obligatorio para un flujo, se gestiona por emisor externo o requiere nuevo contrato de producto, sin improvisarlo.
 
 La regla de alcance del punto 6 resuelve la ambigüedad de “redondeo tributario P0-17”: **no existe redondeo fiscal automático en V1** porque no se calcula base tributaria ni CPE en este módulo; el total comercial ya son enteros de céntimos. Si se autoriza un desglose tributario vinculante futuro, será una funcionalidad separada, con fórmula, unidad de redondeo, clasificación, vigencia y pruebas fiscales por supuesto.
+
+**Precisión D-207 (27-11-2026):** la regla anterior se mantiene. El redondeo de **efectivo** del POS y de R8-24 no es redondeo fiscal: es un ajuste a favor del consumidor de 0 a 9 céntimos que no cambia la base, el IGV ni el total original `T`. Se registra como evento `cash_rounding`, separado del efectivo realmente recibido `R` ([docs/48](48-CONTRATO-POS-V1-P2.md) §6). El comprobante externo puede reflejarlo con `PayableRoundingAmount` si el emisor lo admite; PeruCommerce no lo genera ni lo valida. Su tratamiento tributario y contable lo valida el contador del comercio **antes de P-D**; esta precisión no es certificación tributaria.
 
 ## 2. Tabla fiscal por régimen/emisor/operación — fuentes SUNAT
 

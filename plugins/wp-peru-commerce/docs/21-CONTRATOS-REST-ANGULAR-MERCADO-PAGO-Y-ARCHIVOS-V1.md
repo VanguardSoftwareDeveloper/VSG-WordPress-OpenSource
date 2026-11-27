@@ -1,5 +1,7 @@
 # E-08 — Contratos REST, Angular, Mercado Pago, archivos y errores V1
 
+**PRECEDENCIA VIGENTE D-210 (27-11-2026):** el contrato vigente es OpenAPI **0.13.0-draft (82 REST/78 rutas/162 esquemas)**, con 83 entradas R8, 62 PER, 41 tablas declarativas y 210 decisiones; el POS V1 consta en [docs/48](48-CONTRATO-POS-V1-P2.md) como **DOCUMENTADO/NO IMPLEMENTADO**. Las cifras D-200/0.12.0-draft o anteriores de este archivo quedan como corte histórico; el código y las pruebas siguen alineados con 0.12.0-draft hasta P3.
+
 **CORTE HISTÓRICO anterior a D-199:** OpenAPI principal **0.10.0-draft, 67 REST/64 rutas/134 esquemas**. Los conteos y tablas de 0.3/0.5/0.6 que describen cortes anteriores son antecedentes; el contrato vigente y las correcciones de este documento prevalecen. Ningún endpoint está implementado.
 
 **Investigación legal J-01…J-05/P0-25 y fiscal P0-17 (2026-11-17):** `docs/25-MATRICES-NORMATIVAS-J01-J05-P0-25-V1.md` y `docs/26-CONTRATO-TRIBUTARIO-P0-17-J03-V1.md` proporcionan fuentes normativas y supuestos; **NO ratifican DTO de Libro/ARCO/fiscalidad ni plazos por comercio/sector**. Mantener pendientes de OpenAPI y permisos por campo; no generar campos tributarios universales.

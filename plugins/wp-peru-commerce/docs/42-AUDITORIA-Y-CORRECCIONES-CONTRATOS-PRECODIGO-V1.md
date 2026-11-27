@@ -1,5 +1,7 @@
 # PeruCommerce V1 — Auditoría correctiva de contratos previos al código
 
+**PRECEDENCIA VIGENTE D-210 (27-11-2026):** el contrato vigente es OpenAPI **0.13.0-draft (82 REST/78 rutas/162 esquemas)**, con 83 entradas R8, 62 PER, 41 tablas declarativas y 210 decisiones; el POS V1 consta en [docs/48](48-CONTRATO-POS-V1-P2.md) como **DOCUMENTADO/NO IMPLEMENTADO**. Las cifras D-200/0.12.0-draft o anteriores de este archivo quedan como corte histórico; el código y las pruebas siguen alineados con 0.12.0-draft hasta P3.
+
 **Corte:** 2026-11-17 · **Tipo de trabajo:** revisión estática y modificación **exclusiva de documentación** (`.md` + contrato OpenAPI JSON). **Estado:** CORRECCIONES DE DISEÑO APLICADAS, verificaciones de ejecución y normas por instalación NO REALIZADAS. No significa garantía de ausencia absoluta de defectos ni certificación de software, hosting, pagos o cumplimiento legal.
 
 ## 1. Fuente actual y precedencia

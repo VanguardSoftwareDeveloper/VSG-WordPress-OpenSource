@@ -2,6 +2,8 @@
 
 **Corte: 2026-11-21, rama `main`.** Matriz de responsabilidades de **código fuente**; no prueba que WP, MySQL, archivos, MP, cookies o UX funcionen. Las especificaciones históricas de docs/08/23/24/38 conservan sus fechas; prevalecen OpenAPI 0.12, D-200 y el [registro de fases](43-ESTADO-IMPLEMENTACION.md).
 
+**Actualización contractual D-210 (27-11-2026):** desde este corte prevalecen OpenAPI `0.13.0-draft`, D-201…D-210 y [docs/48](48-CONTRATO-POS-V1-P2.md). Las cifras de esta matriz (56 PER, 39 tablas, A-01…A-202) describen la fuente IMP-70 y siguen como baseline histórico del ecommerce. El POS V1 agrega PER-57…PER-62, las tablas 40–41 y A-203…A-232, todos **DOCUMENTADOS/NO IMPLEMENTADOS** y sin responsable en fuente (sección 6).
+
 Se cotejaron referencias textuales con archivos realmente presentes (sin ejecutar PHP/SQL/Node). **No equivale a una auditoría exhaustiva de cada SQL o permiso interno**: son rutas de inspección delimitadas y escenarios pendientes, no casillas funcionales aprobadas. El mapa REST/consumidores está en [docs/44](44-TRAZABILIDAD-REST-IMP-70.md).
 
 ## 1. Las 56 operaciones de permisos PER
@@ -350,3 +352,14 @@ El criterio es el texto original de [docs/08](08-PLAN-Y-ACEPTACION.md); la terce
 3. R8-58/59 requieren identidad original/reverificación y canal legítimo de entrega de enlace; no suplirlo con botones que conviertan un case_id en credencial. **Actualización IMP-71:** R8-60/61 cuentan ahora con consumidor Angular A por caso/derecho y versión; la apertura tipada de solicitud invitada para un derecho de pedido multiarchivo se enlazó mediante admin-post WP nativo protegido por nonce/capacidades A y el servicio existente Digital_Cases::openFromGuest, sin ampliar OpenAPI. La referencia opaca de decisión R8-61 se proyecta limitadamente por R8-21 para R8-60. Esta conexión es estática y requiere P-C de permisos/CSRF, replay, revocación y múltiples archivos; no afirmar flujo real probado. PER-20/42 no habilitan `set_status` genérico.
 4. P-C debe observar commits ambiguos, carreras de stock/agenda/descarga, holdings vencidos, reenvíos MP, acceso A/O/guest, datos legales, cookies/CSP, archivos/versiones, restauración/epoch y ausencia de secretos en JSON/outbox/logs.
 5. La compatibilidad y distribución finales requieren Node/PHP/SQL/WordPress/MP, derechos GPL y fuente correspondiente, comprobación de locks y SQL físico, navegador/WCAG, upgrade/restauración de una instalación de prueba y autorización específica. Nada fue ejecutado en esta fase.
+
+## 6. Addendum POS V1 (D-201…D-210, DOCUMENTADO/NO IMPLEMENTADO)
+
+Ningún elemento de esta sección tiene código, consumidor ni prueba. Los responsables previstos en P3 están en [docs/48](48-CONTRATO-POS-V1-P2.md) §15.
+
+| Elemento | Contrato | Estado en fuente |
+| --- | --- | --- |
+| **PER-57…PER-62** | [docs/15](15-MATRIZ-PERMISOS-Y-AUTORIZACIONES-V1.md) §6b, [docs/24](24-MATRIZ-REST-PERMISOS-DTO-P0-23-V1.md) y docs/48 §4 | Sin capacidades registradas en `includes/access-roles.php`; pendiente P3 |
+| **Tabla 40** `pc_cash_sessions` y **tabla 41** `pc_cash_session_movements` | [docs/23](23-MODELO-FISICO-DE-DATOS-E-INDICES-V1.md) addendum y docs/48 §10 | Sin DDL en `includes/schema.php`; la migración 1.0.2 → 1.1.0 es solo documental |
+| Columnas POS en tablas existentes | docs/48 §10 | Sin implementar |
+| **A-203…A-232** | docs/48 §14 | Criterios no ejecutados; sin escenarios en `tests/risk/scenarios.json` |

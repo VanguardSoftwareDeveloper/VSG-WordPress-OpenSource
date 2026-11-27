@@ -2,6 +2,7 @@
 
 **Estado: E-04 APROBADO COMO POLÍTICA COMERCIAL/NUMÉRICA D-96…D-108.** E-05 aprobado D-109…D-122 y **E-06 aprobado D-123…D-134** (doc.19). **Pendientes** J-03/P0-17/P0-25, E-07/E-08 y SQL/hosting. Revisión documental 2026-11-17. No certifica impuestos, entrega real de email ni integración MP.
 **No autoriza código, pruebas, migraciones, conexión de cuentas, pasarela real ni despliegue.**
+**Enmienda POS V1 (27-11-2026):** el redondeo de efectivo D-207 y los reembolsos presenciales R8-83 constan en el addendum final, como DOCUMENTADOS/NO IMPLEMENTADOS.
 **Propósito:** evitar que Codex decida representaciones numéricas, redondeos, tarifas de entrega, cobros, conciliaciones, importes de cancelación o tratamiento tributario sin contrato.
 
 Fuentes de producto: decisiones **D-01…D-95** en [01-DECISIONES-Y-ESTADO.md](01-DECISIONES-Y-ESTADO.md), E-01 [14-MAQUINAS-DE-ESTADO-EXACTAS-V1.md](14-MAQUINAS-DE-ESTADO-EXACTAS-V1.md), E-02 [15-MATRIZ-PERMISOS-Y-AUTORIZACIONES-V1.md](15-MATRIZ-PERMISOS-Y-AUTORIZACIONES-V1.md), E-03 [16-ELEGIBILIDAD-CANCELACIONES-DEVOLUCIONES-Y-SERVICIOS-V1.md](16-ELEGIBILIDAD-CANCELACIONES-DEVOLUCIONES-Y-SERVICIOS-V1.md). La matriz fiscal de [07-CUMPLIMIENTO-PERU.md](07-CUMPLIMIENTO-PERU.md) permanece parcialmente pendiente.
@@ -245,3 +246,19 @@ Los ejemplos están expresados en PEN y presuponen precios comerciales ya fijado
 - **P0-24/P0-26 y compatibilidad:** licencia, versiones estables, distribución ZIP, upgrades/rollback/retención. No se cierra E-04 funcional suponiendo que estas áreas no existen.
 
 **Estado de salida:** E-04…E-07 aprobados en política D-96…D-148. **PENDIENTES:** J-01…J-05/P0-17/P0-25, E-08, SQL/hosting/ZIP y demás P0; M4-X/C5-X/N6-X/P7-X no son pruebas ejecutadas. No iniciar código.
+
+## Addendum POS V1 — redondeo de efectivo D-207 (27-11-2026; DOCUMENTADO/NO IMPLEMENTADO)
+
+Fuente vigente: [docs/48](48-CONTRATO-POS-V1-P2.md) §6 y §7 y OpenAPI `0.13.0-draft`. Este addendum enmienda este contrato de forma acotada; el resto de E-04 no cambia y §9 sigue rigiendo los reembolsos del canal web.
+
+- **Importes.** `T` es el total original de la cotización, en céntimos enteros, y no cambia la base ni el IGV. `R = floor(T / 10) × 10` es el efectivo debido y `ajuste = T − R`, de 0 a 9 céntimos. Se aplica solo en efectivo, nunca hacia arriba, y lo calcula el servidor.
+- **Eventos.** `initial_charge` en efectivo por `R` y, si el ajuste es mayor que 0, un evento `cash_rounding` por el ajuste. Se cumple `initial_charge + cash_rounding = T`. `cash_rounding` salda el pedido, no es efectivo del cajón y nunca se reembolsa.
+- **Enmienda acotada de D-105.** «Neto realmente recibido» sigue vigente. `cash_rounding` es la única diferencia admitida entre el total y el efectivo.
+- **R8-24, canal web.** `CashReceipt.rounding_cents` es opcional y vale 0 por defecto. Solo se aceptan dos combinaciones: `amount_cents` igual al saldo con `rounding_cents = 0`, o `amount_cents = floor10(saldo)` con `rounding_cents = saldo mod 10` mayor que 0. Cualquier otra devuelve `pc_cash_amount_mismatch`.
+- **R8-72, canal POS.** Siempre redondea. Si los importes que mostró la pantalla no coinciden con los del servidor, responde 409 `pc_quote_changed` sin escribir nada.
+- **Entregado y vuelto.** `tendered_cents` y `change_cents` se guardan solo en el movimiento `sale_cash`, con `tendered − change = R`. No son ingresos ni asientos.
+- **Devolución presencial (R8-83).** Registra `external_refund` con proveedor `cash` sobre el `initial_charge`, con `refund_cents ≤ R − reembolsos previos` y `refund_cents ≤ Σ(precio unitario × unidades devueltas)`. El movimiento `refund_cash` se registra solo si se indica `cash_session_id`.
+- **Pedidos `pos` en rutas web.** R8-25 y R8-27 los rechazan con 422 `pc_business_ineligible` (`reason = web_channel_required`). R8-64 no cambia.
+- **Reportes.** Muestran por separado el total original, el ajuste y el efectivo recibido.
+- **Comprobante externo.** Puede llevar `PayableRoundingAmount = −(T − R)` solo si el emisor lo admite. PeruCommerce no lo genera ni lo valida.
+- **Límite.** Es una verificación documental, no una certificación tributaria. Antes de P-D, el contador del comercio valida el tratamiento y se comprueba la configuración del emisor externo.

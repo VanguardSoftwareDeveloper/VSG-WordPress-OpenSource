@@ -1,3 +1,5 @@
+**PRECEDENCIA VIGENTE D-210 (27-11-2026):** el contrato vigente es OpenAPI **0.13.0-draft (82 REST/78 rutas/162 esquemas)**, con 83 entradas R8, 62 PER, 41 tablas declarativas y 210 decisiones; el POS V1 consta en [docs/48](48-CONTRATO-POS-V1-P2.md) como **DOCUMENTADO/NO IMPLEMENTADO**. Las cifras D-200/0.12.0-draft o anteriores de este archivo quedan como corte histórico; el código y las pruebas siguen alineados con 0.12.0-draft hasta P3.
+
 **PRECEDENCIA REST VIGENTE D-200 (18-11-2026):** OpenAPI `0.12.0-draft` con 69 REST/66 rutas/138 esquemas. La comunicación de solicitudes R8-69/70 y su resolución es parte del caso/auditoría, **no** una autorización automática a enviar un correo rutinario ni una notificación de devolución acreditada; `closed_adjusted` no acredita que Mercado Pago haya reintegrado fondos. El estado real se consulta por R8-21 a A; cualquier aviso externo exige destinatario y canal verificado conforme E-06, sin inventar email para comprador físico solo teléfono. Las políticas de avisos DOC-QA29 se conservan sin retroactividad ni cambios de alcance. Sin envíos probados.
 
 # E-06 — Comunicaciones, notificaciones y recuperación V1

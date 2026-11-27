@@ -12,6 +12,8 @@
 
 **Precisión D-200/DOC-QA31 (18-11-2026):** R8-70 rechaza o registra retiro legítimo de un expediente físico parcial abierto por R8-69 **sin ajustar dinero/stock**. Solo A con `perucommerce_orders_read` **Y** `perucommerce_orders_financial_adjust`, capacidad de administrar **PER-38/39 existentes**; ni O ni invitados obtienen cierre de expediente. Exige mismo comercio/pedido/línea/tipo, fase `open_review`, `expected_case_version`, idempotencia, `reason` y verificación nueva para retiro del comprador. R8-26, con cantidad parcial, exige también `expected_case_version` y en ajuste válido cambia caso a `closed_adjusted` atómicamente. Lista/caso privado en R8-21 para A; ningún texto o archivo privado se expone a O. **56 PER intactas; 70 R8 contando R8-18 no REST, 69 REST, OpenAPI 0.12.0-draft, 200 decisiones**. No implementación ni prueba de permisos ejecutada.
 
+**Precisión POS V1 D-201…D-210 / DOC-QA32 (27-11-2026; vigente):** el propietario ratificó el POS V1 y exigió capacidades específicas sin ampliar las existentes (D-204). Se añaden **PER-57…PER-62** (sección 6b) y cinco capacidades nuevas (19 → 24): `perucommerce_pos_sell`, `perucommerce_cash_session_operate`, `perucommerce_cash_session_review`, `perucommerce_cash_movements_record` y `perucommerce_external_documents_record`. `cash_record`, `cash_correct`, `reconciliation_manage`, `settings_manage` y `orders_read` **no se amplían**; R8-64 del canal web sigue solo para A. **62 PER; 83 R8 contando R8-18 no REST, 82 REST, OpenAPI 0.13.0-draft, 210 decisiones.** Contrato en [docs/48](48-CONTRATO-POS-V1-P2.md) §4, **DOCUMENTADO/NO IMPLEMENTADO**; ninguna prueba de permisos ejecutada.
+
 ## 1. Reglas confirmadas que E-02 NO puede cambiar
 
 - **D-25/D-47:** dos perfiles administrativos funcionales: administrador y operador limitado. El operador gestiona pedidos, productos, inventario y agenda, no la configuración sensible o credenciales.
@@ -119,6 +121,19 @@
 | PER-54 | Solicitar reenvío de notificación transaccional | P: comprador solo tras verificación adicional E-07; token privado de seguimiento no basta D-85 | P: operador autorizado a reenvío operativo según capability, sin leer datos protegidos | P: administrador con auditoría | C: reenvío manual auditable D-127, **P** actor/capability/campos E-07/E-08 |
 | PER-55 | Activar/desactivar módulos de pago/mapa/reclamaciones | No | R: no concede configuración sensible D-84 | C: solo administrador y sujeto a obligación legal | C política; E-03/P0-25 reglas de desactivación pendientes |
 | PER-56 | Gestionar cuenta y sesión propia WordPress | No aplica invitado | P: solo su cuenta bajo controles WP | P: con permisos WordPress | P compatibilidad |
+
+## 6b. Matriz POS V1 — caja presencial (D-204/D-210, DOCUMENTADO/NO IMPLEMENTADO)
+
+Sin acceso de visitantes ni invitados. Todas las rutas dependen de las puertas de módulo `pos.read`, `pos.write` y `pos.sessions`, cerradas por defecto (503 `pc_module_not_ready`).
+
+| ID | Operación | Visitante/invitado | Operador | Administrador | Estado |
+| --- | --- | --- | --- | --- | --- |
+| PER-57 | Vender en caja presencial y reimprimir la constancia (R8-71/72/82) | No | C: `pos_sell`, solo en su propia sesión abierta; reimprime solo pedidos de su sesión | C: `pos_sell` | C política D-201/D-204; contrato DOCUMENTADO/NO IMPLEMENTADO |
+| PER-58 | Operar la propia sesión de caja: abrir, consultar y cerrar (R8-73/74/76) | No | C: `cash_session_operate`, solo su sesión y con **arqueo ciego** (sin esperado ni diferencia) | C: `cash_session_operate` | C política D-203/D-204; DOCUMENTADO/NO IMPLEMENTADO |
+| PER-59 | Revisar sesiones y forzar su cierre (R8-77/78/79) | No | **R: no concedido** | C: `cash_session_review`, con motivo en el cierre forzado | C política D-204; DOCUMENTADO/NO IMPLEMENTADO |
+| PER-60 | Registrar ingresos y retiros justificados de caja (R8-75) | No | **R: no concedido en V1** | C: `cash_movements_record`, con motivo y versión | C política D-203/D-204; DOCUMENTADO/NO IMPLEMENTADO |
+| PER-61 | Registrar la referencia del comprobante emitido externamente para un pedido `pos` (R8-80/81) | No | C: `external_documents_record`, **sin nota de crédito** | C: `external_documents_record`; nota de crédito además con `refunds_record_external` | C política D-206; DOCUMENTADO/NO IMPLEMENTADO |
+| PER-62 | Registrar devolución o anulación presencial POS (R8-83) | No | **R: no concedido** | C: `orders_read` Y `refunds_record_external` Y `stock_manage` | Política D-205 CONFIRMADA; operación R8-83 con revisión del propietario antes de P3 |
 
 ## E-06: política de avisos por destinatario APROBADA (D-123…D-134)
 
