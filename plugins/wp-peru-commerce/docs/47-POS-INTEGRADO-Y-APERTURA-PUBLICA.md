@@ -2,6 +2,8 @@
 
 **Decisión del propietario: 2026-11-22. Estado: ampliación de alcance autorizada; POS NO IMPLEMENTADO; publicación pública NO REALIZADA.**
 
+**Nota de ubicación (2026-11-26):** la fuente se consolidó en el repositorio público canónico `VSG-WordPress-OpenSource` ([registro](../../../docs/SOURCE-CONSOLIDATION.md)). Las referencias a `Vanguard-WordPress-Plugins` y a un repositorio propio de PeruCommerce describen la decisión de 2026-11-22 y quedan superadas solo en cuanto a ubicación. «Publicación pública NO REALIZADA» se refiere al paquete distribuible: no existe release, build ni ZIP verificados.
+
 Esta adenda posterior a D-01…D-200 prevalece únicamente respecto de dos decisiones anteriores: el POS deja de estar excluido del producto objetivo y el código de PeruCommerce se destinará a un repositorio público independiente cuando esté preparado. No modifica por inferencia los contratos actuales de compra, dinero, fiscalidad, derechos, roles, datos o integraciones. Los registros y cierres IMP-01…IMP-71 permanecen históricos, exclusivamente estáticos y **no incluyen** un POS.
 
 ## 1. Decisiones confirmadas

@@ -31,9 +31,9 @@ Ningún proveedor ha sido contratado o facturado por esta clasificación; no hay
 
 ## Organización de repositorios
 
-- **Futuro repositorio público `Vanguard-WordPress-Free`**: fuente de plugins preparados para distribución pública, en los que cada componente conserva licencia y releases propios.
+- **`VSG-WordPress-OpenSource`** (este repositorio público) es la fuente canónica de los 131 candidatos; cada plugin conserva carpeta, licencia, ZIP y releases propios.
 - **`Vanguard-WordPress-Premium`**: **sin productos asignados**; no es necesario crear repo vacío ni mover 131 fichas de planificación a dos destinos.
-- Mantener `Vanguard-WordPress-Plugins` **privado como entorno de desarrollo** hasta que la fuente de cada plugin esté revisada, sin credenciales, datos ni historial ajeno. No publicar el monorepositorio íntegro.
-- PeruCommerce se publicará en repo propio cuando esté preparado, de acuerdo con su adenda POS; no mezclar su código con otros 130 candidatos por comodidad.
+- El antiguo `Vanguard-WordPress-Plugins` privado dejó de ser el entorno de desarrollo; la consolidación consta en [SOURCE-CONSOLIDATION.md](SOURCE-CONSOLIDATION.md). No publicar repositorios privados cambiando su visibilidad ni subir credenciales, datos o historial ajeno.
+- PeruCommerce se desarrolla en `plugins/wp-peru-commerce/` y se distribuirá como ZIP propio cuando esté preparado, de acuerdo con su adenda POS; su código no se mezcla con los otros 130 candidatos.
 
 **Esto es clasificación económica, no publicación.** No se modificaron pasarelas, licencias de productos, código ejecutable ni instalaciones.

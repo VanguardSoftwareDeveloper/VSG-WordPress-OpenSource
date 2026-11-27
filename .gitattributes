@@ -1,0 +1,23 @@
+# Repository text is stored with LF. Git detects text automatically.
+* text=auto eol=lf
+
+# Windows command scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets are never converted or diffed as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+*.mo binary
+*.pdf binary
+*.zip binary
+*.gz binary

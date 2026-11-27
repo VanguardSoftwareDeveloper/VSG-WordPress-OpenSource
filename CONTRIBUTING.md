@@ -1,6 +1,6 @@
 # Contributing to VSG WordPress projects
 
-Thank you for considering a contribution. **Current status:** this repository contains a public planning catalog, **not** 131 working WordPress plugins. PeruCommerce source, POS and final validation remain in separate development; individual code repositories will have their own contribution rules.
+Thank you for considering a contribution. **Current status:** this repository contains a public planning catalog, **not** 131 working WordPress plugins. It also holds the PeruCommerce VSG development source in `plugins/wp-peru-commerce/`; its POS, build, tests and release validation are not complete. Each plugin folder may add its own contribution rules in its `AGENTS.md` or README.
 
 ## Useful contributions
 
@@ -8,7 +8,7 @@ Thank you for considering a contribution. **Current status:** this repository co
 - Review of accessibility, security design, WordPress/PHP/Angular compatibility, and third-party licensing.
 - Corrections to documentation with relevant official sources and dates.
 - Real translations when a plugin is implemented, respecting its language plan (PeruCommerce targets Spanish for Peru only).
-- For code in a future plugin repo: small, self-contained changes with affected contracts, permissions, data and tests documented accurately.
+- For code (currently only PeruCommerce): small, self-contained changes inside one plugin folder, with affected contracts, permissions, data and tests documented accurately.
 
 ## Proposal and review process
 

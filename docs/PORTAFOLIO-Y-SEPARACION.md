@@ -26,13 +26,12 @@ Estas cifras son una **clasificación de diseño**, no una certificación econó
 
 ## Arquitectura de distribución
 
-**Publicación segura:** las 131 fichas se pueden presentar como catálogo público documental independiente, pero **no** mediante un cambio de visibilidad de este monorepositorio ni copiando su historial. Ver [puertas y exportación permitida](PUBLICACION-SEGURA.md); PeruCommerce tendrá su propio repositorio de código después de POS/IMP-72. Esta clasificación económica no es una autorización de release.
+**Publicación segura:** este repositorio público es la fuente canónica de las 131 fichas y de la fuente de PeruCommerce; el historial privado anterior no se importó ([registro de consolidación](SOURCE-CONSOLIDATION.md)). Las puertas antes de distribuir constan en [estado de publicación](RELEASE-STATUS.md) y, para PeruCommerce, después de POS/IMP-72. Esta clasificación económica no es una autorización de release.
 
-
-- Mantener hoy `Vanguard-WordPress-Plugins` **privado** como repositorio de trabajo. Las 131 carpetas siguen ahí sin mover ni duplicar códigos todavía.
-- **Futura fuente pública:** publicar únicamente plugins completos, verificados, licenciados y auditados. PeruCommerce conservará su repositorio público propio según [su adenda](../plugins/wp-peru-commerce/docs/47-POS-INTEGRADO-Y-APERTURA-PUBLICA.md), no se mezcla con el resto.
+- Las 131 carpetas permanecen en `plugins/<slug>/` sin mover ni duplicar código; el antiguo `Vanguard-WordPress-Plugins` privado ya no es el repositorio de trabajo.
+- **Distribución:** publicar como ZIP únicamente plugins completos, verificados, licenciados y auditados. PeruCommerce conserva su ZIP, licencia y releases propios según [su adenda](../plugins/wp-peru-commerce/docs/47-POS-INTEGRADO-Y-APERTURA-PUBLICA.md), sin mezclarse con el resto.
 - **Grupo comercial:** sin candidatos reales aún, por tanto no es necesario abrir un repositorio comercial vacío. Si surge un servicio pagado por Vanguard, documentar infraestructura y contrato de cobro antes de separar fuentes o vender servicios.
-- Los plugins futuros gratuitos pueden distribuirse en un repositorio colectivo `Vanguard-WordPress-Free` si resulta conveniente; eso **no** autoriza publicar el monorepositorio ni exponer historias importadas, secretos o datos de otros productos.
+- Los plugins futuros gratuitos se desarrollan en este mismo repositorio, cada uno con su propio ZIP; eso **no** autoriza exponer historias importadas, secretos o datos de otros productos.
 - La clasificación económica **no modifica** licencias preexistentes, versiones, permisos, alcance del plugin, contratos ni código.
 
 ## Inventarios enlazados

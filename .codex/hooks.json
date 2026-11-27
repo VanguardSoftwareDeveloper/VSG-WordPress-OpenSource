@@ -1,0 +1,18 @@
+{
+  "description": "VSG policy guard (safety net, not an authorization). Review and trust it with /hooks before it runs.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^(Bash|apply_patch)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"process.argv.push('--client','codex');const d=m=>console.log(JSON.stringify({hookSpecificOutput:{hookEventName:'PreToolUse',permissionDecision:'deny',permissionDecisionReason:'VSG policy guard unavailable (fail closed): '+m}}));try{import(require('url').pathToFileURL(require('child_process').execFileSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).trim()+'/tools/agent-policy/guard.mjs').href).catch(e=>d(e.message))}catch(e){d(e.message)}\"",
+            "timeout": 10,
+            "statusMessage": "VSG policy check"
+          }
+        ]
+      }
+    ]
+  }
+}

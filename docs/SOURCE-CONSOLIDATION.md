@@ -8,3 +8,4 @@ The other 130 plugin concepts remain planning only, not implementations.
 PeruCommerce is source-only, not a verified ZIP, build, test or production release.
 Integrated POS and IMP-72 validation are pending. Old plans about a separate future repo are historical.
 PeruCommerce declares GPL-2.0-or-later; dependency/asset licensing still requires release audit.
+The one-off script `tools/consolidate-perucommerce.ps1` and the 412-file catalog inventory `SOURCE-INVENTORY.json` were retired on 2026-11-26; both remain in history at commit 34f1e57.

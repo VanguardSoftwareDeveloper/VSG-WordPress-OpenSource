@@ -1,0 +1,16 @@
+{
+  "vsg-policy-guard": {
+    "PreToolUse": [
+      {
+        "matcher": "^(run_command|write_to_file|replace_file_content|multi_replace_file_content)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"process.argv.push('--client','antigravity');const d=m=>console.log(JSON.stringify({decision:'deny',reason:'VSG policy guard unavailable (fail closed): '+m}));try{import(require('url').pathToFileURL(require('child_process').execFileSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).trim()+'/tools/agent-policy/guard.mjs').href).catch(e=>d(e.message))}catch(e){d(e.message)}\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

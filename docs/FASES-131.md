@@ -1,6 +1,6 @@
 # Fases del portafolio: 131 proyectos WordPress
 
-**Estado:** 131 carpetas de investigación bajo el monorepositorio privado; solo PeruCommerce tiene fuente ejecutable en el repositorio, todavía sin compilación ni pruebas acreditadas. Las 130 fichas restantes no tienen alcance aprobado.
+**Estado:** 131 carpetas de investigación en este repositorio público; solo PeruCommerce tiene fuente ejecutable en el repositorio, todavía sin compilación ni pruebas acreditadas. Las 130 fichas restantes no tienen alcance aprobado.
 
 | Fase | Entregable | Estado |
 | --- | --- | --- |

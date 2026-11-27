@@ -1,0 +1,61 @@
+name: Unidad de trabajo
+description: Estado durable de una unidad de trabajo (objetivo, alcance, evidencia y relevo) para el propietario y los agentes.
+title: "[Unidad] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Una unidad de trabajo por issue. Los relevos se publican como comentarios con la plantilla de `.agents/skills/vsg-wp-continuidad/SKILL.md`.
+        No incluyas credenciales, datos de clientes, configuraciones privadas ni vulnerabilidades sin divulgar (usa `SECURITY.md`).
+  - type: textarea
+    id: objetivo
+    attributes:
+      label: Objetivo
+      description: Qué debe quedar resuelto, en una o dos frases.
+    validations:
+      required: true
+  - type: textarea
+    id: alcance
+    attributes:
+      label: Alcance
+      description: Plugins, carpetas o documentos incluidos, y lo que queda fuera.
+      placeholder: "plugins/<slug>/ …"
+    validations:
+      required: true
+  - type: textarea
+    id: autorizacion
+    attributes:
+      label: Autorización vigente
+      description: Lo que el propietario autorizó para esta unidad (por ejemplo, editar documentos, instalar, compilar, probar, commit o push). Lo no listado no está autorizado.
+    validations:
+      required: true
+  - type: textarea
+    id: criterio-de-cierre
+    attributes:
+      label: Criterio de cierre
+      description: Condición verificable que da la unidad por terminada.
+    validations:
+      required: true
+  - type: input
+    id: sha
+    attributes:
+      label: Rama y SHA de partida
+      placeholder: "main @ <sha>"
+  - type: textarea
+    id: archivos
+    attributes:
+      label: Archivos afectados
+  - type: textarea
+    id: evidencia
+    attributes:
+      label: Evidencia
+      description: Comandos ejecutados y resultados reales con cifras. Indica también lo que no se ejecutó.
+  - type: textarea
+    id: pendientes
+    attributes:
+      label: Pendientes y bloqueos
+  - type: textarea
+    id: siguiente-paso
+    attributes:
+      label: Siguiente paso
+      description: La siguiente orden exacta para quien retome la unidad.

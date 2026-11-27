@@ -1,0 +1,21 @@
+# Generated output for any plugin. Plugin folders may add stricter rules.
+node_modules/
+dist/
+.angular/
+coverage/
+*.tsbuildinfo
+*.zip
+
+# Secrets never belong in this public repository.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Personal agent and editor configuration.
+.claude/settings.local.json
+CLAUDE.local.md
+AGENTS.override.md
+.vscode/
+.idea/
