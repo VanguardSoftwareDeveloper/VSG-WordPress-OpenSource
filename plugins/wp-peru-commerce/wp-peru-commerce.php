@@ -22,7 +22,7 @@ if (!defined('PERUCOMMERCE_VERSION')) {
 }
 // Contrato estructural independiente de la versión del paquete PHP.
 if (!defined('PERUCOMMERCE_SCHEMA_VERSION')) {
-    define('PERUCOMMERCE_SCHEMA_VERSION', '1.0.2');
+    define('PERUCOMMERCE_SCHEMA_VERSION', '1.1.0');
 }
 if (!defined('PERUCOMMERCE_PLUGIN_FILE')) {
     define('PERUCOMMERCE_PLUGIN_FILE', __FILE__);

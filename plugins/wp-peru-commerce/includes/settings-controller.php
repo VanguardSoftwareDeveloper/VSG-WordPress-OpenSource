@@ -1,7 +1,7 @@
 <?php
 /**
  * IMP-13 — consumidores reales R8-45 GET /admin/settings y
- * R8-46 PATCH /admin/settings (OpenAPI 0.12.0-draft).
+ * R8-46 PATCH /admin/settings (OpenAPI 0.13.0-draft).
  *
  * Se conectan en rest_api_init prioridad 5 antes del enrutador (10).
  * Permisos/DTO de IMP-11/12 y Module_Gates permanecen fail-closed.

@@ -21,7 +21,8 @@ final class Rest_Failure extends \RuntimeException
         string $code = 'pc_request_invalid',
         public readonly int $status = 400,
         public readonly bool $retryable = false,
-        public readonly ?string $field = null
+        public readonly ?string $field = null,
+        public readonly ?string $reason = null
     ) {
         parent::__construct($code);
     }
@@ -58,7 +59,8 @@ final class Rest_Errors
         string $operationId,
         string $code,
         ?string $field = null,
-        bool $currentQuoteRequired = false
+        bool $currentQuoteRequired = false,
+        ?string $reason = null
     ): \WP_Error {
         $declared = self::CATALOG[$code] ?? self::CATALOG['pc_internal_error'];
         $knownCode = isset(self::CATALOG[$code]) ? $code : 'pc_internal_error';
@@ -110,11 +112,49 @@ final class Rest_Errors
         if ($currentQuoteRequired) {
             $details['current_quote_required'] = true;
         }
+        // La causa solo acompaña al código pedido; si el endpoint no lo
+        // declara y make() cae a otro estatus, se omite.
+        if (null !== $reason && $knownCode === $code
+            && \preg_match('/\A[a-z_]{1,60}\z/D', $reason)) {
+            $details['reason'] = $reason;
+        }
         if ([] !== $details) {
             $data['details'] = $details;
         }
         return new \WP_Error($knownCode, $declared['message'], $data);
     }
+
+    /**
+     * D-210…D-216: causa interna POS => [código público, reason, campo].
+     * reason pertenece al catálogo de docs/48 §11; nunca IDs, importes ni PII.
+     *
+     * @var array<string, array{0:string,1:?string,2:?string}>
+     */
+    private const POS_FAILURES = [
+        'pc_pos_disabled' => ['pc_module_not_ready', 'pos_disabled', null],
+        'pc_pos_sessions_open' => ['pc_conflict', 'pos_sessions_open', null],
+        'pc_pos_session_not_open' => ['pc_conflict', 'pos_session_not_open', null],
+        'pc_pos_session_closed' => ['pc_conflict', 'pos_session_closed', null],
+        'pc_pos_session_already_open' => ['pc_conflict', 'pos_session_already_open', null],
+        'pc_pos_register_busy' => ['pc_conflict', 'pos_register_busy', null],
+        'pc_pos_document_already_recorded' => ['pc_conflict', 'document_already_recorded', null],
+        'pc_pos_channel_required' => ['pc_business_ineligible', 'pos_channel_required', null],
+        'pc_pos_web_channel_required' => ['pc_business_ineligible', 'web_channel_required', null],
+        'pc_pos_refund_exceeds_cash' => ['pc_business_ineligible', 'refund_exceeds_cash', null],
+        'pc_pos_refund_cash_not_applicable' => ['pc_business_ineligible', 'refund_cash_not_applicable', null],
+        'pc_pos_return_units_exceeded' => ['pc_business_ineligible', 'return_units_exceeded', null],
+        'pc_pos_cash_total_below_minimum' => ['pc_business_ineligible', 'cash_total_below_minimum', null],
+        'pc_pos_document_amount_mismatch' => ['pc_business_ineligible', 'document_amount_mismatch', null],
+        'pc_pos_credit_note_not_required' => ['pc_business_ineligible', 'credit_note_not_required', null],
+        'pc_pos_denied' => ['pc_access_denied', null, null],
+        'pc_pos_not_found' => ['pc_not_found', null, null],
+        'pc_pos_conflict' => ['pc_conflict', null, null],
+        'pc_pos_quote_changed' => ['pc_quote_changed', null, null],
+        'pc_pos_input_invalid' => ['pc_field_invalid', null, null],
+        'pc_pos_payable_invalid' => ['pc_field_invalid', null, 'payable_cents'],
+        'pc_pos_not_ready' => ['pc_module_not_ready', null, null],
+        'pc_pos_invariant_invalid' => ['pc_dependency_unavailable', null, null],
+    ];
 
     public static function fromThrowable(string $operationId, \Throwable $error): \WP_Error
     {
@@ -124,7 +164,9 @@ final class Rest_Errors
             return self::make(
                 $operationId,
                 $error->getMessage(),
-                $error->field
+                $error->field,
+                false,
+                $error->reason
             );
         }
         if ($error instanceof MP_HTTP_Failure) {
@@ -137,6 +179,10 @@ final class Rest_Errors
             );
         }
         if ($error instanceof Transaction_Failure) {
+            $pos = self::POS_FAILURES[$error->getMessage()] ?? null;
+            if (null !== $pos) {
+                return self::make($operationId, $pos[0], $pos[2], false, $pos[1]);
+            }
             return match ($error->getMessage()) {
                 // IMP-43: propuestas no aprobadas no son cambios
                 // de entrega, y los errores nunca revelan dirección o PII.

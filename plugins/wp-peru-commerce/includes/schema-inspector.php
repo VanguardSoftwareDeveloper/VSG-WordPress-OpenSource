@@ -43,6 +43,8 @@ final class Schema_Inspector
 
     public function verifyTable(string $suffix, string $ddl): void
     {
+        // El nowdoc conserva el fin de línea del archivo; las regex por línea esperan LF.
+        $ddl = \str_replace("\r\n", "\n", $ddl);
         if (!$this->tableExists($suffix)) {
             throw new \RuntimeException('pc_schema_table_missing');
         }
@@ -153,8 +155,9 @@ final class Schema_Inspector
 
     public function verifyAll(): void
     {
+        [$tableCount, $foreignKeyCount] = Schema::expectedCounts(\PERUCOMMERCE_SCHEMA_VERSION);
         $statements = Schema::tableStatements($this->db);
-        if (39 !== \count($statements)) {
+        if ($tableCount !== \count($statements)) {
             throw new \LogicException('pc_schema_inventory_invalid');
         }
         foreach ($statements as $suffix => $sql) {
@@ -162,7 +165,7 @@ final class Schema_Inspector
         }
 
         $foreignKeys = Schema::foreignKeyStatements($this->db);
-        if (56 !== \count($foreignKeys)) {
+        if ($foreignKeyCount !== \count($foreignKeys)) {
             throw new \LogicException('pc_schema_inventory_invalid');
         }
         foreach ($foreignKeys as $statement) {
@@ -171,6 +174,68 @@ final class Schema_Inspector
             }
         }
         $this->verifyAnchor();
+    }
+
+    /**
+     * Estado físico de una columna, o null si no existe. Solo metadatos; lo usa
+     * la actualización 1.1.0 para reconocer pasos ya aplicados.
+     *
+     * @return array{type:string,nullable:bool}|null
+     */
+    public function columnState(string $suffix, string $column): ?array
+    {
+        $rows = $this->rows($this->db->prepare(
+            'SELECT COLUMN_TYPE, IS_NULLABLE FROM information_schema.COLUMNS '
+                . 'WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND COLUMN_NAME = %s',
+            $this->physicalName($suffix), $column
+        ));
+        if ([] === $rows) {
+            return null;
+        }
+        if (1 !== \count($rows)) {
+            throw new \RuntimeException('pc_schema_columns_mismatch');
+        }
+        return [
+            'type' => $this->canonicalType((string) $rows[0]['COLUMN_TYPE']),
+            'nullable' => 'YES' === $rows[0]['IS_NULLABLE'],
+        ];
+    }
+
+    /**
+     * Columnas de un índice BTREE completo (sin prefijos), en orden, o null si
+     * el índice no existe. Un índice con prefijo o de otro tipo no coincide.
+     *
+     * @return list<string>|null
+     */
+    public function indexColumns(string $suffix, string $name): ?array
+    {
+        $rows = $this->rows($this->db->prepare(
+            'SELECT COLUMN_NAME, SUB_PART, INDEX_TYPE FROM information_schema.STATISTICS '
+                . 'WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s AND INDEX_NAME = %s '
+                . 'ORDER BY SEQ_IN_INDEX',
+            $this->physicalName($suffix), $name
+        ));
+        if ([] === $rows) {
+            return null;
+        }
+        $columns = [];
+        foreach ($rows as $row) {
+            if (null !== $row['SUB_PART'] || 'BTREE' !== \strtoupper((string) $row['INDEX_TYPE'])) {
+                throw new \RuntimeException('pc_schema_index_mismatch');
+            }
+            $columns[] = (string) $row['COLUMN_NAME'];
+        }
+        return $columns;
+    }
+
+    /** Indica si la tabla ya tiene un CHECK con esta cláusula (comparada normalizada). */
+    public function hasCheck(string $suffix, string $clause): bool
+    {
+        if (!$this->tableExists($suffix)) {
+            throw new \RuntimeException('pc_schema_table_missing');
+        }
+        return \in_array($this->checkSignature($clause),
+            $this->checkSignatures($this->physicalName($suffix)), true);
     }
 
     public function verifyAnchor(): void
@@ -257,6 +322,29 @@ final class Schema_Inspector
                 $expected[] = $this->checkSignature(\rtrim($parts[1], ','));
             }
         }
+        $actual = $this->checkSignatures($table);
+        if (\count($expected) !== \count($actual)) {
+            throw new \RuntimeException('pc_schema_check_mismatch');
+        }
+        \sort($expected);
+        \sort($actual);
+        if ($expected !== $actual) {
+            throw new \RuntimeException('pc_schema_check_mismatch');
+        }
+
+        if ([] !== $expected) {
+            $definition = $this->rows($this->db->prepare('SHOW CREATE TABLE %i', $table));
+            if (1 !== \count($definition)
+                || !\is_string($definition[0]['Create Table'] ?? null)
+                || false !== \stripos($definition[0]['Create Table'], 'NOT ENFORCED')) {
+                throw new \RuntimeException('pc_schema_check_mismatch');
+            }
+        }
+    }
+
+    /** @return list<string> firmas normalizadas de los CHECK de la tabla física. */
+    private function checkSignatures(string $table): array
+    {
         // MariaDB tiene CHECK_CONSTRAINTS.TABLE_NAME y permite nombres
         // automáticos repetidos por tabla; MySQL 8.4 no expone esa columna.
         // Un JOIN solo por constraint_name en MariaDB mezclaría otras tablas.
@@ -284,31 +372,18 @@ final class Schema_Inspector
                 $table, 'CHECK'
             ));
         }
-        if (\count($expected) !== \count($rows)) {
-            throw new \RuntimeException('pc_schema_check_mismatch');
-        }
-        $actual = \array_map(fn (array $row): string =>
+        return \array_map(fn (array $row): string =>
             $this->checkSignature((string) $row['CHECK_CLAUSE']), $rows);
-        \sort($expected);
-        \sort($actual);
-        if ($expected !== $actual) {
-            throw new \RuntimeException('pc_schema_check_mismatch');
-        }
-
-        if ([] !== $expected) {
-            $definition = $this->rows($this->db->prepare('SHOW CREATE TABLE %i', $table));
-            if (1 !== \count($definition)
-                || !\is_string($definition[0]['Create Table'] ?? null)
-                || false !== \stripos($definition[0]['Create Table'], 'NOT ENFORCED')) {
-                throw new \RuntimeException('pc_schema_check_mismatch');
-            }
-        }
     }
 
     private function checkSignature(string $check): string
     {
-        // MySQL/MariaDB agregan comillas, espacios y paréntesis exteriores.
-        return \preg_replace('/[\x60"()\s]+/', '', \strtolower($check)) ?? '';
+        // MySQL/MariaDB agregan comillas, espacios y paréntesis exteriores;
+        // MySQL además escapa comillas simples y antepone introductores de
+        // juego de caracteres a los literales (_utf8mb4'open').
+        $check = \str_replace('\\', '', \strtolower($check));
+        $check = \preg_replace("/(?<![a-z0-9_'])_[a-z0-9]+(?=')/", '', $check) ?? '';
+        return \preg_replace('/[\x60"()\s]+/', '', $check) ?? '';
     }
 
     /** @return list<string> */

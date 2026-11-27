@@ -28,7 +28,12 @@ final class Transaction_Context
         'pc_schedule_revisions' => ['resource_id', true],
         'pc_calendar_days' => ['id', false],
         'pc_appointments' => ['id', true],
+        'pc_cash_sessions' => ['id', true],
     ];
+
+    /** Columnas de pc_cash_sessions que conserva el bloqueo; sin importes de cierre. */
+    private const CASH_SESSION_COLUMNS = 'id, register_code, status, open_user_id, opened_by, '
+        . 'opening_float_cents, business_date, opened_at, row_version';
 
     private \wpdb $db;
     private \mysqli $link;
@@ -221,6 +226,66 @@ final class Transaction_Context
     public function lockedAppointment(string $id): array
     {
         return $this->requireLocked('pc_appointments', Domain_Validation::sqlId($id));
+    }
+
+    public function lockedCashSession(string $id): array
+    {
+        return $this->requireLocked('pc_cash_sessions', Domain_Validation::sqlId($id));
+    }
+
+    /**
+     * D-214: sesión de caja (etapa 15), después de la raíz de idempotencia y
+     * antes del pedido. Null si no existe; el servicio decide el error.
+     *
+     * @return array<string,mixed>|null
+     */
+    public function lockCashSession(string $id): ?array
+    {
+        $id = Domain_Validation::sqlId($id);
+        $this->advanceStage(15, $id);
+        $rows = $this->rows(
+            'SELECT ' . self::CASH_SESSION_COLUMNS . ' FROM %i WHERE id = %s FOR UPDATE',
+            [$this->name('pc_cash_sessions'), $id]
+        );
+        if ([] === $rows) {
+            return null;
+        }
+        $row = $this->exactlyOne($rows);
+        $this->remember('pc_cash_sessions', $id, $row);
+        return $row;
+    }
+
+    /**
+     * D-216: todas las sesiones abiertas por ix_3 (status, opened_at, id),
+     * sin recorrer ni bloquear el histórico. Solo R8-46, con la fila de
+     * ajustes ya bloqueada: R8-73 espera esa fila antes de insertar.
+     * Esta lectura bloquea ix_3 antes que la clave primaria; quien saque una
+     * sesión de 'open' (R8-76, R8-79) modifica ix_3 y las UQ de apertura, por
+     * lo que también bloquea antes la fila de ajustes: sin ese orden, ambos
+     * esperarían el bloqueo del otro (índice secundario frente a primario).
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function lockOpenCashSessions(): array
+    {
+        // Comprobar el orden ANTES de adquirir bloqueos: un fallo posterior
+        // dejaría filas bloqueadas fuera de la precedencia de IMP-07.
+        if ($this->stage >= 15) {
+            throw new Transaction_Failure('pc_lock_order_conflict');
+        }
+        $rows = $this->rows(
+            'SELECT ' . self::CASH_SESSION_COLUMNS . ' '
+                . 'FROM %i FORCE INDEX (`ix_3`) WHERE status = %s '
+                . 'ORDER BY opened_at, id FOR UPDATE',
+            [$this->name('pc_cash_sessions'), 'open']
+        );
+        \usort($rows, static fn (array $a, array $b): int =>
+            self::compareId((string) $a['id'], (string) $b['id']));
+        foreach ($rows as $row) {
+            $this->advanceStage(15, (string) $row['id']);
+            $this->remember('pc_cash_sessions', (string) $row['id'], $row);
+        }
+        return $rows;
     }
 
     public function lockOrder(string $orderId): array

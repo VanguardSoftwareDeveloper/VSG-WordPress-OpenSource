@@ -262,7 +262,7 @@ final class Settings_Store
             }
         }
         foreach ($s as $key => $_) {
-            if (!\in_array($key, [...$required, 'mail_sender'], true)) {
+            if (!\in_array($key, [...$required, 'mail_sender', 'pos'], true)) {
                 throw new Transaction_Failure('pc_settings_record_invalid');
             }
         }
@@ -288,6 +288,65 @@ final class Settings_Store
         }
         if (isset($s['mail_sender']) && !\is_array($s['mail_sender'])) {
             throw new Transaction_Failure('pc_settings_record_invalid');
+        }
+        if (\array_key_exists('pos', $s)) {
+            self::validatePos($s['pos']);
+        }
+    }
+
+    /**
+     * D-216: ajustes POS persistidos. Ausentes equivalen a desactivado y sin
+     * cajas; nunca se completan en defaults() para no reescribir la opción.
+     *
+     * @param array<string,mixed> $s
+     * @return array{enabled:bool,registers:list<array{code:string,label:string}>}
+     */
+    public static function posState(array $s): array
+    {
+        return $s['pos'] ?? ['enabled' => false, 'registers' => []];
+    }
+
+    /**
+     * Regla de negocio (no puerta de seguridad): POS activo y caja configurada.
+     *
+     * @param array<string,mixed> $s
+     */
+    public static function posRegisterActive(array $s, string $code): bool
+    {
+        $pos = self::posState($s);
+        return true === $pos['enabled']
+            && \in_array($code, \array_column($pos['registers'], 'code'), true);
+    }
+
+    /** Etiqueta visible de caja: UTF-8, 1 a 80 caracteres, sin controles ni solo espacios. */
+    public static function posLabelValid(mixed $label): bool
+    {
+        return \is_string($label)
+            && \mb_check_encoding($label, 'UTF-8')
+            && '' !== \trim($label)
+            && \mb_strlen($label, 'UTF-8') <= 80
+            && 1 !== \preg_match('/[\x00-\x1F\x7F]/', $label);
+    }
+
+    private static function validatePos(mixed $pos): void
+    {
+        if (!\is_array($pos) || 2 !== \count($pos)
+            || !\is_bool($pos['enabled'] ?? null)
+            || !\is_array($pos['registers'] ?? null)
+            || !\array_is_list($pos['registers'])
+            || \count($pos['registers']) > 20) {
+            throw new Transaction_Failure('pc_settings_record_invalid');
+        }
+        $codes = [];
+        foreach ($pos['registers'] as $register) {
+            if (!\is_array($register) || 2 !== \count($register)
+                || !\is_string($register['code'] ?? null)
+                || 1 !== \preg_match('/\A[a-z0-9_-]{1,32}\z/D', $register['code'])
+                || !self::posLabelValid($register['label'] ?? null)
+                || isset($codes[$register['code']])) {
+                throw new Transaction_Failure('pc_settings_record_invalid');
+            }
+            $codes[$register['code']] = true;
         }
     }
 

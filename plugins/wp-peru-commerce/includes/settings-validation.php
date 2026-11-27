@@ -58,6 +58,24 @@ final class Settings_Validation
                 $mapped->$key = (object) $patch[$key];
             }
         }
+        if (\array_key_exists('pos', $patch)) {
+            // PosSettings es objeto con lista de objetos: el validador exige
+            // stdClass anidados y lista real, no un mapa con claves arbitrarias.
+            if (!\is_array($patch['pos'])) {
+                throw new Rest_Failure('pc_field_invalid', 422, false, 'pos');
+            }
+            $pos = (object) $patch['pos'];
+            if (isset($patch['pos']['registers']) && \is_array($patch['pos']['registers'])) {
+                if (!\array_is_list($patch['pos']['registers'])) {
+                    throw new Rest_Failure('pc_field_invalid', 422, false, 'pos.registers');
+                }
+                $pos->registers = \array_map(
+                    static fn (mixed $r): mixed => \is_array($r) ? (object) $r : $r,
+                    $patch['pos']['registers']
+                );
+            }
+            $mapped->pos = $pos;
+        }
         Rest_Validator::namedObject('SettingsPatch', $mapped);
 
         // La infraestructura idempotente también rechaza caracteres de
@@ -90,6 +108,32 @@ final class Settings_Validation
                 || \preg_match('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $text)) {
                 throw new Rest_Failure('pc_field_invalid', 422, false, $key);
             }
+        }
+        if (isset($patch['pos'])) {
+            self::pos($patch['pos']);
+        }
+    }
+
+    /**
+     * D-216: reglas de PosSettings que el esquema no expresa: etiqueta sin
+     * controles ni solo espacios y códigos de caja únicos. El esquema ya
+     * validó tipos, patrón del código, longitudes y máximo de 20 cajas.
+     *
+     * @param array{enabled:bool,registers:list<array{code:string,label:string}>} $pos
+     */
+    private static function pos(array $pos): void
+    {
+        $codes = [];
+        foreach ($pos['registers'] as $i => $register) {
+            if (!Settings_Store::posLabelValid($register['label'])) {
+                throw new Rest_Failure('pc_field_invalid', 422, false,
+                    'pos.registers[' . $i . '].label');
+            }
+            if (isset($codes[$register['code']])) {
+                throw new Rest_Failure('pc_field_invalid', 422, false,
+                    'pos.registers[' . $i . '].code');
+            }
+            $codes[$register['code']] = true;
         }
     }
 

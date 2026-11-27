@@ -131,6 +131,30 @@ final class Settings_Service
                     }
                 }
 
+                if (\array_key_exists('pos', $payload)) {
+                    // D-216: reemplazo completo con la fila de ajustes ya
+                    // bloqueada (ensureWithin FOR UPDATE) y después las
+                    // sesiones abiertas (etapa 15). Desactivar o retirar una
+                    // caja con sesión abierta exige cerrarla antes (R8-76/79).
+                    $nextPos = [
+                        'enabled' => $payload['pos']['enabled'],
+                        'registers' => \array_map(
+                            static fn (array $r): array => [
+                                'code' => $r['code'], 'label' => $r['label'],
+                            ],
+                            $payload['pos']['registers']
+                        ),
+                    ];
+                    $codes = \array_column($nextPos['registers'], 'code');
+                    foreach ($tx->lockOpenCashSessions() as $open) {
+                        if (true !== $nextPos['enabled']
+                            || !\in_array((string) $open['register_code'], $codes, true)) {
+                            throw new Transaction_Failure('pc_pos_sessions_open');
+                        }
+                    }
+                    $updated['pos'] = $nextPos;
+                }
+
                 foreach ([
                     'policy_notice' => ['policy_version_id', 'commercial_terms'],
                     'privacy_notice' => ['privacy_version_id', 'privacy_notice'],
@@ -210,6 +234,7 @@ final class Settings_Service
             'digital_download_limit' => $s['digital_download_limit'],
             'map_tiles' => $s['map_tiles'],
             'routine_buyer_emails_enabled' => $s['routine_buyer_emails_enabled'],
+            'pos' => Settings_Store::posState($s),
         ];
         if (isset($s['mail_sender'])) {
             $result['mail_sender'] = $s['mail_sender'];

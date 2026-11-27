@@ -1,6 +1,6 @@
 <?php
 /**
- * IMP-12 — validación estructural del OpenAPI 0.12.0-draft.
+ * IMP-12 — validación estructural del OpenAPI 0.13.0-draft.
  *
  * Conserva tipos JSON reales: stdClass es objeto (incluso vacío),
  * array es lista. No coercionar importes/cantidades ni hacer mass-assignment.

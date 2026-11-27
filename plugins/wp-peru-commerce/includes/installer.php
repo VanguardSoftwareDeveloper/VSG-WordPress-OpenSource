@@ -236,8 +236,10 @@ final class Installer
             throw new \RuntimeException('pc_install_preflight');
         }
         // Rechaza charset/colación incompatible y prefijos de >64 caracteres.
+        [$tableCount, $foreignKeyCount] = Schema::expectedCounts(PERUCOMMERCE_SCHEMA_VERSION);
         $definitions = Schema::tableStatements($this->db);
-        if (39 !== \count($definitions) || 56 !== \count(Schema::foreignKeyStatements($this->db))) {
+        if ($tableCount !== \count($definitions)
+            || $foreignKeyCount !== \count(Schema::foreignKeyStatements($this->db))) {
             throw new \RuntimeException('pc_install_preflight');
         }
     }
@@ -255,10 +257,11 @@ final class Installer
         $installed = $this->marker(self::SCHEMA);
         $installedPlugin = $this->marker(self::PLUGIN);
         $state = $this->marker(self::STATE);
-        // Solo se admiten las dos expansiones históricas conocidas de
-        // pc_payment_events. Un ZIP antiguo nunca hace rollback del SQL.
+        // Solo se admiten las revisiones históricas conocidas: las dos
+        // expansiones de pc_payment_events (1.0.1, 1.0.2) y POS V1 (1.1.0).
+        // Un ZIP antiguo nunca hace rollback del SQL.
         $upgrading = '' !== $installed && PERUCOMMERCE_SCHEMA_VERSION !== $installed;
-        if ($upgrading && !\in_array($installed, ['1.0.0', '1.0.1'], true)) {
+        if ($upgrading && !\in_array($installed, ['1.0.0', '1.0.1', '1.0.2'], true)) {
             throw new \RuntimeException('pc_schema_upgrade_unsupported');
         }
 
@@ -443,14 +446,18 @@ final class Installer
         foreach ($rows as $row) {
             $entry = (string) $row['version'];
             if (1 !== \preg_match(
-                '/\A(1\.0\.[012]):(tables|foreign_keys|resource|verified|upgrade_correction|upgrade_refund)\z/D',
+                '/\A(1\.0\.[012]|1\.1\.0):(tables|foreign_keys|resource|verified'
+                    . '|upgrade_correction|upgrade_refund|upgrade_pos)\z/D',
                 $entry, $parts
             )) {
                 return false;
             }
             $version = $parts[1];
             $stage = $parts[2];
-            if (\str_starts_with($stage, 'upgrade_') && '1.0.2' !== $version) {
+            // Las etapas de actualización solo las escribe 1.0.2 (evidencias)
+            // o 1.1.0 (evidencias y POS); upgrade_pos nace con 1.1.0.
+            if (\str_starts_with($stage, 'upgrade_') && Schema::POS_VERSION !== $version
+                && ('1.0.2' !== $version || 'upgrade_pos' === $stage)) {
                 return false;
             }
             if (!\hash_equals(
@@ -466,19 +473,26 @@ final class Installer
     /** @return array<string,string> */
     private function statementsForVersion(string $version): array
     {
-        if (!\in_array($version, ['1.0.0', '1.0.1', '1.0.2'], true)) {
+        if (!\in_array($version, ['1.0.0', '1.0.1', '1.0.2', Schema::POS_VERSION], true)) {
             throw new \RuntimeException('pc_schema_upgrade_unsupported');
         }
-        $statements = Schema::tableStatements($this->db);
+        if (Schema::POS_VERSION === $version) {
+            return Schema::tableStatements($this->db, Schema::POS_VERSION);
+        }
+        // Las sentencias 1.0.x se derivan de la forma 1.0.2 conservada byte a
+        // byte: las huellas del journal existente siguen verificándose.
+        $statements = Schema::tableStatements($this->db, Schema::BASE_VERSION);
+        // El nowdoc conserva el fin de línea de la copia (LF en Git).
+        $eol = \str_contains($statements['pc_payment_events'], "\r\n") ? "\r\n" : "\n";
         if ('1.0.2' !== $version) {
             $statements['pc_payment_events'] = \str_replace(
-                "  \x60refund_evidence_snapshot\x60 LONGTEXT NULL,\n", '',
+                "  \x60refund_evidence_snapshot\x60 LONGTEXT NULL," . $eol, '',
                 $statements['pc_payment_events']
             );
         }
         if ('1.0.0' === $version) {
             $statements['pc_payment_events'] = \str_replace(
-                "  \x60correction_evidence_snapshot\x60 LONGTEXT NULL,\n", '',
+                "  \x60correction_evidence_snapshot\x60 LONGTEXT NULL," . $eol, '',
                 $statements['pc_payment_events']
             );
         }
@@ -487,16 +501,21 @@ final class Installer
 
     private function stageDigest(string $stage, string $version = PERUCOMMERCE_SCHEMA_VERSION): string
     {
+        $foreignKeys = Schema::foreignKeyStatements(
+            $this->db, Schema::POS_VERSION === $version ? Schema::POS_VERSION : Schema::BASE_VERSION
+        );
         $serialized = \implode("\n", \array_values($this->statementsForVersion($version)))
-            . "\n" . \implode("\n", Schema::foreignKeyStatements($this->db))
+            . "\n" . \implode("\n", $foreignKeys)
             . "\n" . $version . ':' . $stage;
         return \hash('sha256', $serialized);
     }
 
     /**
-     * Evolución idempotente 1.0.0 → 1.0.1 → 1.0.2. Solo columnas
-     * nullable de evidencia; sin backfill inventado, DROP ni reset de datos.
-     * El administrador debe contar con backup realmente certificado.
+     * Evolución idempotente 1.0.0 → 1.0.1 → 1.0.2 → 1.1.0. Solo columnas
+     * nullable de evidencia, la relajación de aceptaciones de pc_orders para
+     * pedidos POS y las tablas POS V1 (docs/48 §10); sin backfill inventado,
+     * DROP ni reset de datos. El administrador debe contar con backup
+     * realmente certificado.
      */
     private function upgradeKnownSchema(string $installed): void
     {
@@ -520,6 +539,8 @@ final class Installer
             $this->recordStage('upgrade_refund', 'running');
             $this->ensureEvidenceColumn('refund_evidence_snapshot', 'correction_evidence_snapshot');
             $this->recordStage('upgrade_refund', 'complete');
+
+            $this->upgradePos();
 
             // Verificación estricta de TODAS las tablas, índices, CHECK y FK.
             // Si el DDL se confirmó parcialmente, los marcadores siguen cerrados.
@@ -552,22 +573,124 @@ final class Installer
         $statements = $this->statementsForVersion($installed);
         $correction = $this->requireEvidenceColumn('correction_evidence_snapshot');
         $refund = $this->requireEvidenceColumn('refund_evidence_snapshot');
-        if (($refund && !$correction) || ('1.0.1' === $installed && !$correction)) {
+        if (($refund && !$correction) || ('1.0.1' === $installed && !$correction)
+            || ('1.0.2' === $installed && !$refund)) {
             throw new \RuntimeException('pc_schema_columns_mismatch');
         }
         $observedVersion = $refund ? '1.0.2' : ($correction ? '1.0.1' : '1.0.0');
         $statements['pc_payment_events'] = $this->statementsForVersion(
             $observedVersion
         )['pc_payment_events'];
+        if ($this->journalHas(Schema::POS_VERSION . ':upgrade_pos')) {
+            // Reentrada: el DDL aditivo POS pudo confirmarse en parte. Cada paso
+            // se reconoce en upgradePos() y ambas tablas se verifican después
+            // de forma estricta contra la revisión 1.1.0.
+            unset($statements['pc_orders'], $statements['pc_external_documents']);
+        } else {
+            foreach (Schema::posTables() as $suffix) {
+                if ($this->inspector->tableExists($suffix)) {
+                    throw new \RuntimeException('pc_schema_unowned_existing');
+                }
+            }
+        }
         foreach ($statements as $suffix => $sql) {
             $this->inspector->verifyTable($suffix, $sql);
         }
-        foreach (Schema::foreignKeyStatements($this->db) as $sql) {
+        foreach (Schema::foreignKeyStatements($this->db, Schema::BASE_VERSION) as $sql) {
             if (!$this->inspector->foreignKeyExists($sql)) {
                 throw new \RuntimeException('pc_schema_fk_missing');
             }
         }
         $this->inspector->verifyAnchor();
+    }
+
+    /**
+     * 1.0.2 → 1.1.0 (docs/48 §10): crea y verifica las tablas POS, aplica los
+     * pasos aditivos sobre pc_orders y pc_external_documents reconociendo los
+     * ya confirmados, verifica ambas tablas contra 1.1.0 y añade las FK nuevas.
+     * El ADD CONSTRAINT CHECK valida las filas existentes: un pedido web sin
+     * aceptaciones o un redondeo fuera de rango hace fallar la etapa.
+     */
+    private function upgradePos(): void
+    {
+        $this->recordStage('upgrade_pos', 'running');
+        $statements = Schema::tableStatements($this->db, Schema::POS_VERSION);
+        foreach (Schema::posTables() as $suffix) {
+            if (!$this->inspector->tableExists($suffix)) {
+                $this->writeSql($statements[$suffix], 'pc_schema_create_failed');
+            }
+            $this->inspector->verifyTable($suffix, $statements[$suffix]);
+        }
+
+        foreach (Schema::posUpgradeSteps($this->db) as $step) {
+            if ($this->posStepApplied($step)) {
+                continue;
+            }
+            $this->writeSql($step['sql'], 'pc_schema_upgrade_failed');
+            if (!$this->posStepApplied($step)) {
+                throw new \RuntimeException('pc_schema_upgrade_failed');
+            }
+        }
+        $this->inspector->verifyTable('pc_orders', $statements['pc_orders']);
+        $this->inspector->verifyTable('pc_external_documents', $statements['pc_external_documents']);
+
+        foreach (Schema::foreignKeyStatements($this->db, Schema::POS_VERSION) as $sql) {
+            if ($this->inspector->foreignKeyExists($sql)) {
+                continue;
+            }
+            $this->writeSql($sql, 'pc_schema_fk_failed');
+            if (!$this->inspector->foreignKeyExists($sql)) {
+                throw new \RuntimeException('pc_schema_fk_failed');
+            }
+        }
+        $this->recordStage('upgrade_pos', 'complete');
+    }
+
+    /**
+     * Un paso ya presente con otra forma no se corrige: falla cerrado.
+     *
+     * @param array{kind:string,table:string,name:string,expect:string,sql:string} $step
+     */
+    private function posStepApplied(array $step): bool
+    {
+        switch ($step['kind']) {
+            case 'nullable':
+                $state = $this->inspector->columnState($step['table'], $step['name']);
+                if (null === $state || $step['expect'] !== $state['type']) {
+                    throw new \RuntimeException('pc_schema_columns_mismatch');
+                }
+                return $state['nullable'];
+            case 'column':
+                $state = $this->inspector->columnState($step['table'], $step['name']);
+                if (null === $state) {
+                    return false;
+                }
+                if ($step['expect'] !== $state['type'] || !$state['nullable']) {
+                    throw new \RuntimeException('pc_schema_columns_mismatch');
+                }
+                return true;
+            case 'key':
+                $columns = $this->inspector->indexColumns($step['table'], $step['name']);
+                if (null === $columns) {
+                    return false;
+                }
+                if ($step['expect'] !== \implode(',', $columns)) {
+                    throw new \RuntimeException('pc_schema_index_mismatch');
+                }
+                return true;
+            case 'check':
+                return $this->inspector->hasCheck($step['table'], $step['expect']);
+        }
+        throw new \LogicException('pc_schema_upgrade_unsupported');
+    }
+
+    private function journalHas(string $entry): bool
+    {
+        $rows = $this->inspector->rows($this->db->prepare(
+            'SELECT version FROM %i WHERE version = %s LIMIT 1',
+            Schema::tableNames($this->db)['pc_migrations'], $entry
+        ));
+        return [] !== $rows;
     }
 
     private function requireEvidenceColumn(string $column): bool

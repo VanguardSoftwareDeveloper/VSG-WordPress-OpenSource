@@ -1,8 +1,10 @@
 <?php
 /**
- * IMP-04: esquema SQL declarativo de 39 tablas para una instalación WordPress.
+ * IMP-04: esquema SQL declarativo de 42 tablas (39 en 1.0.x) para una instalación WordPress.
  *
  * Fuente: docs/23, docs/36, docs/38; ajustes de docs/23 §12 (R8-37/54/64).
+ * POS V1 (esquema 1.1.0): docs/48 §10, D-209/D-212. Las sentencias de 1.0.x se
+ * conservan byte a byte para que las huellas del diario existente sigan verificándose.
  * Este archivo NO ejecuta SQL ni registra hooks de instalación. IMP-05 definirá
  * migraciones, checksums, orden recuperable y estados de preflight reales.
  *
@@ -23,6 +25,24 @@ if (!\defined('ABSPATH')) {
  */
 final class Schema
 {
+    /** Última revisión 1.0.x; sus sentencias se conservan byte a byte. */
+    public const BASE_VERSION = '1.0.2';
+
+    /** Primera revisión con POS V1 (docs/48 §10, D-209/D-212). */
+    public const POS_VERSION = '1.1.0';
+
+    /** @var list<string> revisiones de DDL que este código sabe generar. */
+    private const VERSIONS = [self::BASE_VERSION, self::POS_VERSION];
+
+    /**
+     * D-202: un pedido web conserva sus dos aceptaciones; uno POS (canal derivado
+     * de pos_session_id no NULL) solo se cobra en efectivo.
+     */
+    private const ORDERS_POS_CHECK = "(pos_session_id IS NULL AND policy_version_id IS NOT NULL AND privacy_version_id IS NOT NULL) OR (pos_session_id IS NOT NULL AND payment_method = 'cash')";
+
+    /** D-211: redondeo del comprobante externo; NULL en los registros web. */
+    private const ROUNDING_CHECK = 'rounding_cents IS NULL OR (rounding_cents >= -9 AND rounding_cents <= 0)';
+
     /** @var array<string, string> */
     private const DEFINITIONS = [
         'pc_sellables' => <<<'SQL'
@@ -883,16 +903,146 @@ SQL,
         ['pc_digital_assignments', ['active_file_id', 'sellable_id'], 'pc_digital_files', ['id', 'sellable_id']],
     ];
 
-    /** @return list<string> */
+    /**
+     * Tablas nuevas de POS V1 (esquema 1.1.0, docs/48 §10). Mismas reglas que
+     * DEFINITIONS: InnoDB, utf8mb4, céntimos BIGINT, DATETIME(6) UTC, FK RESTRICT
+     * y ninguna FK a wp_users/wp_posts. Movimientos y líneas de devolución son
+     * inmutables (solo INSERT); los campos de cierre de una sesión no abierta
+     * son inmutables por regla de servicio con control de versión.
+     *
+     * @var array<string, string>
+     */
+    private const DEFINITIONS_110 = [
+        'pc_cash_sessions' => <<<'SQL'
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `register_code` VARCHAR(32) NOT NULL,
+  `status` VARCHAR(16) NOT NULL,
+  `open_register_code` VARCHAR(32) NULL,
+  `open_user_id` BIGINT UNSIGNED NULL,
+  `opened_by` BIGINT UNSIGNED NOT NULL,
+  `opening_float_cents` BIGINT NOT NULL,
+  `business_date` DATE NOT NULL,
+  `opened_at` DATETIME(6) NOT NULL,
+  `closed_at` DATETIME(6) NULL,
+  `closed_by` BIGINT UNSIGNED NULL,
+  `counted_cents` BIGINT NULL,
+  `expected_cents` BIGINT NULL,
+  `close_reason` VARCHAR(500) NULL,
+  `created_at` DATETIME(6) NOT NULL,
+  `updated_at` DATETIME(6) NOT NULL,
+  `row_version` BIGINT UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_1` (`open_register_code`),
+  UNIQUE KEY `uq_2` (`open_user_id`),
+  KEY `ix_1` (`business_date`, `register_code`),
+  KEY `ix_2` (`opened_by`, `opened_at`),
+  KEY `ix_3` (`status`, `opened_at`, `id`),
+  CHECK (opening_float_cents >= 0),
+  CHECK (counted_cents IS NULL OR counted_cents >= 0),
+  CHECK (status IN ('open','closed','force_closed')),
+  CHECK ((status = 'open' AND closed_at IS NULL AND open_register_code IS NOT NULL AND open_user_id IS NOT NULL) OR (status <> 'open' AND closed_at IS NOT NULL AND open_register_code IS NULL AND open_user_id IS NULL)),
+  CHECK (row_version >= 1)
+SQL,
+
+        'pc_cash_session_movements' => <<<'SQL'
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `session_id` BIGINT UNSIGNED NOT NULL,
+  `kind` VARCHAR(16) NOT NULL,
+  `amount_cents` BIGINT NOT NULL,
+  `order_id` BIGINT UNSIGNED NULL,
+  `case_id` BIGINT UNSIGNED NULL,
+  `payment_event_id` BIGINT UNSIGNED NULL,
+  `reason` VARCHAR(500) NULL,
+  `tendered_cents` BIGINT NULL,
+  `change_cents` BIGINT NULL,
+  `idempotency_id` BIGINT UNSIGNED NOT NULL,
+  `actor_user_id` BIGINT UNSIGNED NOT NULL,
+  `occurred_at` DATETIME(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ix_1` (`session_id`, `id`),
+  UNIQUE KEY `uq_1` (`payment_event_id`),
+  KEY `ix_2` (`order_id`, `id`),
+  KEY `ix_3` (`case_id`),
+  KEY `ix_4` (`idempotency_id`),
+  KEY `ix_5` (`payment_event_id`, `order_id`),
+  CHECK (kind IN ('sale_cash','web_cash_in','pay_in','pay_out','refund_cash')),
+  CHECK ((kind IN ('sale_cash','web_cash_in','pay_in') AND amount_cents > 0) OR (kind IN ('pay_out','refund_cash') AND amount_cents < 0)),
+  CHECK ((kind IN ('pay_in','pay_out') AND reason IS NOT NULL AND payment_event_id IS NULL) OR (kind IN ('sale_cash','web_cash_in','refund_cash') AND payment_event_id IS NOT NULL AND order_id IS NOT NULL)),
+  CHECK ((kind = 'sale_cash' AND tendered_cents IS NOT NULL AND change_cents IS NOT NULL AND change_cents >= 0 AND tendered_cents - change_cents = amount_cents) OR (kind <> 'sale_cash' AND tendered_cents IS NULL AND change_cents IS NULL))
+SQL,
+
+        'pc_pos_return_lines' => <<<'SQL'
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `case_id` BIGINT UNSIGNED NOT NULL,
+  `order_id` BIGINT UNSIGNED NOT NULL,
+  `order_line_id` BIGINT UNSIGNED NOT NULL,
+  `sellable_id` BIGINT UNSIGNED NOT NULL,
+  `returned_units` INT UNSIGNED NOT NULL,
+  `restocked_units` INT UNSIGNED NOT NULL,
+  `inspection` VARCHAR(24) NOT NULL,
+  `refund_cents` BIGINT NOT NULL,
+  `created_at` DATETIME(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_1` (`case_id`, `order_line_id`),
+  KEY `ix_1` (`order_line_id`, `id`),
+  KEY `ix_2` (`order_id`, `id`),
+  KEY `ix_3` (`case_id`, `order_id`),
+  KEY `ix_4` (`order_id`, `order_line_id`),
+  KEY `ix_5` (`order_line_id`, `sellable_id`),
+  CHECK (returned_units >= 1),
+  CHECK (restocked_units <= returned_units),
+  CHECK (refund_cents >= 0),
+  CHECK (inspection IN ('fit_for_sale','not_fit','warranty_external')),
+  CHECK (inspection = 'fit_for_sale' OR restocked_units = 0)
+SQL,
+    ];
+
+    /**
+     * Relaciones añadidas por 1.1.0 (9; 65 en total). Las compuestas impiden
+     * vincular el evento, el expediente, la línea o el vendible de otro pedido.
+     */
+    private const RELATIONS_110 = [
+        ['pc_orders', ['pos_session_id'], 'pc_cash_sessions', ['id']],
+        ['pc_cash_session_movements', ['session_id'], 'pc_cash_sessions', ['id']],
+        ['pc_cash_session_movements', ['order_id'], 'pc_orders', ['id']],
+        ['pc_cash_session_movements', ['case_id'], 'pc_cases', ['id']],
+        ['pc_cash_session_movements', ['payment_event_id', 'order_id'], 'pc_payment_events', ['id', 'order_id']],
+        ['pc_cash_session_movements', ['idempotency_id'], 'pc_idempotency', ['id']],
+        ['pc_pos_return_lines', ['case_id', 'order_id'], 'pc_cases', ['id', 'order_id']],
+        ['pc_pos_return_lines', ['order_id', 'order_line_id'], 'pc_order_lines', ['order_id', 'id']],
+        ['pc_pos_return_lines', ['order_line_id', 'sellable_id'], 'pc_order_lines', ['id', 'sellable_id']],
+    ];
+
+    /** @return list<string> sufijos de todas las tablas que este código conoce (42). */
     public static function suffixes(): array
     {
-        return \array_keys(self::DEFINITIONS);
+        return \array_merge(\array_keys(self::DEFINITIONS), \array_keys(self::DEFINITIONS_110));
+    }
+
+    /** @return list<string> tablas nuevas de POS V1 (1.1.0). */
+    public static function posTables(): array
+    {
+        return \array_keys(self::DEFINITIONS_110);
     }
 
     /**
+     * Recuentos esperados de tablas y FK por revisión. Se mantienen literales
+     * para que una edición accidental de las constantes se detecte al instalar.
+     *
+     * @return array{0:int,1:int}
+     */
+    public static function expectedCounts(string $version): array
+    {
+        self::assertVersion($version);
+        return self::POS_VERSION === $version ? [42, 65] : [39, 56];
+    }
+
+    /**
+     * La forma 1.0.x es la de 1.0.2 byte a byte; 1.1.0 añade POS V1.
+     *
      * @return array<string, string> CREATE TABLE por sufijo lógico.
      */
-    public static function tableStatements(\wpdb $wpdb): array
+    public static function tableStatements(\wpdb $wpdb, string $version = \PERUCOMMERCE_SCHEMA_VERSION): array
     {
         $charset = \strtolower((string) $wpdb->charset);
         $collation = \strtolower((string) $wpdb->collate);
@@ -905,7 +1055,7 @@ SQL,
             . ('' === $collation ? '' : ' COLLATE=' . $collation);
 
         $sql = [];
-        foreach (self::DEFINITIONS as $suffix => $definition) {
+        foreach (self::definitions($version) as $suffix => $definition) {
             $sql[$suffix] = 'CREATE TABLE ' . self::tableIdentifier($wpdb, $suffix)
                 . " (\n" . $definition . "\n)" . $options;
         }
@@ -914,12 +1064,18 @@ SQL,
 
     /**
      * @return list<string> ALTER TABLE para aplicar DESPUÉS de crear y verificar
-     *                      las 39 tablas, con journal separado en IMP-05.
+     *                      las tablas de la revisión (39 en 1.0.x, 42 en 1.1.0),
+     *                      con journal separado en IMP-05.
      */
-    public static function foreignKeyStatements(\wpdb $wpdb): array
+    public static function foreignKeyStatements(\wpdb $wpdb, string $version = \PERUCOMMERCE_SCHEMA_VERSION): array
     {
+        self::assertVersion($version);
+        $relations = self::POS_VERSION === $version
+            ? \array_merge(self::RELATIONS, self::RELATIONS_110)
+            : self::RELATIONS;
+
         $statements = [];
-        foreach (self::RELATIONS as [$child, $columns, $parent, $referenced]) {
+        foreach ($relations as [$child, $columns, $parent, $referenced]) {
             $name = 'pcfk_' . \substr(\hash(
                 'sha256',
                 self::physicalName($wpdb, $child) . ':' . \implode(',', $columns)
@@ -945,9 +1101,105 @@ SQL,
         return $names;
     }
 
+    /**
+     * Pasos aditivos 1.0.2 → 1.1.0 sobre tablas existentes (docs/48 §10, paso 1).
+     * Cada paso declara cómo reconocerlo ya aplicado: el instalador lo inspecciona
+     * antes y después de ejecutarlo, de modo que un reintento no lo repite.
+     *
+     * @return list<array{kind:string,table:string,name:string,expect:string,sql:string}>
+     */
+    public static function posUpgradeSteps(\wpdb $wpdb): array
+    {
+        $orders = self::tableIdentifier($wpdb, 'pc_orders');
+        $documents = self::tableIdentifier($wpdb, 'pc_external_documents');
+        $ordersCheck = self::checkName($wpdb, 'pc_orders', self::ORDERS_POS_CHECK);
+        $roundingCheck = self::checkName($wpdb, 'pc_external_documents', self::ROUNDING_CHECK);
+
+        return [
+            ['kind' => 'nullable', 'table' => 'pc_orders', 'name' => 'policy_version_id',
+                'expect' => 'bigint unsigned',
+                'sql' => 'ALTER TABLE ' . $orders . ' MODIFY COLUMN `policy_version_id` BIGINT UNSIGNED NULL'],
+            ['kind' => 'nullable', 'table' => 'pc_orders', 'name' => 'privacy_version_id',
+                'expect' => 'bigint unsigned',
+                'sql' => 'ALTER TABLE ' . $orders . ' MODIFY COLUMN `privacy_version_id` BIGINT UNSIGNED NULL'],
+            ['kind' => 'column', 'table' => 'pc_orders', 'name' => 'pos_session_id',
+                'expect' => 'bigint unsigned',
+                'sql' => 'ALTER TABLE ' . $orders . ' ADD COLUMN `pos_session_id` BIGINT UNSIGNED NULL AFTER `row_version`'],
+            ['kind' => 'key', 'table' => 'pc_orders', 'name' => 'ix_6',
+                'expect' => 'pos_session_id,created_at,id',
+                'sql' => 'ALTER TABLE ' . $orders . ' ADD KEY `ix_6` (`pos_session_id`, `created_at`, `id`)'],
+            ['kind' => 'check', 'table' => 'pc_orders', 'name' => $ordersCheck,
+                'expect' => self::ORDERS_POS_CHECK,
+                'sql' => 'ALTER TABLE ' . $orders . ' ADD CONSTRAINT `' . $ordersCheck . '` CHECK ('
+                    . self::ORDERS_POS_CHECK . ')'],
+            ['kind' => 'column', 'table' => 'pc_external_documents', 'name' => 'rounding_cents',
+                'expect' => 'bigint',
+                'sql' => 'ALTER TABLE ' . $documents . ' ADD COLUMN `rounding_cents` BIGINT NULL AFTER `issuer_identity_hash`'],
+            ['kind' => 'column', 'table' => 'pc_external_documents', 'name' => 'buyer_id_type',
+                'expect' => 'varchar(16)',
+                'sql' => 'ALTER TABLE ' . $documents . ' ADD COLUMN `buyer_id_type` VARCHAR(16) NULL AFTER `rounding_cents`'],
+            ['kind' => 'check', 'table' => 'pc_external_documents', 'name' => $roundingCheck,
+                'expect' => self::ROUNDING_CHECK,
+                'sql' => 'ALTER TABLE ' . $documents . ' ADD CONSTRAINT `' . $roundingCheck . '` CHECK ('
+                    . self::ROUNDING_CHECK . ')'],
+        ];
+    }
+
+    /**
+     * 1.0.x devuelve DEFINITIONS sin tocar. 1.1.0 expande pc_orders y
+     * pc_external_documents con los mismos cambios que posUpgradeSteps(), de
+     * modo que una instalación nueva y una actualizada converjan en el mismo
+     * esquema verificable, y añade las tres tablas POS.
+     *
+     * @return array<string, string>
+     */
+    private static function definitions(string $version): array
+    {
+        self::assertVersion($version);
+        if (self::POS_VERSION !== $version) {
+            return self::DEFINITIONS;
+        }
+
+        $definitions = self::DEFINITIONS;
+        // El fin de línea sigue al del archivo (LF en Git; CRLF en algunas copias).
+        $orders = $definitions['pc_orders'];
+        $eol = \str_contains($orders, "\r\n") ? "\r\n" : "\n";
+        $orders = self::replaceOnce($orders,
+            '  `policy_version_id` BIGINT UNSIGNED NOT NULL,' . $eol,
+            '  `policy_version_id` BIGINT UNSIGNED NULL,' . $eol);
+        $orders = self::replaceOnce($orders,
+            '  `privacy_version_id` BIGINT UNSIGNED NOT NULL,' . $eol,
+            '  `privacy_version_id` BIGINT UNSIGNED NULL,' . $eol);
+        $orders = self::replaceOnce($orders,
+            '  `row_version` BIGINT UNSIGNED NOT NULL,' . $eol,
+            '  `row_version` BIGINT UNSIGNED NOT NULL,' . $eol
+                . '  `pos_session_id` BIGINT UNSIGNED NULL,' . $eol);
+        $orders = self::replaceOnce($orders,
+            '  KEY `ix_5` (`id`, `current_delivery_revision_id`),' . $eol,
+            '  KEY `ix_5` (`id`, `current_delivery_revision_id`),' . $eol
+                . '  KEY `ix_6` (`pos_session_id`, `created_at`, `id`),' . $eol);
+        $definitions['pc_orders'] = self::replaceOnce($orders,
+            '  CHECK (row_version >= 1)',
+            '  CHECK (row_version >= 1),' . $eol . '  CHECK (' . self::ORDERS_POS_CHECK . ')');
+
+        $documents = $definitions['pc_external_documents'];
+        $documents = self::replaceOnce($documents,
+            '  `issuer_identity_hash` BINARY(32) NULL,' . $eol,
+            '  `issuer_identity_hash` BINARY(32) NULL,' . $eol
+                . '  `rounding_cents` BIGINT NULL,' . $eol
+                . '  `buyer_id_type` VARCHAR(16) NULL,' . $eol);
+        $definitions['pc_external_documents'] = self::replaceOnce($documents,
+            '  KEY `ix_4` (`source_document_id`, `order_id`)',
+            '  KEY `ix_4` (`source_document_id`, `order_id`),' . $eol
+                . '  CHECK (' . self::ROUNDING_CHECK . ')');
+
+        return $definitions + self::DEFINITIONS_110;
+    }
+
     private static function physicalName(\wpdb $wpdb, string $suffix): string
     {
-        if (!\array_key_exists($suffix, self::DEFINITIONS)
+        if ((!\array_key_exists($suffix, self::DEFINITIONS)
+                && !\array_key_exists($suffix, self::DEFINITIONS_110))
             || !\is_string($wpdb->prefix)
             || !\preg_match('/^[A-Za-z0-9_]+$/D', $wpdb->prefix)) {
             throw new \InvalidArgumentException('PeruCommerce: prefijo/tabla no válido.');
@@ -958,6 +1210,27 @@ SQL,
             throw new \RuntimeException('PeruCommerce: identificador SQL demasiado largo.');
         }
         return $physical;
+    }
+
+    private static function assertVersion(string $version): void
+    {
+        if (!\in_array($version, self::VERSIONS, true)) {
+            throw new \InvalidArgumentException('PeruCommerce: versión de esquema no válida.');
+        }
+    }
+
+    private static function replaceOnce(string $subject, string $search, string $replace): string
+    {
+        if (1 !== \substr_count($subject, $search)) {
+            throw new \LogicException('PeruCommerce: expansión de esquema 1.1.0 no aplicable.');
+        }
+        return \str_replace($search, $replace, $subject);
+    }
+
+    /** Nombre estable de un CHECK añadido por actualización (único por esquema). */
+    private static function checkName(\wpdb $wpdb, string $suffix, string $clause): string
+    {
+        return 'pcck_' . \substr(\hash('sha256', self::physicalName($wpdb, $suffix) . ':' . $clause), 0, 24);
     }
 
     private static function tableIdentifier(\wpdb $wpdb, string $suffix): string

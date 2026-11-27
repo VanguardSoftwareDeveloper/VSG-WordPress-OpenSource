@@ -25,22 +25,27 @@ final class Access_Roles
     private const ACTION = 'perucommerce_sync_access_roles';
     private const NONCE = 'perucommerce_sync_access_roles_nonce';
 
-    /** 19 primitivas del x-authz 0.12.0-draft; no introducir caps inventadas. */
+    /** 24 primitivas del x-authz 0.13.0-draft; no introducir caps inventadas. */
     private const ADMIN_CAPS = [
         'perucommerce_appointments_manage',
         'perucommerce_cash_correct',
+        'perucommerce_cash_movements_record',
         'perucommerce_cash_record',
+        'perucommerce_cash_session_operate',
+        'perucommerce_cash_session_review',
         'perucommerce_catalog_edit',
         'perucommerce_catalog_hide',
         'perucommerce_catalog_publish',
         'perucommerce_complaints_manage',
         'perucommerce_digital_files_manage',
+        'perucommerce_external_documents_record',
         'perucommerce_integrations_manage',
         'perucommerce_notifications_operate',
         'perucommerce_orders_cancel_unpaid',
         'perucommerce_orders_financial_adjust',
         'perucommerce_orders_fulfill',
         'perucommerce_orders_read',
+        'perucommerce_pos_sell',
         'perucommerce_privacy_manage',
         'perucommerce_reconciliation_manage',
         'perucommerce_refunds_record_external',
@@ -48,17 +53,24 @@ final class Access_Roles
         'perucommerce_stock_manage',
     ];
 
-    /** Mínimo de tareas del operador; jamás configuración ni ajustes monetarios. */
+    /**
+     * Mínimo de tareas del operador; jamás configuración ni ajustes monetarios.
+     * D-214/D-215: vende, opera su propia sesión y registra comprobantes
+     * externos; no revisa sesiones ajenas, no mueve efectivo ni devuelve.
+     */
     private const OPERATOR_CAPS = [
         'read',
         'perucommerce_appointments_manage',
         'perucommerce_cash_record',
+        'perucommerce_cash_session_operate',
         'perucommerce_catalog_edit',
         'perucommerce_catalog_hide',
+        'perucommerce_external_documents_record',
         'perucommerce_notifications_operate',
         'perucommerce_orders_cancel_unpaid',
         'perucommerce_orders_fulfill',
         'perucommerce_orders_read',
+        'perucommerce_pos_sell',
         'perucommerce_stock_manage',
     ];
 

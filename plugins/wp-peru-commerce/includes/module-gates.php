@@ -55,6 +55,11 @@ final class Module_Gates
         'guest.requests' => ['platform','commerce_php','https','database','schema','locks'],
         // R8-58 recupera credenciales de acceso, NO una venta nueva.
         'tracking.reissue' => ['platform','commerce_php','https','database','schema','locks'],
+        // D-215/D-216: POS presencial. Lectura sin commerce_php; escritura y
+        // sesiones con el motor transaccional verificado. Nunca puertas menores.
+        'pos.read' => ['platform','https','database','schema','locks'],
+        'pos.write' => ['platform','commerce_php','https','database','schema','locks'],
+        'pos.sessions' => ['platform','commerce_php','https','database','schema','locks'],
         'settings.read' => ['platform', 'database', 'schema'],
         'settings.write' => ['platform', 'commerce_php', 'database', 'schema', 'locks'],
         'payments.read' => ['platform', 'https', 'database', 'schema', 'locks', 'mp_orders'],

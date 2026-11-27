@@ -1,6 +1,6 @@
 <?php
 /**
- * IMP-11 — autorización por operación del OpenAPI 0.12.0-draft.
+ * IMP-11 — autorización por operación del OpenAPI 0.13.0-draft.
  *
  * Rol + capability son solo dos puertas: toda ruta requiere además guard
  * de servidor por instalación, recurso, estado, finalidad y campos. Un
