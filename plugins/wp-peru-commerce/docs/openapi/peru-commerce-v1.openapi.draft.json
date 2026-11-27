@@ -3,7 +3,7 @@
   "info": {
     "title": "PeruCommerce REST V1 — R8-01…R8-83, contrato documental de diseño",
     "version": "0.13.0-draft",
-    "description": "Diseño V1: D-189/D-198 protegen detalle y evidencia de Libro/ARCO. Rectificación 2026-11-18 de contratos de checkout/seguimiento, webhook Orders, versiones CAS, catálogo y archivo digital por variante. 67 REST, 64 rutas y 134 DTO; R8-18 es página WordPress no REST. No hay código, tests ni integraciones habilitadas. Rectificación de contratos precódigo 2026-11-18: exposición, políticas editables, versiones de recursos y conciliación MP prepedido. Sin nuevos endpoints, roles, tablas ni estados. Rectificación precódigo 2026-11-18: recuperación privada de detalles de caso y términos históricos, cuota de descarga por comercio, proveedor de tiles opcional, y reintento R8-12 atómico; 67 REST/64 rutas/134 esquemas, sin tablas nuevas. La fuente física de eventos distingue actor_kind y actor_user_id nullable para invitado/sistema sin identidad WP falsa. R8-45 exige map_tiles (al menos enabled=false) y digital_download_limit (null por defecto) para que el panel no adivine configuración.\nDOC-QA22…26: 5 recorridos contractuales completados (cantidad parcial, pago tardío/cita, datos proveedor/correo, privacidad/exportación y cierre de agenda), sin rutas/esquemas/tablas/roles nuevos.\nDOC-QA27…29: quantity conserva la cantidad original; physical_quantities comunica compromisos y salidas físicas por línea, con versiones coherentes. Listas de exposición reconciliadas para remitente/exportaciones. routine_buyer_emails_enabled configura solo avisos físicos rutinarios futuros, sin alterar cola previa, comunicaciones esenciales ni versiones legales. 67 REST/64 rutas/134 esquemas; sin código ni nuevas tablas, roles o estados.\nDOC-QA30/D-199: R8-69 abre expediente manual de solicitud de ajuste parcial físico para comprador sin correo, solo A y sin efecto financiero; R8-26 consume y revalida expediente. Se agregan 1 REST, 1 ruta, 2 DTO, sin nuevas tablas/capabilities/roles.\nDOC-QA31/D-200: R8-70 cierre rechazado o retirado de caso físico parcial de R8-69, R8-26 cierra adjusted de modo atómico. Total 69 REST/66 rutas/138 DTO, 56 PER, 39 tablas, sin código ni prueba.\nDOC-QA32/D-201…D-210 (27-11-2026): POS V1 R8-71…R8-83, 13 REST/12 rutas/24 DTO nuevos, 5 capabilities, 2 tablas, PER-57…62; enmiendas aditivas R8-20/21/24/25/27/45/46. Total 82 REST/78 rutas/162 DTO, 62 PER, 41 tablas, sin código ni prueba."
+    "description": "Diseño V1: D-189/D-198 protegen detalle y evidencia de Libro/ARCO. Rectificación 2026-11-18 de contratos de checkout/seguimiento, webhook Orders, versiones CAS, catálogo y archivo digital por variante. 67 REST, 64 rutas y 134 DTO; R8-18 es página WordPress no REST. No hay código, tests ni integraciones habilitadas. Rectificación de contratos precódigo 2026-11-18: exposición, políticas editables, versiones de recursos y conciliación MP prepedido. Sin nuevos endpoints, roles, tablas ni estados. Rectificación precódigo 2026-11-18: recuperación privada de detalles de caso y términos históricos, cuota de descarga por comercio, proveedor de tiles opcional, y reintento R8-12 atómico; 67 REST/64 rutas/134 esquemas, sin tablas nuevas. La fuente física de eventos distingue actor_kind y actor_user_id nullable para invitado/sistema sin identidad WP falsa. R8-45 exige map_tiles (al menos enabled=false) y digital_download_limit (null por defecto) para que el panel no adivine configuración.\nDOC-QA22…26: 5 recorridos contractuales completados (cantidad parcial, pago tardío/cita, datos proveedor/correo, privacidad/exportación y cierre de agenda), sin rutas/esquemas/tablas/roles nuevos.\nDOC-QA27…29: quantity conserva la cantidad original; physical_quantities comunica compromisos y salidas físicas por línea, con versiones coherentes. Listas de exposición reconciliadas para remitente/exportaciones. routine_buyer_emails_enabled configura solo avisos físicos rutinarios futuros, sin alterar cola previa, comunicaciones esenciales ni versiones legales. 67 REST/64 rutas/134 esquemas; sin código ni nuevas tablas, roles o estados.\nDOC-QA30/D-199: R8-69 abre expediente manual de solicitud de ajuste parcial físico para comprador sin correo, solo A y sin efecto financiero; R8-26 consume y revalida expediente. Se agregan 1 REST, 1 ruta, 2 DTO, sin nuevas tablas/capabilities/roles.\nDOC-QA31/D-200: R8-70 cierre rechazado o retirado de caso físico parcial de R8-69, R8-26 cierra adjusted de modo atómico. Total 69 REST/66 rutas/138 DTO, 56 PER, 39 tablas, sin código ni prueba.\nDOC-QA32/D-201…D-210 (27-11-2026): POS V1 R8-71…R8-83, 13 REST/12 rutas/24 DTO nuevos, 5 capabilities, 2 tablas, PER-57…62; enmiendas aditivas R8-20/21/24/25/27/45/46. Total 82 REST/78 rutas/162 DTO, 62 PER, 41 tablas, sin código ni prueba.\nD-211…D-216 (27-11-2026, previo a P3): comprobante externo con total, redondeo y pagadero; devolución con un expediente por operación y reembolso por línea; importes cero; reintentos idempotentes antes de comprobar la sesión; puertas de seguridad intactas; desactivar el POS solo sin sesiones abiertas. Mismos 82 REST/78 rutas/162 DTO; tabla nueva pc_pos_return_lines (42 tablas)."
   },
   "servers": [
     {
@@ -2871,7 +2871,7 @@
           "admin"
         ],
         "summary": "Monto neto realmente recibido D-105 y idempotencia; no corrección destructiva",
-        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. D-207: rounding_cents solo floor10 con ajuste 0–9 o importe exacto; D-203: cash_session_id opcional crea web_cash_in solo si se envía, nunca automático.",
+        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. D-207: rounding_cents solo floor10 con ajuste 0–9 o importe exacto; D-203: cash_session_id opcional crea web_cash_in solo si se envía, nunca automático. D-213: rounding_cents > 0 solo si saldo − rounding ≥ 10; otra combinación 409 pc_conflict.",
         "security": [
           {
             "WordPressSession": []
@@ -3015,7 +3015,7 @@
           "admin"
         ],
         "summary": "Evento correctivo inmutable, evidencia y motivo, sin editar recepción original",
-        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. D-205/D-210: rechaza pedidos channel=pos con 422 pc_business_ineligible (reason web_channel_required); usar R8-83.",
+        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. D-205/D-210: rechaza pedidos POS (pos_session_id no nulo) con 422 pc_business_ineligible (reason web_channel_required); usar R8-83.",
         "security": [
           {
             "WordPressSession": []
@@ -3318,7 +3318,7 @@
           "admin"
         ],
         "summary": "Registrar **resultado** externo total/parcial comprobado y conciliado, sin API proveedor refund",
-        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. D-205/D-210: rechaza pedidos channel=pos con 422 pc_business_ineligible (reason web_channel_required); usar R8-83. cash_session_id opcional solo si el cobro original es cash (refund_cash).",
+        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. D-205/D-210: rechaza pedidos POS (pos_session_id no nulo) con 422 pc_business_ineligible (reason web_channel_required); usar R8-83. cash_session_id opcional solo si el cobro original es cash (refund_cash).",
         "security": [
           {
             "WordPressSession": []
@@ -6129,7 +6129,7 @@
           "admin"
         ],
         "summary": "Configuración sensible auditada; no desactivar obligaciones legales",
-        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. Perfil fiscal declarado, no emisión CPE ni impuestos calculados; normativa J-03 por comerciante. Texto nuevo genera pc_policy_versions inmutable y modifica puntero de settings por CAS, nunca reescribe contrato de pedidos anteriores. Admin A configura límite opcional por comercio para NUEVOS derechos (null=ilimitado, 0 inválido) y mapa por subobjeto MapTilesConfig. map_tiles reemplaza completo cuando se envía; enabled:true requiere URL plantilla HTTPS {z}/{x}/{y} y atribución texto/enlace verificados frente a origen autorizado; enabled:false deshabilita SOLO mapa. Idempotency/CAS de settings, no cambiar historicidad de cuotas, tarifas, cobertura ni pedidos. Secretos de proveedores no pertenecen a este DTO. DOC-QA28/29: mail_sender y routine_buyer_emails_enabled forman parte de las proyecciones admitidas, solo A con settings_manage. La preferencia es prospectiva sobre nuevos eventos; no cancela cola ni altera avisos esenciales. Modificar remitente/preferencia incrementa la versión de configuración y auditoría, no crea versiones de textos legales.",
+        "description": "BORRADOR documental P0-23; verificar campos y permisos con docs/24; no implementado. Mantener E-01…E-08 y J-01…J-05; no generar estados adicionales. Perfil fiscal declarado, no emisión CPE ni impuestos calculados; normativa J-03 por comerciante. Texto nuevo genera pc_policy_versions inmutable y modifica puntero de settings por CAS, nunca reescribe contrato de pedidos anteriores. Admin A configura límite opcional por comercio para NUEVOS derechos (null=ilimitado, 0 inválido) y mapa por subobjeto MapTilesConfig. map_tiles reemplaza completo cuando se envía; enabled:true requiere URL plantilla HTTPS {z}/{x}/{y} y atribución texto/enlace verificados frente a origen autorizado; enabled:false deshabilita SOLO mapa. Idempotency/CAS de settings, no cambiar historicidad de cuotas, tarifas, cobertura ni pedidos. Secretos de proveedores no pertenecen a este DTO. DOC-QA28/29: mail_sender y routine_buyer_emails_enabled forman parte de las proyecciones admitidas, solo A con settings_manage. La preferencia es prospectiva sobre nuevos eventos; no cancela cola ni altera avisos esenciales. Modificar remitente/preferencia incrementa la versión de configuración y auditoría, no crea versiones de textos legales. D-216: con pos, bloquea la fila de ajustes FOR UPDATE y rechaza con 409 pc_conflict (reason pos_sessions_open) desactivar el POS o retirar una caja con sesión abierta.",
         "security": [
           {
             "WordPressSession": []
@@ -9927,7 +9927,7 @@
           "pos"
         ],
         "summary": "Buscar productos físicos para la caja presencial",
-        "description": "D-210/PER-57: búsqueda por nombre, SKU o código de barras leído como teclado. Solo físicos y variantes publicadas; precio y disponibilidad informativos, el servidor recalcula al cobrar.",
+        "description": "D-210/PER-57: búsqueda por nombre, SKU o código de barras leído como teclado. Solo físicos y variantes publicadas; precio y disponibilidad informativos, el servidor recalcula al cobrar. D-216: con el POS desactivado o la caja no configurada responde 423 pc_module_not_ready (reason pos_disabled).",
         "security": [
           {
             "WordPressSession": []
@@ -10019,7 +10019,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "staff",
           "rolesAllowed": [
@@ -10069,11 +10069,12 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.read",
         "x-policy-refs": [
           "D-204",
-          "D-205"
+          "D-205",
+          "D-216"
         ]
       }
     },
@@ -10084,8 +10085,8 @@
           "admin",
           "pos"
         ],
-        "summary": "Confirmar venta presencial en efectivo (pedido channel=pos)",
-        "description": "D-208/D-207/D-203: en una transacción crea el pedido channel=pos por O-10 (sin pedido → CONFIRMADO), registra la entrega con stockOutWithin, initial_charge cash por R, cash_rounding por el ajuste si > 0 y el movimiento sale_cash (+R, tendered y change) en la sesión propia abierta. Orden de locks: idempotencia → sesión FOR UPDATE → pedido → líneas → vendibles asc → compromisos de stock. Totales distintos: 409 pc_quote_changed sin escribir. Sesión cerrada: 409 pc_conflict con reason pos_session_closed. Reintento con la misma clave devuelve el mismo resultado o 423.",
+        "summary": "Confirmar venta presencial en efectivo (pedido POS)",
+        "description": "D-208/D-207/D-203: en una transacción crea el pedido POS (pos_session_id = la sesión de la venta) por O-10, registra la entrega con stockOutWithin, initial_charge cash por R, cash_rounding por el ajuste si es mayor que 0, el movimiento sale_cash (+R, tendered y change) en la sesión propia abierta y O-07: nace FINALIZADO. Orden de locks: idempotencia → sesión FOR UPDATE → pedido → líneas → vendibles asc → compromisos de stock. Totales distintos: 409 pc_quote_changed sin escribir. D-213: R = 0 → 422 pc_business_ineligible (reason cash_total_below_minimum). Sesión que no es la propia abierta: 409 pc_conflict (reason pos_session_not_open o pos_session_closed). D-216: con el POS desactivado o la caja no configurada responde 423 pc_module_not_ready (reason pos_disabled). D-214: el reintento con la misma clave espera el bloqueo de la operación y devuelve el resultado guardado aunque la sesión ya se haya cerrado o el POS se haya desactivado; si el bloqueo vence, 409 pc_conflict y se consulta R8-82, R8-77 o R8-78.",
         "security": [
           {
             "WordPressSession": []
@@ -10157,7 +10158,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "staff",
           "rolesAllowed": [
@@ -10228,14 +10229,17 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.write",
         "x-policy-refs": [
           "D-202",
           "D-203",
           "D-205",
           "D-207",
-          "D-208"
+          "D-208",
+          "D-213",
+          "D-214",
+          "D-216"
         ]
       }
     },
@@ -10247,7 +10251,7 @@
           "pos"
         ],
         "summary": "Abrir sesión de caja propia",
-        "description": "D-203/PER-58: abre una sesión con fondo inicial para una caja configurada; máximo una abierta por caja y una por usuario (409 pc_conflict con reason pos_register_busy o pos_session_already_open).",
+        "description": "D-203/PER-58: abre una sesión con fondo inicial para una caja configurada; máximo una abierta por caja y una por usuario (409 pc_conflict con reason pos_register_busy o pos_session_already_open). Bloquea la fila de ajustes FOR UPDATE antes de abrir. D-216: con el POS desactivado o la caja no configurada responde 423 pc_module_not_ready (reason pos_disabled).",
         "security": [
           {
             "WordPressSession": []
@@ -10319,7 +10323,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "staff",
           "rolesAllowed": [
@@ -10386,11 +10390,12 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.sessions",
         "x-policy-refs": [
           "D-203",
-          "D-204"
+          "D-204",
+          "D-216"
         ]
       },
       "get": {
@@ -10400,7 +10405,7 @@
           "pos"
         ],
         "summary": "Listar sesiones de caja con esperado y diferencia",
-        "description": "D-204/PER-59: solo A con cash_session_review. Filtros por estado, caja y fecha comercial.",
+        "description": "D-204/PER-59: solo A con cash_session_review. Filtros por estado, caja y fecha comercial. D-216: disponible aunque el POS esté desactivado.",
         "security": [
           {
             "WordPressSession": []
@@ -10513,7 +10518,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "admin_only",
           "rolesAllowed": [
@@ -10564,11 +10569,12 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.read",
         "x-policy-refs": [
           "D-203",
-          "D-204"
+          "D-204",
+          "D-216"
         ]
       }
     },
@@ -10580,7 +10586,7 @@
           "pos"
         ],
         "summary": "Consultar la sesión abierta propia",
-        "description": "D-203/PER-58: devuelve la sesión abierta del usuario, sin esperado ni diferencia (arqueo ciego); 404 si no tiene ninguna.",
+        "description": "D-203/PER-58: devuelve la sesión abierta del usuario, sin esperado ni diferencia (arqueo ciego); 404 si no tiene ninguna. D-216: disponible aunque el POS esté desactivado.",
         "security": [
           {
             "WordPressSession": []
@@ -10640,7 +10646,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "staff",
           "rolesAllowed": [
@@ -10692,11 +10698,12 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.read",
         "x-policy-refs": [
           "D-203",
-          "D-204"
+          "D-204",
+          "D-216"
         ]
       }
     },
@@ -10708,7 +10715,7 @@
           "pos"
         ],
         "summary": "Ver detalle de una sesión de caja con sus movimientos",
-        "description": "D-204/PER-59: solo A con cash_session_review; esperado calculado desde movimientos inmutables.",
+        "description": "D-204/PER-59: solo A con cash_session_review; esperado calculado desde movimientos inmutables. D-216: disponible aunque el POS esté desactivado.",
         "security": [
           {
             "WordPressSession": []
@@ -10778,7 +10785,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "admin_only",
           "rolesAllowed": [
@@ -10835,11 +10842,12 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.read",
         "x-policy-refs": [
           "D-203",
-          "D-204"
+          "D-204",
+          "D-216"
         ]
       }
     },
@@ -10851,7 +10859,7 @@
           "pos"
         ],
         "summary": "Registrar ingreso o retiro de efectivo con motivo",
-        "description": "D-203/PER-60: solo A en V1 con cash_movements_record; sesión abierta con CAS expected_version; movimiento inmutable pay_in (+) o pay_out (−).",
+        "description": "D-203/PER-60: solo A en V1 con cash_movements_record; sesión abierta con CAS expected_version; movimiento inmutable pay_in (+) o pay_out (−). D-213: amount_cents ≥ 1. D-216: con el POS desactivado o la caja no configurada responde 423 pc_module_not_ready (reason pos_disabled). El cierre sigue disponible.",
         "security": [
           {
             "WordPressSession": []
@@ -10932,7 +10940,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "admin_only",
           "rolesAllowed": [
@@ -10995,11 +11003,13 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.sessions",
         "x-policy-refs": [
           "D-203",
-          "D-204"
+          "D-204",
+          "D-213",
+          "D-216"
         ]
       }
     },
@@ -11011,7 +11021,7 @@
           "pos"
         ],
         "summary": "Cerrar la sesión propia con arqueo ciego",
-        "description": "D-203/PER-58: fija expected, counted y difference de forma inmutable bajo lock de la sesión; las ventas posteriores reciben 409 pc_conflict con reason pos_session_closed. Comprobantes pendientes no bloquean el cierre.",
+        "description": "D-203/PER-58: fija expected, counted y difference de forma inmutable bajo lock de la sesión; las ventas posteriores reciben 409 pc_conflict con reason pos_session_closed. Comprobantes pendientes no bloquean el cierre. D-216: disponible aunque el POS esté desactivado.",
         "security": [
           {
             "WordPressSession": []
@@ -11092,7 +11102,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "staff",
           "rolesAllowed": [
@@ -11156,12 +11166,13 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.sessions",
         "x-policy-refs": [
           "D-203",
           "D-204",
-          "D-206"
+          "D-206",
+          "D-216"
         ]
       }
     },
@@ -11173,7 +11184,7 @@
           "pos"
         ],
         "summary": "Forzar el cierre de una sesión ajena",
-        "description": "D-203/PER-59: solo A con cash_session_review y motivo; sin conteo, counted y difference quedan null pendientes de revisión. No hay cierre automático.",
+        "description": "D-203/PER-59: solo A con cash_session_review y motivo; sin conteo, counted y difference quedan null pendientes de revisión. No hay cierre automático. D-216: disponible aunque el POS esté desactivado.",
         "security": [
           {
             "WordPressSession": []
@@ -11254,7 +11265,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "admin_only",
           "rolesAllowed": [
@@ -11317,11 +11328,12 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.sessions",
         "x-policy-refs": [
           "D-203",
-          "D-204"
+          "D-204",
+          "D-216"
         ]
       }
     },
@@ -11333,7 +11345,7 @@
           "pos"
         ],
         "summary": "Listar comprobantes externos pendientes de registrar",
-        "description": "D-206/PER-61: ventas pos sin comprobante de venta registrado y devoluciones sin nota de crédito. O solo ve los de su propia sesión.",
+        "description": "D-206/D-211/PER-61: pedidos POS sin comprobante de venta registrado y expedientes de devolución con reembolso mayor que 0 sin nota de crédito; cada pendiente muestra total_cents y payable_cents. O solo ve los de su propia sesión. D-216: disponible aunque el POS esté desactivado.",
         "security": [
           {
             "WordPressSession": []
@@ -11415,7 +11427,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "staff",
           "rolesAllowed": [
@@ -11467,10 +11479,12 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.read",
         "x-policy-refs": [
-          "D-206"
+          "D-206",
+          "D-211",
+          "D-216"
         ]
       }
     },
@@ -11481,8 +11495,8 @@
           "admin",
           "pos"
         ],
-        "summary": "Registrar referencia del comprobante emitido fuera para un pedido pos",
-        "description": "D-206/PER-61: solo pedidos channel=pos (otro canal: 422 pc_business_ineligible pos_channel_required; el canal web sigue en R8-64). No emite ni valida CPE ni autentica con SUNAT. Importe distinto de T o del reembolso del expediente: 422. Un comprobante de venta por pedido. Nunca recibe ni guarda el número de documento del adquirente.",
+        "summary": "Registrar referencia del comprobante emitido fuera para un pedido POS",
+        "description": "D-206/D-211/PER-61: solo pedidos POS (pos_session_id no nulo; otro pedido: 422 pc_business_ineligible pos_channel_required; el canal web sigue en R8-64). No emite ni valida CPE ni autentica con SUNAT. Recibe total_cents, rounding_cents y payable_cents del documento con las reglas de PosExternalDocumentRecord. Un comprobante de venta por pedido y una nota de crédito por expediente con reembolso (409 pc_conflict document_already_recorded). Nunca recibe ni guarda el número de documento del adquirente. D-216: disponible aunque el POS esté desactivado.",
         "security": [
           {
             "WordPressSession": []
@@ -11507,7 +11521,7 @@
             "schema": {
               "$ref": "#/components/schemas/SqlId"
             },
-            "description": "Pedido channel=pos"
+            "description": "Pedido POS (pos_session_id no nulo)"
           }
         ],
         "responses": {
@@ -11563,7 +11577,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "staff",
           "rolesAllowed": [
@@ -11605,7 +11619,9 @@
             "series",
             "number",
             "issued_at",
-            "amount_cents",
+            "total_cents",
+            "rounding_cents",
+            "payable_cents",
             "buyer_id_type",
             "case_id",
             "external_reference",
@@ -11633,11 +11649,13 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.write",
         "x-policy-refs": [
           "D-206",
-          "J-03"
+          "J-03",
+          "D-211",
+          "D-216"
         ]
       }
     },
@@ -11648,8 +11666,8 @@
           "admin",
           "pos"
         ],
-        "summary": "Reimprimir la constancia de operación de un pedido pos",
-        "description": "D-206/PER-57: solo pedidos channel=pos; constancia con la leyenda «Este documento no es un comprobante de pago», sin desglose de IGV.",
+        "summary": "Reimprimir la constancia de operación de un pedido POS",
+        "description": "D-206/PER-57: solo pedidos POS (pos_session_id no nulo); constancia con la leyenda «Este documento no es un comprobante de pago», sin desglose de IGV. D-214: sirve también para comprobar una venta confirmada tras un resultado incierto. D-216: disponible aunque el POS esté desactivado.",
         "security": [
           {
             "WordPressSession": []
@@ -11663,7 +11681,7 @@
             "schema": {
               "$ref": "#/components/schemas/SqlId"
             },
-            "description": "Pedido channel=pos"
+            "description": "Pedido POS (pos_session_id no nulo)"
           }
         ],
         "responses": {
@@ -11719,7 +11737,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "staff",
           "rolesAllowed": [
@@ -11777,11 +11795,13 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.read",
         "x-policy-refs": [
           "D-206",
-          "D-207"
+          "D-207",
+          "D-214",
+          "D-216"
         ]
       }
     },
@@ -11792,8 +11812,8 @@
           "admin",
           "pos"
         ],
-        "summary": "Registrar devolución o anulación presencial de un pedido pos",
-        "description": "D-205/PER-62: solo A. En una transacción: expediente pc_cases pos_return_after_delivery closed_returned por línea, reingreso pc_stock_movements solo de unidades fit_for_sale, external_refund cash sobre initial_charge y refund_cash solo si se indica cash_session_id de una sesión abierta. La línea sigue ENTREGADO y el pedido FINALIZADO; entra en la cola de notas de crédito. Solo channel=pos (otro canal: 422 pos_channel_required).",
+        "summary": "Registrar devolución o anulación presencial de un pedido POS",
+        "description": "D-205/D-212/PER-62: solo A. En una transacción: un expediente pc_cases pos_return_after_delivery closed_returned por operación, con sus líneas en pc_pos_return_lines (unidades, inspección y refund_cents por línea); reingreso pc_stock_movements (source_type case) solo de unidades fit_for_sale; external_refund cash por F sobre initial_charge si F > 0; refund_cash (−F) solo si se indica cash_session_id de una sesión abierta. Límites acumulados sobre todos los expedientes del pedido, comprobados bajo el bloqueo del pedido y sus líneas: unidades (return_units_exceeded) y reembolsos ≤ R (refund_exceeds_cash). D-213: F = 0 es admisible, sin evento ni nota de crédito. La línea sigue ENTREGADO y el pedido FINALIZADO; el expediente con F > 0 entra en la cola de notas de crédito. Solo pedidos POS (otro pedido: 422 pos_channel_required). D-216: disponible aunque el POS esté desactivado.",
         "security": [
           {
             "WordPressSession": []
@@ -11818,7 +11838,7 @@
             "schema": {
               "$ref": "#/components/schemas/SqlId"
             },
-            "description": "Pedido channel=pos"
+            "description": "Pedido POS (pos_session_id no nulo)"
           }
         ],
         "responses": {
@@ -11874,7 +11894,7 @@
             "$ref": "#/components/responses/Error503"
           }
         },
-        "x-contract-status": "PROPOSED_NOT_IMPLEMENTED",
+        "x-contract-status": "APPROVED_NOT_IMPLEMENTED",
         "x-authz": {
           "actor": "admin_only",
           "rolesAllowed": [
@@ -11923,7 +11943,7 @@
           "response": [
             "operation_id",
             "order_id",
-            "case_ids",
+            "case_id",
             "refund_cents",
             "restocked_units",
             "row_version"
@@ -11942,13 +11962,16 @@
           "staffProjectionRule": "Filtrar por capability, recurso, estado, finalidad y campo; O solo los datos necesarios para la tarea"
         },
         "x-decision-id": "D-210",
-        "x-ratification": "OWNER_REVIEW_PENDING_BEFORE_P3",
+        "x-ratification": "OWNER_APPROVED_2026-11-27",
         "x-module-gate": "pos.write",
         "x-policy-refs": [
           "D-89",
           "D-105",
           "D-205",
-          "D-207"
+          "D-207",
+          "D-212",
+          "D-213",
+          "D-216"
         ]
       }
     }
@@ -13736,7 +13759,7 @@
           "idempotency_key"
         ],
         "additionalProperties": false,
-        "description": "Importe neto realmente aplicado; sin billetes/vuelto. D-207: rounding_cents 0 con amount = saldo, o rounding = saldo mod 10 > 0 con amount = saldo − rounding; otra combinación 422 pc_cash_amount_mismatch. D-203: cash_session_id opcional crea web_cash_in solo si se envía; nunca automático"
+        "description": "Importe neto realmente aplicado; sin billetes/vuelto. D-207: rounding_cents 0 con amount = saldo, o rounding = saldo mod 10 > 0 con amount = saldo − rounding; otra combinación 409 pc_conflict (causa interna pc_cash_amount_mismatch). D-213: el redondeo solo se admite si saldo − rounding ≥ 10. D-203: cash_session_id opcional crea web_cash_in solo si se envía; nunca automático"
       },
       "CashCorrection": {
         "type": "object",
@@ -15596,7 +15619,7 @@
                     "type": "string",
                     "pattern": "^[a-z_]+$",
                     "maxLength": 60,
-                    "description": "D-210: causa específica sin nuevo código de primer nivel"
+                    "description": "D-210…D-216: causa específica sin nuevo código de primer nivel (catálogo en docs/48 §11)"
                   }
                 },
                 "required": [],
@@ -17987,7 +18010,7 @@
           "registers"
         ],
         "additionalProperties": false,
-        "description": "D-204/D-210: solo A con settings_manage. enabled falso por defecto; las cajas son códigos configurados, no identidades de terminal confiables. Las puertas pos.* requieren enabled, esquema 1.1.0 y al menos una caja."
+        "description": "D-204/D-216: solo A con settings_manage. enabled falso por defecto; las cajas son códigos configurados, no identidades de terminal confiables. enabled y registers son reglas de negocio, no puertas de seguridad: con enabled falso o la caja no configurada, R8-71/72/73/75 responden 423 pc_module_not_ready (reason pos_disabled), y R8-74 y R8-76…R8-83 siguen disponibles para cerrar sesiones y resolver pendientes. R8-46 rechaza con 409 pc_conflict (reason pos_sessions_open) desactivar el POS o retirar una caja con sesión abierta."
       },
       "PosCatalogItem": {
         "type": "object",
@@ -18120,7 +18143,7 @@
           "idempotency_key"
         ],
         "additionalProperties": false,
-        "description": "D-207: el servidor calcula T, ajuste = T mod 10 y R = T − ajuste; si los importes esperados no coinciden responde 409 pc_quote_changed sin escribir. tendered_cents ≥ R. La clave nace al pulsar Cobrar; editar el carrito genera otra."
+        "description": "D-207: el servidor calcula T, ajuste = T mod 10 y R = T − ajuste; si los importes esperados no coinciden responde 409 pc_quote_changed sin escribir. tendered_cents ≥ R. La clave nace al pulsar Cobrar; editar el carrito genera otra. D-213: si R = 0 (T < 10) responde 422 pc_business_ineligible (reason cash_total_below_minimum) sin escribir."
       },
       "PosSaleResult": {
         "type": "object",
@@ -18171,7 +18194,7 @@
           "row_version"
         ],
         "additionalProperties": false,
-        "description": "Pedido channel=pos CONFIRMADO (O-10) y entregado en la misma transacción; total original, ajuste y efectivo debido por separado; tendered − change = cash_due."
+        "description": "D-208: pedido POS (pos_session_id no nulo) creado por O-10 y entregado en la misma transacción; nace FINALIZADO. Total original, ajuste y efectivo debido por separado; tendered − change = cash_due."
       },
       "CashSessionOpen": {
         "type": "object",
@@ -18289,7 +18312,7 @@
           "idempotency_key"
         ],
         "additionalProperties": false,
-        "description": "D-203: movimiento manual inmutable de una sesión abierta; order_id opcional para citar un pedido (p. ej. vuelto omitido). Nunca vincula cobros MP, cash_rounding ni correcciones R8-25."
+        "description": "D-203: movimiento manual inmutable de una sesión abierta; order_id opcional para citar un pedido (p. ej. vuelto omitido). Nunca vincula cobros MP, cash_rounding ni correcciones R8-25. D-213: amount_cents ≥ 1."
       },
       "CashSessionClose": {
         "type": "object",
@@ -18660,6 +18683,9 @@
           "total_cents": {
             "$ref": "#/components/schemas/MoneyCents"
           },
+          "payable_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
           "pending_kind": {
             "type": "string",
             "enum": [
@@ -18676,10 +18702,11 @@
           "order_number",
           "created_at",
           "total_cents",
+          "payable_cents",
           "pending_kind"
         ],
         "additionalProperties": false,
-        "description": "Pedido pos sin referencia de comprobante de venta, o expediente de devolución sin nota de crédito registrada. O solo ve los de su propia sesión."
+        "description": "D-206/D-211: pedido POS (pos_session_id no nulo) sin referencia de comprobante de venta, o expediente de devolución con reembolso mayor que 0 sin nota de crédito registrada. total_cents es T en la venta o V en la nota de crédito; payable_cents es R o F. O solo ve los de su propia sesión."
       },
       "PosDocumentPendingPage": {
         "type": "object",
@@ -18739,7 +18766,16 @@
             "type": "string",
             "format": "date-time"
           },
-          "amount_cents": {
+          "total_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
+          },
+          "rounding_cents": {
+            "type": "integer",
+            "minimum": -9,
+            "maximum": 0,
+            "default": 0
+          },
+          "payable_cents": {
             "$ref": "#/components/schemas/MoneyCents"
           },
           "buyer_id_type": {
@@ -18775,13 +18811,14 @@
           "series",
           "number",
           "issued_at",
-          "amount_cents",
+          "total_cents",
+          "payable_cents",
           "buyer_id_type",
           "expected_version",
           "idempotency_key"
         ],
         "additionalProperties": false,
-        "description": "D-206: referencia de un comprobante emitido fuera de PeruCommerce; no emite ni valida CPE. Nunca acepta el número de documento del adquirente, solo su tipo. Venta: amount_cents = T (total original antes del redondeo D-207), uno por pedido. nota_credito: exige case_id pos_return_after_delivery del mismo pedido y amount_cents = reembolso del expediente."
+        "description": "D-206/D-211: referencia de un comprobante emitido fuera de PeruCommerce; no emite ni valida CPE. Nunca acepta el número de documento del adquirente, solo su tipo. Importes del documento tal como se emitió: total_cents sin redondeo, rounding_cents de −9 a 0 (PayableRoundingAmount) y payable_cents (PayableAmount). Siempre payable_cents = total_cents + rounding_cents (si no, 422 pc_field_invalid field payable_cents). Venta (boleta, factura, ticket; sin case_id): total_cents = T y rounding_cents 0 o −(T − R). nota_credito: exige case_id pos_return_after_delivery del mismo pedido, payable_cents = F y F ≤ total_cents ≤ min(F + 9, V). Otra combinación: 422 pc_business_ineligible document_amount_mismatch. Expediente con F = 0: 422 credit_note_not_required. Segundo comprobante de venta del pedido o segunda nota del expediente: 409 pc_conflict document_already_recorded."
       },
       "PosReceiptLine": {
         "type": "object",
@@ -18904,16 +18941,20 @@
               "not_fit",
               "warranty_external"
             ]
+          },
+          "refund_cents": {
+            "$ref": "#/components/schemas/MoneyCents"
           }
         },
         "required": [
           "line_id",
           "returned_units",
           "restock_units",
-          "inspection"
+          "inspection",
+          "refund_cents"
         ],
         "additionalProperties": false,
-        "description": "restock_units ≤ returned_units ≤ entregadas − ya devueltas; restock_units > 0 solo con inspection fit_for_sale"
+        "description": "D-205/D-212: restock_units ≤ returned_units ≤ entregadas − Σ devueltas en expedientes anteriores; restock_units > 0 solo con inspection fit_for_sale; refund_cents ≤ precio unitario × returned_units. Una línea del pedido aparece como máximo una vez por operación."
       },
       "PosReturnRecord": {
         "type": "object",
@@ -18956,7 +18997,7 @@
           "idempotency_key"
         ],
         "additionalProperties": false,
-        "description": "D-205: refund_cents ≤ R − reembolsos previos y ≤ Σ(precio × unidades devueltas); cash_rounding nunca se reembolsa (422 pc_business_ineligible refund_exceeds_cash). refund_cash solo si se indica cash_session_id de una sesión abierta."
+        "description": "D-205/D-212: refund_cents = Σ refund_cents de las líneas (si no, 422 pc_field_invalid field refund_cents). El acumulado de reembolsos de todos los expedientes del pedido no supera R, el efectivo recibido (422 pc_business_ineligible refund_exceeds_cash); cash_rounding nunca se reembolsa. Unidades por encima del límite acumulado: 422 return_units_exceeded. D-213: refund_cents = 0 es admisible, sin evento external_refund, refund_cash ni nota de crédito. refund_cash solo si se indica cash_session_id de una sesión abierta y refund_cents > 0; cash_session_id con refund_cents = 0: 422 refund_cash_not_applicable."
       },
       "PosReturnResult": {
         "type": "object",
@@ -18969,13 +19010,8 @@
           "order_id": {
             "$ref": "#/components/schemas/SqlId"
           },
-          "case_ids": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 100,
-            "items": {
-              "$ref": "#/components/schemas/SqlId"
-            }
+          "case_id": {
+            "$ref": "#/components/schemas/SqlId"
           },
           "refund_cents": {
             "$ref": "#/components/schemas/MoneyCents"
@@ -18991,13 +19027,13 @@
         "required": [
           "operation_id",
           "order_id",
-          "case_ids",
+          "case_id",
           "refund_cents",
           "restocked_units",
           "row_version"
         ],
         "additionalProperties": false,
-        "description": "Expedientes closed_returned por línea; la línea sigue ENTREGADO y el pedido FINALIZADO (F-10 prohibido); el pedido entra en la cola de notas de crédito."
+        "description": "D-212: un expediente pos_return_after_delivery closed_returned por operación, con sus líneas en pc_pos_return_lines; la línea sigue ENTREGADO y el pedido FINALIZADO (F-10 prohibido). Entra en la cola de notas de crédito solo si refund_cents > 0."
       }
     },
     "securitySchemes": {

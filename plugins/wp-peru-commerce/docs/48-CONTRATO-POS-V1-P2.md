@@ -1,14 +1,15 @@
 # 48 — Contrato POS V1 (P2): ventas presenciales en efectivo
 
-**Corte: 2026-11-27, rama `main`, partida 53c89db.**
+**Corte: 2026-11-27, rama `main`, partida b1e3552 (ajustes de contrato previos a P3).**
 
 **Estado:**
 
 - P1 está **RATIFICADO por el propietario** (2026-11-27), con las precisiones D-202…D-207.
 - P1b está **RESUELTO CONTRACTUALMENTE** (D-207).
-- P2 está **DOCUMENTADO/NO IMPLEMENTADO**: OpenAPI `0.13.0-draft`, sin PHP, Angular, migraciones ejecutables, compilación ni pruebas.
+- P2 está **APROBADO por el propietario** (2026-11-27): D-208, D-209 y D-210, incluida la operación atómica R8-83. Antes de P3 se resolvieron seis ajustes puntuales (D-211…D-216, §1).
+- P3 (backend PHP) está **AUTORIZADO** (P-B). El estado real de cada pieza consta en [docs/43](43-ESTADO-IMPLEMENTACION.md). Ninguna migración, compilación ni prueba se ha ejecutado.
 
-Este documento convierte la propuesta de [docs/47 §2](47-POS-INTEGRADO-Y-APERTURA-PUBLICA.md) en contrato. Añade las decisiones D-201…D-210 a D-01…D-200 ([docs/01](01-DECISIONES-Y-ESTADO.md)). Para el POS prevalece sobre la propuesta de docs/47 y, en rutas y DTO, manda el OpenAPI `0.13.0-draft`. Nada de lo aquí descrito existe en código.
+Este documento convierte la propuesta de [docs/47 §2](47-POS-INTEGRADO-Y-APERTURA-PUBLICA.md) en contrato. Añade las decisiones D-201…D-216 a D-01…D-200 ([docs/01](01-DECISIONES-Y-ESTADO.md)). Para el POS prevalece sobre la propuesta de docs/47 y, en rutas y DTO, manda el OpenAPI `0.13.0-draft`. Nada de lo aquí descrito existe en código.
 
 ## 0. Precedencia, independencia y etiquetas
 
@@ -24,7 +25,7 @@ Este documento convierte la propuesta de [docs/47 §2](47-POS-INTEGRADO-Y-APERTU
 
 **Lo que este documento propone:** todo lo demás, con la etiqueta DOCUMENTADO/NO IMPLEMENTADO salvo que se indique otra cosa.
 
-## 1. Decisiones D-201…D-210
+## 1. Decisiones D-201…D-216
 
 | ID | Decisión | Estado |
 | --- | --- | --- |
@@ -35,9 +36,15 @@ Este documento convierte la propuesta de [docs/47 §2](47-POS-INTEGRADO-Y-APERTU
 | D-205 | D6: errores, anulaciones, reembolsos y devoluciones, con invariantes y procedimientos seguros para las exclusiones (§7) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO |
 | D-206 | D13: flujo operativo de emisión externa del comprobante, identificación y registro de su referencia (§8) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO |
 | D-207 | D14/P1b: redondeo de efectivo a favor del consumidor, separando total original, ajuste y efectivo recibido (§6) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO; validación contable antes de P-D |
-| D-208 | Transición O-10 «sin pedido → CONFIRMADO» del canal POS, sin estados nuevos (§9) | DOCUMENTADO/NO IMPLEMENTADO; revisión del propietario antes de P3 |
-| D-209 | Persistencia: 2 tablas nuevas (39 → 41), columnas aditivas y migración 1.0.2 → 1.1.0 solo documental (§10) | DOCUMENTADO/NO IMPLEMENTADO; revisión del propietario antes de P3 |
-| D-210 | REST R8-71…R8-83, enmiendas aditivas de R8-20/21/24/25/27/45/46 y OpenAPI `0.13.0-draft` (§11) | DOCUMENTADO/NO IMPLEMENTADO; revisión del propietario antes de P3 |
+| D-208 | Transición O-10 «sin pedido → CONFIRMADO» del canal POS, sin estados nuevos (§9) | CONFIRMADO por el propietario (2026-11-27); implementación P3 |
+| D-209 | Persistencia: 3 tablas nuevas (39 → 42), columnas aditivas y migración 1.0.2 → 1.1.0 (§10) | CONFIRMADO por el propietario (2026-11-27), con el ajuste D-212; implementación P3 sin ejecutar |
+| D-210 | REST R8-71…R8-83, incluida la devolución atómica R8-83, enmiendas aditivas de R8-20/21/24/25/27/45/46 y OpenAPI `0.13.0-draft` (§11) | CONFIRMADO por el propietario (2026-11-27); implementación P3 |
+| D-211 | Comprobante externo: total original, redondeo e importe pagadero separados en R8-81 (§8) | Ajuste previo a P3 ordenado por el propietario; DOCUMENTADO |
+| D-212 | Reembolso por línea: un expediente por operación R8-83, líneas en `pc_pos_return_lines`, devoluciones parciales y sucesivas y una nota de crédito por expediente (§7, §10) | Ajuste previo a P3 ordenado por el propietario; DOCUMENTADO |
+| D-213 | Importes cero: venta POS con efectivo debido 0 rechazada; reembolso 0 admitido sin movimiento de cajón (§6, §7) | Ajuste previo a P3 ordenado por el propietario; DOCUMENTADO |
+| D-214 | Reintentos idempotentes recuperables aunque la sesión de caja se cierre después (§12) | Ajuste previo a P3 ordenado por el propietario; DOCUMENTADO |
+| D-215 | Se conservan todas las puertas de seguridad; el módulo no preparado responde 423 `pc_module_not_ready` (§4) | Ajuste previo a P3 ordenado por el propietario; DOCUMENTADO |
+| D-216 | Desactivar el POS no deja sesiones ni obligaciones sin vía de resolución (§4) | Ajuste previo a P3 ordenado por el propietario; DOCUMENTADO |
 
 **Ratificación de D1–D14 (D-201).** Quedan ratificadas tal como se propusieron, salvo las precisiones del propietario:
 
@@ -67,7 +74,7 @@ Este documento convierte la propuesta de [docs/47 §2](47-POS-INTEGRADO-Y-APERTU
 - **M5 Constancia de operación.** No es comprobante de pago.
 - **M6 Historial y correcciones.** Pedidos por canal, ventas pendientes de comprobante, y correcciones y devoluciones por A (D-205).
 
-**Cambio respecto de la propuesta P1:** la devolución física con reingreso pasa de EXCLUIDO a la operación atómica R8-83, solo para A. Es la única forma de cumplir la precisión D6 («no permitir inconsistencias entre inventario, dinero y pedidos»): con las operaciones existentes, stock (R8-35) y dinero (R8-27) se registrarían en transacciones separadas. Requiere la revisión del propietario antes de P3.
+**Cambio respecto de la propuesta P1:** la devolución física con reingreso pasa de EXCLUIDO a la operación atómica R8-83, solo para A. Es la única forma de cumplir la precisión D6 («no permitir inconsistencias entre inventario, dinero y pedidos»): con las operaciones existentes, stock (R8-35) y dinero (R8-27) se registrarían en transacciones separadas. El propietario lo aprobó el 2026-11-27 (D-210).
 
 ## 2. Requisitos peruanos (fuentes oficiales; no es certificación)
 
@@ -81,9 +88,9 @@ Fuentes al final (§17). Ninguna afirmación de este documento acredita cumplimi
 
 ## 3. Canal y obligaciones del canal web (D-202)
 
-- `pc_orders.channel` toma `web` o `pos`. Todos los pedidos existentes quedan en `web` por relleno de migración.
+- **Canal derivado.** Un pedido es `pos` si y solo si `pc_orders.pos_session_id` no es NULL; en otro caso es `web`. No hay columna `channel` ni relleno: todos los pedidos existentes tienen `pos_session_id` NULL y siguen siendo `web`. REST expone `channel` como valor derivado (§11).
 - **Canal web sin cambios.** Checkout, aceptación de política y privacidad, contacto D-24, seguimiento D-34, notificaciones, Libro de Reclamaciones virtual y R8-64 siguen exactamente igual. Ninguna regla de este documento relaja un contrato web.
-- **Sin aceptaciones ficticias.** En `pos`, `policy_version_id` y `privacy_version_id` son NULL, porque nadie aceptó nada en un formulario. La columna admite NULL, pero el servicio exige NOT NULL cuando `channel = web`; una fila web con NULL es un error de invariante.
+- **Sin aceptaciones ficticias.** En `pos`, `policy_version_id` y `privacy_version_id` son NULL, porque nadie aceptó nada en un formulario. Las columnas admiten NULL, pero una restricción CHECK de la base exige ambas versiones cuando `pos_session_id` es NULL y exige `payment_method = 'cash'` cuando no lo es (§10). Una fila web sin versiones no puede escribirse.
 - `customer_snapshot` contiene solo los datos realmente entregados; es `{}` en una venta anónima. El POS no pide nombre, correo ni teléfono.
 - **D-24 y D-34 no aplican a `pos`.** La venta se entrega en el acto: no hay contacto obligatorio ni enlace de seguimiento.
 - **Recojo en tienda:** `delivery_cents = 0`, `payment_method = cash`.
@@ -121,13 +128,21 @@ Las 19 capacidades existentes no cambian de significado ni de rol. Se añaden ci
 | PER-61 | Registrar la referencia del comprobante externo POS | R8-80, R8-81 | Sí | Sí (sin nota de crédito) |
 | PER-62 | Registrar devolución o anulación presencial POS | R8-83 | Sí | No |
 
-**Puertas de módulo** (`module-gates.php`, P3), todas cerradas por defecto: `pos.read` (R8-71, R8-74, R8-77, R8-78, R8-80, R8-82), `pos.write` (R8-72, R8-81, R8-83) y `pos.sessions` (R8-73, R8-75, R8-76, R8-79). Se abren solo si:
+**Puertas de seguridad** (`module-gates.php`, D-215), cerradas por defecto: `pos.read` (R8-71, R8-74, R8-77, R8-78, R8-80, R8-82), `pos.write` (R8-72, R8-81, R8-83) y `pos.sessions` (R8-73, R8-75, R8-76, R8-79). Se conservan todas las puertas existentes:
 
-- `pos.enabled = true` en ajustes;
-- el esquema es 1.1.0 verificado;
-- hay al menos una caja configurada.
+- `pos.read` exige plataforma, HTTPS, base de datos InnoDB, esquema 1.1.0 verificado y bloqueos verificados por integración;
+- `pos.write` y `pos.sessions` exigen además PHP del comercio y que no haya mantenimiento en curso, como cualquier escritura;
+- cada operación conserva su `permission_callback`, sus capacidades y las comprobaciones por recurso (sesión propia, pedido `pos`, expediente del mismo pedido).
 
-Si no, responden 503 `pc_module_not_ready`.
+Si una puerta está cerrada, la operación responde **423** `pc_module_not_ready` sin efectos, igual que el resto del plugin.
+
+**Activación y desactivación del POS (D-216).** `pos.enabled` y `pos.registers` no son puertas de seguridad: son una regla de negocio que comprueba el servicio dentro de su transacción.
+
+- **Solo abren nuevas obligaciones** R8-71 (catálogo), R8-72 (venta), R8-73 (apertura) y R8-75 (ingreso o retiro). Con el POS desactivado, o sin la caja de la operación entre las configuradas, responden 423 `pc_module_not_ready` con `reason = pos_disabled`.
+- **Siempre resuelven lo pendiente**, aunque el POS esté desactivado: R8-74 (consultar la propia sesión), R8-76 (cerrarla), R8-77/78 (revisar), R8-79 (cierre forzado), R8-80/81 (comprobantes pendientes y notas de crédito), R8-82 (constancia) y R8-83 (devolución). Sus puertas de seguridad siguen vigentes.
+- **Sin sesiones huérfanas.** R8-46 rechaza con 409 `pc_conflict` (`reason = pos_sessions_open`) desactivar el POS o retirar una caja mientras haya una sesión abierta afectada; A la cierra antes con R8-76 o R8-79.
+- **Serialización.** R8-46 y R8-73 bloquean la fila de ajustes (`FOR UPDATE`) antes que cualquier sesión. R8-46 consulta las sesiones abiertas con una lectura bloqueante; R8-72 y R8-75 bloquean la fila de la sesión. Así ninguna sesión se abre ni se usa con una configuración que ya la excluye.
+- **Desactivar el plugin de WordPress** no es desactivar el POS: los datos se conservan, y al reactivarlo las sesiones se resuelven con R8-76 o R8-79. La desinstalación es conservadora. Si el esquema deja de estar verificado, la puerta de seguridad cierra todo hasta completar la migración.
 
 ## 5. Sesión de caja y vínculo del efectivo (D-203)
 
@@ -147,7 +162,7 @@ Si no, responden 503 `pc_module_not_ready`.
 - **Nunca se vinculan** los cobros de Mercado Pago, los ajustes `cash_rounding` (no es efectivo), las correcciones R8-25 (son contables, no movimientos de cajón) ni ningún evento web sin efectivo físico en ese cajón.
 - **Quién puede vincular.** O, solo su propia sesión abierta; A, cualquier sesión abierta de la instalación. Una sesión cerrada nunca admite movimientos (409 `pc_conflict`, `reason = pos_session_closed`).
 - **Esperado** = fondo + Σ movimientos. Se calcula en el servidor desde los movimientos, no desde contadores.
-- **Cierre.** O declara el efectivo contado sin ver el esperado (arqueo ciego). El servidor fija `expected_cents`, `counted_cents` y `difference_cents = counted − expected`, que son **inmutables** tras el cierre. Una diferencia posterior se explica con un expediente o un movimiento de otra sesión, nunca reabriendo la cerrada.
+- **Cierre.** O declara el efectivo contado sin ver el esperado (arqueo ciego). El servidor fija `expected_cents` y `counted_cents`, que son **inmutables** tras el cierre; la diferencia `counted − expected` se deriva de ellos al leer y no se almacena. Una diferencia posterior se explica con un expediente o un movimiento de otra sesión, nunca reabriendo la cerrada.
 - **Cierre forzado.** A cierra una sesión ajena con motivo y, si lo tiene, el conteo; sin conteo, `counted_cents` queda NULL y la diferencia queda pendiente de revisión.
 - **Sesiones largas.** Pasadas 24 horas abierta, la pantalla avisa y A puede forzar el cierre. No hay cierre automático.
 
@@ -175,51 +190,63 @@ No se encontró pronunciamiento específico de SUNAT sobre su registro contable.
 
 **Enmienda acotada de D-105.** «Neto realmente recibido» sigue vigente. El evento `cash_rounding` es la única diferencia admitida entre el total y el efectivo, limitada a 0–9 céntimos y calculada por el servidor.
 
-**R8-24, canal web (P1b).** `CashReceipt` gana `rounding_cents`, opcional y 0 por defecto. Se aceptan exactamente dos combinaciones; cualquier otra devuelve `pc_cash_amount_mismatch`:
+**R8-24, canal web (P1b).** `CashReceipt` gana `rounding_cents`, opcional y 0 por defecto. Se aceptan exactamente dos combinaciones; cualquier otra devuelve 409 `pc_conflict` (causa interna `pc_cash_amount_mismatch`, como hoy):
 
 - `amount_cents` igual al saldo debido y `rounding_cents` 0;
-- `amount_cents = floor10(saldo)` y `rounding_cents = saldo mod 10`, mayor que 0.
+- `amount_cents = floor10(saldo)` y `rounding_cents = saldo mod 10`, mayor que 0, solo si `floor10(saldo) ≥ 10`.
 
 **R8-72, canal POS.** Siempre redondea. El servidor calcula `T`, el ajuste y `R`; el cliente envía los importes que mostró, y si no coinciden responde 409 `pc_quote_changed` sin escribir nada.
+
+**Importes cero (D-213).** Un cobro en efectivo nunca es de 0 céntimos:
+
+- Una venta POS con `R = 0` (es decir, `T < 10`) se rechaza con 422 `pc_business_ineligible` (`reason = cash_total_below_minimum`), sin escribir nada. Una línea de precio 0 es admisible si el total de la venta da `R ≥ 10`.
+- En R8-24 el redondeo solo se admite si deja un efectivo de al menos 10 céntimos; un saldo menor se cobra exacto.
+- Un reembolso de 0 es admisible en R8-83 (devolución sin dinero): crea el expediente y el reingreso, pero ningún evento `external_refund`, ningún `refund_cash` y ninguna nota de crédito pendiente (§7).
+- `pay_in` y `pay_out` son de al menos 1 céntimo. El fondo inicial y el efectivo contado sí pueden ser 0.
 
 **Entregado y vuelto (D7).** El importe entregado y el vuelto se guardan en el movimiento `sale_cash` (`tendered_cents` y `change_cents`), con `tendered − change = R`. No son ingresos ni asientos del libro.
 
 **Reportes.** Muestran por separado el total original, el ajuste por redondeo y el efectivo recibido.
 
-**Comprobante externo.** La boleta emitida fuera puede llevar `PayableRoundingAmount = −(T − R)` si el emisor lo admite. PeruCommerce no lo genera ni lo valida.
+**Comprobante externo.** La boleta emitida fuera puede llevar `PayableRoundingAmount = −(T − R)` si el emisor lo admite. PeruCommerce no lo genera ni lo valida; R8-81 registra por separado el total, el redondeo y el importe pagadero del documento (§8).
 
 ## 7. Errores, anulaciones, reembolsos y devoluciones (D-205)
 
 | Situación | Procedimiento | Efecto en pedido, stock y dinero |
 | --- | --- | --- |
 | Error antes del commit (validación, stock, versión) | Se revierte la transacción; el carrito sigue en la memoria de la pestaña | Ninguno |
-| Resultado incierto (red, tiempo de espera) | Reintentar con **la misma** `idempotency_key`: devuelve el resultado guardado o 423 si sigue en curso. Nunca una clave nueva para la misma intención | Ninguno adicional |
+| Resultado incierto (red, tiempo de espera) | Reintentar con **la misma** `idempotency_key`: el reintento espera el bloqueo de la operación y devuelve el resultado guardado, aunque la sesión ya se haya cerrado (D-214). Si el bloqueo vence, 409 `pc_conflict`: consultar R8-82, R8-77 o R8-78, o reintentar con la misma clave. Nunca una clave nueva para la misma intención | Ninguno adicional |
 | Venta errónea ya confirmada (anulación) | O no anula: avisa a A. A usa R8-83 como devolución total con reingreso y reembolso en la misma sesión abierta | `sale_cash` +R y `refund_cash` −R suman 0; stock repuesto; pedido FINALIZADO con expediente |
 | Anulación con la sesión original ya cerrada | A usa R8-83 indicando la sesión abierta de la que sale el efectivo | La diferencia de la sesión cerrada sigue inmutable; el expediente explica el movimiento |
 | Error al dar vuelto | Aparece como diferencia en el arqueo. Si se debía vuelto al cliente, A registra un `pay_out` con motivo que cita el pedido | Solo el cajón |
 | Devolución tras la entrega (D-89) | R8-83 (abajo) | Expediente, reingreso solo de lo apto, reembolso acotado |
-| Corrección R8-25 o reembolso R8-27 sobre un pedido `pos` | Rechazado con 422 `pc_business_ineligible`; se usa R8-83 | Ninguno |
+| Corrección R8-25 o reembolso R8-27 sobre un pedido `pos` | Rechazado con 422 `pc_business_ineligible` (`reason = web_channel_required`); se usa R8-83 | Ninguno |
 
-**R8-83: devolución o anulación presencial, en una sola transacción.**
+**R8-83: devolución o anulación presencial, en una sola transacción (D-212).**
 
-1. Un expediente `pc_cases` por cada línea devuelta (`case_type = pos_return_after_delivery`, `case_phase = closed_returned`), con unidades devueltas, unidades repuestas, inspección y evidencia.
-2. Cada línea cumple `restock_units ≤ returned_units ≤ unidades entregadas − unidades ya devueltas`.
-3. El reingreso se hace en `pc_stock_movements` (`source_type = case`), solo por las unidades con inspección `fit_for_sale`.
-4. Las unidades `not_fit` o `warranty_external` no vuelven al stock vendible.
-5. Reembolso: evento `external_refund`, proveedor `cash`, sobre el `initial_charge`.
-   - `refund_cents ≤ R − reembolsos previos`.
-   - `refund_cents ≤ Σ(precio unitario × unidades devueltas)`.
-   - El ajuste `cash_rounding` nunca se reembolsa.
-6. El movimiento `refund_cash` se registra solo si se indica `cash_session_id`.
-7. La línea sigue ENTREGADO (F-10 sigue PROHIBIDO) y el pedido sigue FINALIZADO. La devolución vive en expedientes separados (O-07, D-89).
-8. El pedido entra en la cola de notas de crédito pendientes (R8-80).
+1. **Un expediente por operación.** Cada R8-83 confirmada crea exactamente un expediente `pc_cases` (`case_type = pos_return_after_delivery`, `case_phase = closed_returned`, `order_line_id` NULL, `source_operation_id` = la operación), con motivo y evidencia.
+2. **Líneas del expediente.** Cada línea devuelta es una fila de `pc_pos_return_lines` con la línea del pedido, el vendible, las unidades devueltas, las repuestas, la inspección y su `refund_cents`. Una línea del pedido aparece como máximo una vez por expediente.
+3. **Unidades.** En cada línea, `restock_units ≤ returned_units ≤ unidades entregadas − Σ unidades devueltas en expedientes anteriores`. Solo la inspección `fit_for_sale` admite `restock_units > 0`; las unidades `not_fit` o `warranty_external` no vuelven al stock vendible. Superar el límite devuelve 422 `pc_business_ineligible` (`reason = return_units_exceeded`).
+4. **Reingreso.** Se hace en `pc_stock_movements` (`source_type = case`, el expediente como origen), solo por las unidades repuestas.
+5. **Distribución del reembolso.** El reembolso se asigna línea a línea:
+   - `refund_cents` de cada línea ≤ precio unitario × unidades devueltas en esa operación;
+   - `refund_cents` del cuerpo = Σ `refund_cents` de las líneas; si no, 422;
+   - acumulado del pedido: Σ reembolsos de todos sus expedientes ≤ `R`, el efectivo recibido; si no, 422 `pc_business_ineligible` (`reason = refund_exceeds_cash`). El ajuste `cash_rounding` nunca se reembolsa.
+6. **Dinero.** Si el reembolso `F` es mayor que 0, un evento `external_refund` (proveedor `cash`, sobre el `initial_charge`) por `F`, vinculado al expediente. Si `F = 0`, no hay evento.
+7. **Cajón.** El movimiento `refund_cash` (−F) se registra solo si se indica `cash_session_id` de una sesión abierta y `F > 0`. Indicar `cash_session_id` con `F = 0` devuelve 422 `pc_business_ineligible` (`reason = refund_cash_not_applicable`).
+8. **Estados.** La línea sigue ENTREGADO (F-10 sigue PROHIBIDO) y el pedido sigue FINALIZADO. La devolución vive en el expediente (O-07, D-89).
+9. **Nota de crédito.** Un expediente con `F > 0` exige exactamente una nota de crédito (R8-81 con su `case_id`) y entra en la cola R8-80 hasta registrarla. Un expediente con `F = 0` no la exige.
+
+**Devoluciones parciales y sucesivas.** Cada nueva devolución del mismo pedido es una nueva operación R8-83 con su propio expediente, sus líneas y, si reembolsa, su nota de crédito. Los límites de unidades y de dinero son acumulados sobre todos los expedientes anteriores del pedido, y se comprueban bajo el bloqueo del pedido y de sus líneas.
+
+**Ejemplo.** Venta de `T = 1234` (dos líneas: 2 × 500 y 1 × 234), `R = 1230`, ajuste 4. Primera devolución: 1 unidad de la línea 1 con reembolso 500 (expediente 1, nota de crédito de pagadero 500). Segunda: la otra unidad de la línea 1 y la línea 2; el máximo por líneas es 734, pero el acumulado admite solo `1230 − 500 = 730` (expediente 2, nota de crédito de pagadero 730 y total 734, con redondeo −4).
 
 **Invariantes:**
 
 - **I1** — Cada operación de dinero, stock o pedido es atómica: todo o nada.
 - **I2** — Cada `sale_cash` corresponde 1:1 al `initial_charge` en efectivo de su venta (UQ `payment_event_id`).
-- **I3** — `initial_charge + cash_rounding = T`; los reembolsos nunca superan el efectivo recibido.
-- **I4** — Salidas de stock = unidades entregadas; los reingresos solo nacen de una inspección `fit_for_sale`.
+- **I3** — `initial_charge + cash_rounding = T`; los reembolsos nunca superan el efectivo recibido, y el reembolso de cada expediente es la suma del de sus líneas.
+- **I4** — Salidas de stock = unidades entregadas; los reingresos solo nacen de una inspección `fit_for_sale` y nunca superan las unidades devueltas.
 - **I5** — Esperado = fondo + Σ movimientos; la diferencia es inmutable tras el cierre.
 - **I6** — Ningún evento web se vincula a una sesión sin `cash_session_id` explícito.
 
@@ -242,22 +269,35 @@ No se encontró pronunciamiento específico de SUNAT sobre su registro contable.
 1. El POS muestra siempre el recordatorio «Emita el comprobante de pago en su sistema de emisión».
 2. Al confirmar la venta, el pedido entra en la cola de pendientes (R8-80).
 3. Si `T > 70000` céntimos (S/700.00), la pantalla avisa antes de cobrar que la boleta exige identificar al adquirente. Esa identificación se ingresa **solo en el emisor externo**.
-4. Quien tenga `external_documents_record` registra en R8-81 el tipo, serie, número, fecha de emisión e importe del comprobante emitido.
+4. Quien tenga `external_documents_record` registra en R8-81 el tipo, serie, número, fecha de emisión e importes del comprobante emitido.
 
 **Identificación.** Localmente solo se guarda `buyer_id_type` (`dni`, `ce`, `ruc`, `pasaporte`, `otro`, `none`), nunca el número. Guardar el número queda EXCLUIDO en V1, porque añadiría datos personales y obligaría a revisar la política de privacidad.
 
 **Reglas de R8-81:**
 
 - Tipos `boleta`, `factura`, `ticket` (el comprobante de máquina registradora emitido fuera) y `nota_credito`.
-- El importe debe coincidir con `T` en el comprobante de venta y con el reembolso de un expediente en la nota de crédito; si no, 422.
-- Un solo comprobante de venta por pedido.
+- Un solo comprobante de venta por pedido y una sola nota de crédito por expediente; un segundo registro devuelve 409 `pc_conflict` (`reason = document_already_recorded`).
 - Una nota de crédito exige `case_id` de un expediente `pos_return_after_delivery` del mismo pedido.
+
+**Importes del comprobante (D-211).** R8-81 recibe tres cifras separadas, en céntimos, que reflejan el documento tal como lo emitió el emisor externo:
+
+| Campo | Significado | En UBL 2.1 |
+| --- | --- | --- |
+| `total_cents` | Importe total del documento, sin redondeo | importe total antes de `PayableRoundingAmount` |
+| `rounding_cents` | Redondeo del documento, de −9 a 0; 0 por defecto | `PayableRoundingAmount` |
+| `payable_cents` | Importe pagadero | `PayableAmount` |
+
+- **Coherencia interna.** Siempre `payable_cents = total_cents + rounding_cents`; si no, 422 `pc_field_invalid` (`field = payable_cents`). Esta es la única comprobación aritmética interna y no depende del pedido.
+- **Comprobante de venta.** `total_cents = T` y `rounding_cents` es 0 o `−(T − R)`. Así se aceptan los dos documentos válidos: el de un emisor sin redondeo (pagadero `T`) y el de uno con redondeo (pagadero `R`). Cualquier otra combinación devuelve 422 `pc_business_ineligible` (`reason = document_amount_mismatch`).
+- **Nota de crédito.** El pagadero es el reembolso `F` del expediente. El total no es menor que `F`, no lo supera en más de 9 céntimos y no supera `V = Σ precio unitario × unidades devueltas` de ese expediente. Si no, 422 `document_amount_mismatch`. En el ejemplo de §7, la segunda nota de crédito tiene total 734, redondeo −4 y pagadero 730.
+- **Expediente sin reembolso.** Un expediente con `F = 0` no exige nota de crédito; registrarla devuelve 422 `pc_business_ineligible` (`reason = credit_note_not_required`).
+- **Cola R8-80.** Cada pendiente muestra `total_cents` (`T`, o `V` en una nota de crédito) y `payable_cents` (el efectivo `R`, o el reembolso `F`), para que quien emite vea ambas cifras.
 
 **Cierre de sesión.** No se bloquea por comprobantes pendientes; la respuesta del cierre incluye `pending_documents_count`.
 
 **Contingencia.** Si el emisor externo no está disponible, se siguen los procedimientos oficiales de SUNAT. Este documento no afirma su cumplimiento.
 
-**Almacenamiento.** `pc_external_documents` con `buyer_id_type VARCHAR(16) NULL`. La referencia registrada no es un CPE emitido ni validado por PeruCommerce.
+**Almacenamiento.** `pc_external_documents` guarda `amount_cents = total_cents` y las columnas nuevas `rounding_cents` y `buyer_id_type` (§10); el pagadero se deriva como `amount_cents + rounding_cents`. Las filas del canal web conservan `rounding_cents` NULL. La referencia registrada no es un CPE emitido ni validado por PeruCommerce.
 
 ## 9. Estados: transición O-10 (D-208)
 
@@ -265,7 +305,7 @@ Sin estados nuevos. Se añade una transición del pedido para el canal `pos`:
 
 | ID | Transición | Actor y condición | Efectos en la misma transacción |
 | --- | --- | --- | --- |
-| O-10 | sin pedido → CONFIRMADO, con `channel = pos` | O o A con `pos_sell` y su propia sesión abierta; módulo `pos.write` abierto | Ver la secuencia abajo |
+| O-10 | sin pedido → CONFIRMADO, con `pos_session_id` = la sesión de la venta | O o A con `pos_sell` y su propia sesión abierta; puerta `pos.write` abierta y POS activado | Ver la secuencia abajo |
 
 **Secuencia de efectos:**
 
@@ -281,31 +321,32 @@ Sin estados nuevos. Se añade una transición del pedido para el canal `pos`:
 - Si cualquier paso falla, no queda nada escrito.
 - No se reutiliza ningún estado intermedio visible: la venta nace FINALIZADA o no existe.
 
-## 10. Persistencia y migración (D-209)
+## 10. Persistencia y migración (D-209, D-212)
 
-**Tablas nuevas (39 → 41).**
+**Tablas nuevas (39 → 42).** Las tres siguen las reglas existentes: InnoDB, `utf8mb4`, céntimos en BIGINT, fechas en DATETIME(6) UTC, FK `RESTRICT` y ninguna FK a `wp_users` ni `wp_posts`.
 
 `pc_cash_sessions`:
 
 - **Columnas:**
   - id BIGINT UNSIGNED PK;
   - register_code VARCHAR(32) NN;
-  - opened_by BIGINT UNSIGNED NN;
   - status VARCHAR(16) NN (`open`, `closed`, `force_closed`);
-  - open_register_code VARCHAR(32) N y open_user_id BIGINT UNSIGNED N, que se vacían al cerrar;
+  - open_register_code VARCHAR(32) N y open_user_id BIGINT UNSIGNED N: copian la caja y la persona mientras la sesión está abierta y se vacían al cerrar;
+  - opened_by BIGINT UNSIGNED NN;
   - opening_float_cents BIGINT NN;
   - business_date DATE NN (America/Lima);
   - opened_at DATETIME(6) NN;
-  - closed_by BIGINT UNSIGNED N y closed_at DATETIME(6) N;
-  - counted_cents, expected_cents y difference_cents BIGINT N;
+  - closed_at DATETIME(6) N y closed_by BIGINT UNSIGNED N;
+  - counted_cents y expected_cents BIGINT N;
   - close_reason VARCHAR(500) N;
-  - row_version BIGINT UNSIGNED NN;
-  - created_at y updated_at DATETIME(6) NN.
-- **Índices:** UQ(open_register_code); UQ(open_user_id); IX(business_date, register_code); IX(opened_by, opened_at).
+  - created_at y updated_at DATETIME(6) NN;
+  - row_version BIGINT UNSIGNED NN.
+- **La diferencia no se almacena:** es `counted_cents − expected_cents` y se calcula al leer, así que no puede contradecir a sus términos.
+- **Índices:** UQ(open_register_code); UQ(open_user_id); IX(business_date, register_code); IX(opened_by, opened_at); IX(status, opened_at, id).
 - **Restricciones:**
-  - Los UQ con NULL permiten varias sesiones cerradas y una sola abierta por caja y por usuario.
-  - `opening_float_cents ≥ 0`.
-  - Los campos de cierre son inmutables cuando `status ≠ open`.
+  - Los UQ con NULL permiten varias sesiones cerradas y una sola abierta por caja y por persona.
+  - CHECK: `opening_float_cents ≥ 0`; `counted_cents` NULL o ≥ 0; `status` dentro de su lista; abierta si y solo si `closed_at` es NULL y las dos columnas `open_*` no lo son; `row_version ≥ 1`.
+  - Los campos de cierre son inmutables cuando `status ≠ open` (regla de servicio con control de versión).
 
 `pc_cash_session_movements`, inmutable:
 
@@ -313,50 +354,64 @@ Sin estados nuevos. Se añade una transición del pedido para el canal `pos`:
   - id BIGINT UNSIGNED PK;
   - session_id BIGINT UNSIGNED NN;
   - kind VARCHAR(16) NN (`sale_cash`, `web_cash_in`, `pay_in`, `pay_out`, `refund_cash`);
-  - amount_cents BIGINT NN, con signo según el tipo y distinto de 0;
-  - payment_event_id BIGINT UNSIGNED N;
-  - order_id BIGINT UNSIGNED N;
-  - case_id BIGINT UNSIGNED N;
+  - amount_cents BIGINT NN, distinto de 0 y con el signo de su tipo;
+  - order_id, case_id y payment_event_id BIGINT UNSIGNED N;
   - reason VARCHAR(500) N;
-  - tendered_cents BIGINT N y change_cents BIGINT N, solo en `sale_cash`;
+  - tendered_cents y change_cents BIGINT N, solo en `sale_cash`;
+  - idempotency_id BIGINT UNSIGNED NN, la operación que lo creó;
   - actor_user_id BIGINT UNSIGNED NN;
-  - occurred_at y recorded_at DATETIME(6) NN.
-- **Índices:** IX(session_id, id); UQ(payment_event_id); IX(order_id).
+  - occurred_at DATETIME(6) NN.
+- **Índices:** IX(session_id, id); UQ(payment_event_id); IX(order_id, id); IX(case_id); IX(idempotency_id).
+- **FK:** sesión; pedido; expediente; (payment_event_id, order_id) → `pc_payment_events`(id, order_id), que impide vincular el evento de otro pedido; raíz de idempotencia.
 - **Restricciones:**
   - Nunca se actualiza ni se borra.
-  - `pay_in` y `pay_out` exigen motivo.
-  - `sale_cash`, `web_cash_in` y `refund_cash` exigen `payment_event_id`.
+  - CHECK: `kind` dentro de su lista y signo según el tipo; `pay_in` y `pay_out` exigen motivo y no llevan evento; `sale_cash`, `web_cash_in` y `refund_cash` exigen evento y pedido; entregado y vuelto solo en `sale_cash`, con `tendered − change = amount`.
 
-El vínculo entre evento y sesión vive en esta tabla. Así `pc_payment_events` sigue inmutable y no se recalcula ninguna huella de deduplicación existente.
+`pc_pos_return_lines`, inmutable (D-212):
+
+- **Columnas:**
+  - id BIGINT UNSIGNED PK;
+  - case_id, order_id, order_line_id y sellable_id BIGINT UNSIGNED NN;
+  - returned_units y restocked_units INT UNSIGNED NN;
+  - inspection VARCHAR(24) NN (`fit_for_sale`, `not_fit`, `warranty_external`);
+  - refund_cents BIGINT NN;
+  - created_at DATETIME(6) NN.
+- **Índices:** UQ(case_id, order_line_id); IX(order_line_id, id); IX(order_id, id).
+- **FK compuestas:** (case_id, order_id) → `pc_cases`(id, order_id); (order_id, order_line_id) → `pc_order_lines`(order_id, id); (order_line_id, sellable_id) → `pc_order_lines`(id, sellable_id). Impiden mezclar líneas, expedientes y vendibles de pedidos distintos.
+- **CHECK:** `returned_units ≥ 1`; `restocked_units ≤ returned_units`; `refund_cents ≥ 0`; `inspection` dentro de su lista; `restocked_units = 0` salvo con `fit_for_sale`.
+
+El vínculo entre evento y sesión vive en `pc_cash_session_movements`. Así `pc_payment_events` sigue inmutable y no se recalcula ninguna huella de deduplicación existente.
 
 **Columnas y valores aditivos:**
 
 - `pc_orders`:
-  - channel VARCHAR(8) NN DEFAULT 'web';
-  - pos_session_id BIGINT UNSIGNED N;
-  - índice IX(channel, created_at, id);
-  - `policy_version_id` y `privacy_version_id` pasan a NULL a nivel de columna, con la regla de servicio de D-202.
+  - pos_session_id BIGINT UNSIGNED N, con FK a `pc_cash_sessions` e índice IX(pos_session_id, created_at, id);
+  - `policy_version_id` y `privacy_version_id` pasan a NULL a nivel de columna;
+  - CHECK: o el pedido es web (`pos_session_id` NULL) con sus dos aceptaciones, o es POS y su medio de pago es `cash`. Así la excepción D-202 la impone también el motor, no solo el servicio.
+- `pc_external_documents`:
+  - rounding_cents BIGINT N, con CHECK de NULL o de −9 a 0;
+  - buyer_id_type VARCHAR(16) N.
 - `pc_payment_events`: nuevo valor de `kind`, `cash_rounding`.
-- `pc_external_documents`: buyer_id_type VARCHAR(16) N.
-- `pc_cases`:
-  - nuevo `case_type`, `pos_return_after_delivery`;
-  - returned_units y restocked_units INT UNSIGNED N, solo para ese tipo, con `restocked_units ≤ returned_units`.
+- `pc_cases`: nuevo `case_type`, `pos_return_after_delivery`. No gana columnas: las unidades y el reembolso por línea viven en `pc_pos_return_lines`, y la UQ existente (case_type, source_operation_id) garantiza un expediente por operación.
 - `pc_stock_movements`: nuevo `source_type`, `case`.
 
-**Migración 1.0.2 → 1.1.0** (solo documental; no se escribe ni se ejecuta en P2):
+**Canal derivado.** No hay columna `channel`: un pedido es `pos` si y solo si `pos_session_id` no es NULL. No hay relleno ni una segunda fuente de verdad.
 
-1. **Expandir:** crear las dos tablas y añadir columnas con valores por defecto, sin bloquear el canal web.
-2. **Rellenar:** `channel = 'web'` en los pedidos existentes.
-3. **Verificar:** inspección física de columnas, índices y restricciones con `schema-inspector.php`.
-4. **Registrar:** `schema_version = 1.1.0` en `pc_migrations`, bajo bloqueo y solo tras la verificación.
+**Relaciones.** Las 56 FK existentes no cambian. La 1.1.0 añade 9: una en `pc_orders`, cinco en los movimientos y tres en las líneas de devolución (65 en total).
 
-El módulo POS queda cerrado hasta completar el paso 4. La migración es solo hacia adelante e idempotente; una migración parcial no se marca como exitosa. La desinstalación conservadora conserva las tablas nuevas igual que las demás.
+**Migración 1.0.2 → 1.1.0.** P3 escribe su código; no se ejecuta sin autorización expresa.
+
+1. **Expandir:** crear las tres tablas; añadir en `pc_orders` y `pc_external_documents` las columnas nulas, el índice, las FK y los CHECK; relajar a NULL las dos columnas de versión. No hay relleno: los pedidos existentes tienen `pos_session_id` NULL y sus dos aceptaciones, así que cumplen el CHECK nuevo.
+2. **Verificar:** inspección física del esquema 1.1.0 completo (42 tablas, 65 FK, índices y CHECK) con `schema-inspector.php`.
+3. **Registrar:** `schema_version = 1.1.0` en `pc_migrations`, bajo el bloqueo de mantenimiento y solo tras la verificación. Cada etapa queda en el diario de la migración con su huella.
+
+La puerta `schema` mantiene cerrado el POS hasta completar el paso 3. La migración es solo hacia adelante e idempotente: una etapa ya registrada no se repite, y una migración parcial no se marca como exitosa. Las sentencias de 1.0.x se conservan byte a byte, para que las huellas de las instalaciones existentes sigan verificándose. La desinstalación conservadora conserva las tablas nuevas igual que las demás.
 
 ## 11. REST R8-71…R8-83 y enmiendas (D-210)
 
 Todas exigen sesión WordPress, `X-WP-Nonce` (solo CSRF), deny-by-default y `Cache-Control: private, no-store`. Las mutaciones exigen `idempotency_key` de 16 a 128 caracteres y una versión esperada cuando modifican un recurso existente.
 
-El OpenAPI `0.13.0-draft` suma 13 operaciones en 12 rutas nuevas y 24 esquemas nuevos: en total, **82 operaciones REST, 78 rutas y 162 esquemas**. Cada operación nueva lleva `x-contract-status: PROPOSED_NOT_IMPLEMENTED`, `x-ratification: OWNER_REVIEW_PENDING_BEFORE_P3` y su puerta `x-module-gate` (§4).
+El OpenAPI `0.13.0-draft` suma 13 operaciones en 12 rutas nuevas y 24 esquemas nuevos: en total, **82 operaciones REST, 78 rutas y 162 esquemas**. Cada operación nueva lleva `x-ratification: OWNER_APPROVED_2026-11-27`, su puerta `x-module-gate` (§4) y un `x-contract-status` que dice hasta dónde llegó: `APPROVED_NOT_IMPLEMENTED` mientras no hay código, e `IMPLEMENTED_STATIC_REVIEW_NOT_EXECUTED` cuando P3 lo escribe y lo revisa sin ejecutarlo.
 
 | R8 | Método y ruta | Request → response | Capacidades (todas) | PER |
 | --- | --- | --- | --- | --- |
@@ -370,9 +425,9 @@ El OpenAPI `0.13.0-draft` suma 13 operaciones en 12 rutas nuevas y 24 esquemas n
 | R8-78 | GET `/admin/pos/sessions/{id}` | → `CashSessionDetail` | `cash_session_review` (A) | PER-59 |
 | R8-79 | POST `/admin/pos/sessions/{id}/force-close` | `CashSessionForceClose` → `CashSessionCloseResult` | `cash_session_review` (A) | PER-59 |
 | R8-80 | GET `/admin/pos/documents/pending` | → `PosDocumentPendingPage` | `external_documents_record` | PER-61 |
-| R8-81 | POST `/admin/pos/orders/{id}/external-documents` | `PosExternalDocumentRecord` → 201 `C2312Response` | `external_documents_record` (+ `refunds_record_external` para nota de crédito) | PER-61 |
+| R8-81 | POST `/admin/pos/orders/{id}/external-documents` | `PosExternalDocumentRecord` (total, redondeo y pagadero, §8) → 201 `C2312Response` | `external_documents_record` (+ `refunds_record_external` para nota de crédito) | PER-61 |
 | R8-82 | GET `/admin/pos/orders/{id}/receipt` | → `PosOperationReceipt` | `pos_sell` + `orders_read` | PER-57 |
-| R8-83 | POST `/admin/pos/orders/{id}/returns` | `PosReturnRecord` → 201 `PosReturnResult` | `orders_read` + `refunds_record_external` + `stock_manage` (A) | PER-62 |
+| R8-83 | POST `/admin/pos/orders/{id}/returns` | `PosReturnRecord` (reembolso por línea, §7) → 201 `PosReturnResult` (un `case_id`) | `orders_read` + `refunds_record_external` + `stock_manage` (A) | PER-62 |
 
 **Respuestas por actor:**
 
@@ -383,46 +438,56 @@ El OpenAPI `0.13.0-draft` suma 13 operaciones en 12 rutas nuevas y 24 esquemas n
 
 - **R8-24** `CashReceipt`: + `rounding_cents` (D-207) y + `cash_session_id` opcional (D-203).
 - **R8-27** `ExternalRefundRecord`: + `cash_session_id` opcional, solo si el proveedor del cobro original es `cash`.
-- **R8-25 y R8-27:** rechazan pedidos `channel = pos` con 422 `pc_business_ineligible`.
-- **R8-20:** + filtro `channel` (`web` o `pos`).
-- **R8-21** `AdminOrder`: + `channel`.
-- **R8-45 y R8-46:** `AdminSettings` y `SettingsPatch` ganan `pos` (`PosSettings`: `enabled`, falso por defecto, y `registers`, hasta 20 con `code` y `label`), solo para A con `settings_manage`.
+- **R8-25 y R8-27:** rechazan pedidos POS (`pos_session_id` no nulo) con 422 `pc_business_ineligible` (`reason = web_channel_required`); la devolución presencial usa R8-83.
+- **R8-20:** + filtro `channel` (`web` o `pos`), que se traduce a `pos_session_id IS NULL` o `IS NOT NULL`.
+- **R8-21** `AdminOrder`: + `channel`, derivado de `pos_session_id` y nunca almacenado.
+- **R8-45 y R8-46:** `AdminSettings` y `SettingsPatch` ganan `pos` (`PosSettings`: `enabled`, falso por defecto, y `registers`, hasta 20 con `code` y `label`), solo para A con `settings_manage`. R8-46 rechaza con 409 `pc_conflict` (`reason = pos_sessions_open`) desactivar el POS o retirar una caja con sesión abierta (D-216).
 - **`ErrorResponse.data.details`:** + `reason` opcional (`^[a-z_]+$`, hasta 60 caracteres) para distinguir causas sin nuevos códigos de primer nivel.
 
-**Errores** (códigos ya presentes en el código):
+**Errores.** Solo códigos públicos que ya existen en `includes/rest-errors.php`; las causas internas se traducen a ellos y `reason` distingue el caso:
 
-- 409:
-  - `pc_quote_changed` (totales cambiados);
-  - `pc_version_conflict`;
-  - `pc_conflict` con `reason`: `pos_session_not_open`, `pos_session_closed`, `pos_session_already_open` o `pos_register_busy`.
-- 422:
-  - `pc_cash_amount_mismatch`;
-  - `pc_business_ineligible`, con `reason`: `pos_channel_required`, `web_channel_required` o `refund_exceeds_cash`.
-- 423: idempotencia en curso.
-- 503: `pc_module_not_ready`.
+- **409 `pc_conflict`:**
+  - sesiones: `pos_session_not_open`, `pos_session_closed`, `pos_session_already_open`, `pos_register_busy` y, en R8-46, `pos_sessions_open`;
+  - comprobantes: `document_already_recorded`;
+  - versión esperada distinta, clave de idempotencia reutilizada con otro cuerpo, efectivo que no cuadra en R8-24, bloqueo vencido o interbloqueo (las causas internas `pc_version_conflict`, `pc_idempotency_conflict`, `pc_cash_amount_mismatch`, `pc_lock_timeout` y `pc_deadlock` salen como `pc_conflict`, igual que hoy).
+- **409 `pc_operation_uncertain`:** el resultado del commit es incierto; consultar R8-82, R8-77 o R8-78 antes de reintentar con la misma clave.
+- **409 `pc_quote_changed`:** los totales que mostró la pantalla no coinciden con los del servidor.
+- **422 `pc_field_invalid`:** campo mal formado o incoherente, con `field` (por ejemplo `payable_cents`).
+- **422 `pc_business_ineligible`**, con `reason`:
+  - `pos_channel_required` (R8-80…R8-83 sobre un pedido web);
+  - `web_channel_required` (R8-25 y R8-27 sobre un pedido POS);
+  - `refund_exceeds_cash`, `refund_cash_not_applicable` y `return_units_exceeded` (R8-83);
+  - `cash_total_below_minimum` (R8-72, D-213);
+  - `document_amount_mismatch` y `credit_note_not_required` (R8-81, D-211).
+- **423 `pc_module_not_ready`:** puerta de seguridad cerrada; con `reason = pos_disabled`, POS desactivado o caja no configurada en R8-71/72/73/75 (D-216).
+- **503 `pc_dependency_unavailable`:** dependencia interna no disponible; reintentable con la misma clave.
 
 ## 12. Idempotencia y concurrencia
 
 **Idempotencia:**
 
 - Cada mutación usa la raíz de idempotencia existente (`pc_idempotency`) con ámbito por actor e instalación.
-- La misma clave con otro cuerpo devuelve 409 `pc_idempotency_conflict`; la misma clave con el mismo cuerpo devuelve el resultado guardado.
+- La misma clave con otro cuerpo devuelve 409 `pc_conflict` (causa interna `pc_idempotency_conflict`); la misma clave con el mismo cuerpo devuelve el resultado guardado.
+- **Reintento tras el cierre (D-214).** La reclamación y la reproducción de la clave preceden a las comprobaciones de sesión, estado y `pos.enabled`. Un reintento de R8-72 cuya venta ya se confirmó devuelve el mismo pedido aunque la sesión se haya cerrado o el POS se haya desactivado después; la respuesta se reconstruye desde el pedido y su movimiento `sale_cash`. Las puertas de seguridad (§4) sí se comprueban antes. Si el cliente perdió la clave, recupera la operación con R8-82, R8-77 o R8-78.
+- **Misma clave en paralelo.** La segunda solicitud espera el bloqueo de la raíz de idempotencia y, al liberarse, recibe la reproducción del resultado. Si el bloqueo vence, 409 `pc_conflict`; nunca se ejecuta dos veces.
 - La clave de venta se genera al pulsar «Cobrar», y editar el carrito genera una nueva.
 
 **Orden global de bloqueos** (extiende el orden existente sin invertirlo):
 
 1. raíz de idempotencia;
-2. sesión de caja `FOR UPDATE`;
-3. `pc_orders`;
-4. líneas;
-5. expedientes;
-6. vendibles en orden ascendente de id;
-7. compromisos de stock;
-8. inserción de eventos, movimientos y auditoría;
-9. resultado de idempotencia.
+2. fila de ajustes `FOR UPDATE` (solo R8-46 y R8-73);
+3. sesión de caja `FOR UPDATE`;
+4. `pc_orders`;
+5. líneas;
+6. expedientes;
+7. vendibles en orden ascendente de id;
+8. compromisos de stock;
+9. inserción de eventos, movimientos y auditoría;
+10. resultado de idempotencia.
 
 **Reglas:**
 
+- **Activación frente a apertura.** R8-46 bloquea la fila de ajustes y después lee con lectura bloqueante las sesiones abiertas: si hay alguna en una caja que se retira, o en cualquiera si se desactiva el POS, responde 409 `pos_sessions_open`. R8-73 bloquea la misma fila, comprueba `pos.enabled` y la caja, e inserta la sesión; las UQ `open_register_code` y `open_user_id` dan `pos_register_busy` o `pos_session_already_open`. Así una apertura nunca se cuela durante una desactivación.
 - La venta y el cierre de la misma sesión se serializan por el bloqueo de la sesión; una venta posterior al cierre recibe 409 `pc_conflict` (`reason = pos_session_closed`).
 - La última unidad la decide el bloqueo de los vendibles: dos cajas no venden la misma unidad.
 - Ninguna llamada HTTP ni de impresión ocurre dentro de una transacción.
@@ -448,11 +513,11 @@ El OpenAPI `0.13.0-draft` suma 13 operaciones en 12 rutas nuevas y 24 esquemas n
 - **Fallo de impresión.** No repite la venta; se reimprime con R8-82.
 - **Sin conexión.** El POS se bloquea con un mensaje claro; no hay modo fuera de línea.
 
-## 14. Criterios de aceptación A-203…A-232 (no ejecutados)
+## 14. Criterios de aceptación A-203…A-241 (no ejecutados)
 
 | ID | Criterio |
 | --- | --- |
-| A-203 | Con el módulo desactivado o el esquema anterior a 1.1.0, R8-71…R8-83 responden 503 sin efectos |
+| A-203 | Con una puerta de seguridad cerrada o el esquema anterior a 1.1.0, R8-71…R8-83 responden 423 `pc_module_not_ready` sin efectos |
 | A-204 | O sin `pos_sell` recibe 403 en R8-71/72/82; A y O con la capacidad acceden |
 | A-205 | O no ve esperado ni diferencia en R8-74/76 ni accede a R8-75/77/78/79/83 |
 | A-206 | Una venta en efectivo crea pedido `pos` FINALIZADO, líneas ENTREGADO, salida de stock, `initial_charge` y `sale_cash` en una transacción |
@@ -462,7 +527,7 @@ El OpenAPI `0.13.0-draft` suma 13 operaciones en 12 rutas nuevas y 24 esquemas n
 | A-210 | Totales del cliente distintos de los del servidor devuelven 409 `pc_quote_changed` sin escribir |
 | A-211 | Redondeo POS: T=1234 da R=1230 y ajuste 4; T=1230 da ajuste 0; nunca hay ajuste hacia arriba |
 | A-212 | `initial_charge + cash_rounding = T` y `tendered − change = R` en toda venta |
-| A-213 | R8-24 web acepta importe exacto o `floor10` con su ajuste; cualquier otra combinación da `pc_cash_amount_mismatch` |
+| A-213 | R8-24 web acepta importe exacto o `floor10` con su ajuste; cualquier otra combinación da 409 `pc_conflict` |
 | A-214 | R8-24 sin `cash_session_id` no crea movimiento de cajón aunque el usuario tenga sesión abierta |
 | A-215 | R8-24 o R8-27 con la sesión de otra persona (O) o una sesión cerrada se rechazan |
 | A-216 | Los cobros de Mercado Pago y `cash_rounding` nunca generan movimientos de sesión |
@@ -471,17 +536,26 @@ El OpenAPI `0.13.0-draft` suma 13 operaciones en 12 rutas nuevas y 24 esquemas n
 | A-219 | Una venta posterior al cierre de su sesión recibe 409 `pc_conflict` (`reason = pos_session_closed`) |
 | A-220 | El cierre forzado de A registra motivo y actor; sin conteo deja la diferencia pendiente |
 | A-221 | `pay_in` y `pay_out` exigen motivo y solo los registra A |
-| A-222 | R8-83 total en sesión abierta: stock repuesto, `refund_cash` −R y neto 0 en la sesión |
+| A-222 | R8-83 total en sesión abierta: stock repuesto de lo apto, `refund_cash` −F y neto 0 en la sesión cuando F = R |
 | A-223 | R8-83 no repone unidades `not_fit` ni `warranty_external` y no supera las unidades entregadas menos las ya devueltas |
-| A-224 | R8-83 no reembolsa más que el efectivo recibido menos reembolsos previos ni el ajuste `cash_rounding` |
-| A-225 | Tras R8-83 la línea sigue ENTREGADO, el pedido sigue FINALIZADO y aparece en la cola de notas de crédito |
-| A-226 | R8-25 y R8-27 rechazan pedidos `pos` con 422 |
-| A-227 | Un pedido `pos` aparece en R8-80 hasta registrar su comprobante; el importe distinto de T se rechaza |
-| A-228 | O no registra nota de crédito; A sí, solo con un expediente de devolución del mismo pedido |
+| A-224 | R8-83 no reembolsa más que el efectivo recibido menos reembolsos previos ni el ajuste `cash_rounding`; el reembolso del cuerpo es la suma de las líneas |
+| A-225 | Tras R8-83 la línea sigue ENTREGADO, el pedido sigue FINALIZADO y, si F > 0, el expediente aparece en la cola de notas de crédito |
+| A-226 | R8-25 y R8-27 rechazan pedidos POS (`pos_session_id` no nulo) con 422 (`reason = web_channel_required`) |
+| A-227 | Un pedido POS aparece en R8-80 hasta registrar su boleta; total ≠ T, redondeo fuera de {0, −(T−R)} o pagadero ≠ total + redondeo se rechazan |
+| A-228 | O no registra nota de crédito; A sí, solo con un expediente de devolución del mismo pedido con F > 0 y pagadero = F |
 | A-229 | Ninguna respuesta, auditoría ni registro guarda el número de documento del adquirente |
 | A-230 | Los pedidos `web` conservan aceptación de política y privacidad, contacto D-24 y seguimiento D-34 sin cambios |
 | A-231 | La constancia muestra la leyenda, no usa boleta, factura ni ticket como título y no desglosa IGV |
 | A-232 | El POS se opera completo con teclado, anuncia resultados y cumple 44 × 44 y WCAG 2.2 AA en las pantallas POS |
+| A-233 | Una venta POS con T < 10 se rechaza con 422 (`reason = cash_total_below_minimum`) sin escribir nada |
+| A-234 | Un R8-83 con reembolso 0 crea expediente y reingreso, sin evento `external_refund`, sin `refund_cash` y sin nota de crédito pendiente |
+| A-235 | El reintento de R8-72 con la misma clave tras cerrar la sesión o desactivar el POS devuelve el mismo pedido sin crear otro |
+| A-236 | Con `pos.enabled` falso, R8-71/72/73/75 responden 423 (`reason = pos_disabled`); R8-74, R8-76…R8-83 siguen disponibles para cerrar y regularizar |
+| A-237 | R8-46 no desactiva el POS ni retira una caja con sesión abierta: 409 (`reason = pos_sessions_open`) |
+| A-238 | Dos devoluciones sucesivas del ejemplo de §7 (T = 1234, R = 1230) admiten 500 y luego 730; un tercer reembolso mayor que 0 se rechaza |
+| A-239 | R8-46 y R8-73 concurrentes se serializan por la fila de ajustes: nunca queda una sesión abierta con el POS desactivado |
+| A-240 | Toda respuesta 409/422/423 de una causa POS incluye `data.details.reason` del catálogo de §11 |
+| A-241 | La migración 1.1.0 deja 42 tablas y 65 FK verificadas antes de registrar `schema_version = 1.1.0`; los pedidos web previos cumplen el CHECK nuevo sin relleno |
 
 ## 15. Consumidores de P3 (código que cambiará)
 
@@ -490,11 +564,21 @@ El OpenAPI `0.13.0-draft` suma 13 operaciones en 12 rutas nuevas y 24 esquemas n
 | `wp-peru-commerce.php` | `PERUCOMMERCE_SCHEMA_VERSION` de 1.0.2 a 1.1.0 |
 | `includes/rest-contract.php` | `VERSION` 0.13.0-draft y las 13 operaciones nuevas en su espejo `OPS` |
 | `includes/access-contract.php` | `VERSION` 0.13.0-draft y el `x-authz` de R8-71…R8-83 |
+| `includes/access-output-contract.php` | Raíces y DTO alcanzables de las respuestas POS |
 | `includes/access-roles.php` | Cinco capacidades nuevas y su asignación A/O |
 | `includes/module-gates.php` | `pos.read`, `pos.write` y `pos.sessions`, cerrados por defecto |
+| `includes/rest-errors.php` | `data.details.reason` en `make()` y `Rest_Failure`; causas internas `pc_pos_*` hacia los códigos públicos de §11 |
+| `includes/settings-validation.php`, `settings-store.php` y `settings-service.php` | Bloque `pos` (`enabled`, cajas), fila de ajustes `FOR UPDATE` y 409 `pos_sessions_open` en R8-46 (D-216) |
+| `includes/transaction-context.php` | Bloqueo de la sesión de caja entre la idempotencia y el pedido |
+| `includes/inventory-reservations.php` | Reingreso de unidades aptas con `source_type = case` |
+| `includes/financial-events.php` y `orders-persistence.php` | Verificación del evento `cash_rounding` y del reembolso POS |
+| `includes/external-documents.php` | Boleta POS con total, redondeo y pagadero (D-211) y nota de crédito ligada al expediente (D-212) |
+| `includes/orders-read.php` | Canal derivado de `pos_session_id` y filtro de R8-20 |
+| Lectores del dinero cobrado (`orders-finalization`, `orders-cancellation`, `orders-delivery-changes`, `orders-adjustments`, `guest-order`, `notification-*`, `queue-outbox`) | Reconocen `cash_rounding` al sumar lo cobrado |
+| `includes/bootstrap.php` | Registro de servicios y controladores POS |
 | `includes/schema.php`, `schema-inspector.php` e `installer.php` | Tablas, columnas y migración 1.1.0 |
-| `includes/cash-payments.php` | `rounding_cents` y `cash_session_id` en R8-24; `cashBalanceWithin` y `owedWithin` reconocen `cash_rounding`; rechazo `pos` en R8-25 |
-| `includes/external-refunds.php` | Rechazo `pos` y `cash_session_id` opcional en R8-27 |
+| `includes/cash-payments.php` | `rounding_cents` y `cash_session_id` en R8-24; `cashBalanceWithin` y `owedWithin` reconocen `cash_rounding`; rechazo de pedidos POS en R8-25 |
+| `includes/external-refunds.php` | Rechazo de pedidos POS y `cash_session_id` opcional en R8-27 |
 | Nuevo coordinador de venta POS | O-10, sesión y constancia |
 | Nuevo coordinador de devolución POS | R8-83 atómico |
 | Controladores REST nuevos | R8-71…R8-83 con `permission_callback` y validación de esquema |
@@ -503,12 +587,12 @@ El OpenAPI `0.13.0-draft` suma 13 operaciones en 12 rutas nuevas y 24 esquemas n
 
 Otros archivos PHP y TypeScript citan 0.12.0-draft solo en comentarios; se actualizan junto con su módulo.
 
-**Desalineación conocida.** Desde este corte el OpenAPI principal es 0.13.0-draft, mientras el código y las pruebas offline IMP-69 siguen fijados en 0.12.0-draft (69 REST, 66 rutas, 138 DTO). Es la consecuencia prevista de definir el contrato antes del código: esas pruebas fallarán por versión y recuentos hasta que P3 actualice sus consumidores. No se ejecutaron y el repositorio no tiene CI que las lance.
+**Alineación en P3.** El OpenAPI principal es 0.13.0-draft. P3 alinea el código PHP y los contratos de las pruebas offline IMP-69 con esa versión (82 REST, 78 rutas, 162 DTO) en sus cortes; hasta el último de ellos, el código y esas pruebas pueden seguir fijados en 0.12.0-draft. Ninguna prueba se ejecutó y el repositorio no tiene CI que las lance. El estado de cada corte consta en [docs/43](43-ESTADO-IMPLEMENTACION.md).
 
-## 16. Bloqueos reales para iniciar P3
+## 16. Bloqueos y pendientes
 
-1. **Autorización P-B** de implementación de código: no concedida.
-2. **Revisión del propietario** de D-208…D-210, en especial R8-83, que cambia la exclusión M6 de la propuesta.
+1. **Autorización P-B** de implementación de código: concedida el 2026-11-27 para P1b y P3, sin ejecutar migraciones, instalar dependencias, compilar ni probar.
+2. **Revisión del propietario** de D-208…D-210: aprobadas el 2026-11-27, incluida R8-83. Los seis ajustes previos a P3 se resolvieron en D-211…D-216.
 3. **Entorno local** de WordPress y base de datos para verificar la migración y la concurrencia: necesita autorización expresa.
 4. **Antes de P-D** (no bloquea P3): validación del contador sobre el redondeo (D-207) y comprobación de la configuración del emisor externo del comercio.
 

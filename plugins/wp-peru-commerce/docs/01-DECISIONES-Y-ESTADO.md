@@ -1,6 +1,6 @@
 # Registro de decisiones y estado — PeruCommerce
 
-**Corte: actualización contractual 2026-11-27 · Estado:** Fase 0 cerrada en decisiones D-01…D-200; POS V1 ratificado y contratado documentalmente en D-201…D-210 ([docs/48](48-CONTRATO-POS-V1-P2.md)); API 0.13.0-draft (82 REST/78 rutas/162 esquemas), con R8-71…R8-83 DOCUMENTADAS/NO IMPLEMENTADAS, sin código ni pruebas autorizadas. Corte anterior: 2026-11-18, D-200 y 0.12.0-draft (69 REST/66 rutas/138 esquemas).
+**Corte: actualización contractual 2026-11-27 · Estado:** Fase 0 cerrada en decisiones D-01…D-200; POS V1 ratificado y contratado en D-201…D-216 ([docs/48](48-CONTRATO-POS-V1-P2.md)), con D-208…D-210 aprobadas por el propietario y los ajustes previos a P3 en D-211…D-216; API 0.13.0-draft (82 REST/78 rutas/162 esquemas). P3 (backend PHP) autorizada (P-B); sin ejecutar migraciones, compilaciones ni pruebas. Corte anterior: 2026-11-18, D-200 y 0.12.0-draft (69 REST/66 rutas/138 esquemas).
 
 ## Convenciones
 
@@ -9,7 +9,7 @@
 - **PENDIENTE:** no decidido o requiere comprobación.
 - **EXCLUIDO:** fuera de la V1 salvo cambio de alcance.
 
-## 210 decisiones registradas (incluidas la rectificación técnica D-200 y el POS V1 D-201…D-210)
+## 216 decisiones registradas (incluidas la rectificación técnica D-200 y el POS V1 D-201…D-216)
 
 | ID | Decisión | Estado |
 | --- | --- | --- |
@@ -220,9 +220,15 @@
 | D-205 | D6: errores, anulaciones, reembolsos y devoluciones con invariantes de inventario, dinero y pedido, y procedimientos operativos seguros para las exclusiones de V1 (docs/48 §7) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO |
 | D-206 | D13: flujo operativo de emisión externa del comprobante, identificación del adquirente cuando corresponda (solo `buyer_id_type`) y registro de su referencia; no emite ni declara cumplimiento SUNAT (docs/48 §8) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO |
 | D-207 | D14/P1b: redondeo del efectivo a favor del consumidor a la decena de céntimos inferior, separando total original, ajuste `cash_rounding` y efectivo recibido (docs/48 §6) | CONFIRMADO en política; contrato DOCUMENTADO/NO IMPLEMENTADO; validación contable antes de P-D |
-| D-208 | Transición O-10 «sin pedido → CONFIRMADO» con `channel = pos`, seguida de O-07 FINALIZADO en la misma transacción, sin estados E-01 nuevos (docs/48 §9) | DOCUMENTADO/NO IMPLEMENTADO; revisión del propietario antes de P3 |
-| D-209 | Persistencia POS: tablas `pc_cash_sessions` y `pc_cash_session_movements` (39 → 41), columnas aditivas y migración 1.0.2 → 1.1.0 solo documental (docs/48 §10) | DOCUMENTADO/NO IMPLEMENTADO; revisión del propietario antes de P3 |
-| D-210 | REST R8-71…R8-83, enmiendas aditivas de R8-20/21/24/25/27/45/46 y OpenAPI `0.13.0-draft` (82 REST/78 rutas/162 esquemas; 62 PER) (docs/48 §11) | DOCUMENTADO/NO IMPLEMENTADO; revisión del propietario antes de P3 |
+| D-208 | Transición O-10 «sin pedido → CONFIRMADO» del canal POS (`pos_session_id` no nulo), seguida de O-07 FINALIZADO en la misma transacción, sin estados E-01 nuevos (docs/48 §9) | CONFIRMADO por el propietario (2026-11-27); implementación P3 |
+| D-209 | Persistencia POS: tablas `pc_cash_sessions`, `pc_cash_session_movements` y `pc_pos_return_lines` (39 → 42; 56 → 65 FK), columnas aditivas y migración 1.0.2 → 1.1.0 (docs/48 §10) | CONFIRMADO por el propietario (2026-11-27), con el ajuste D-212; implementación P3 sin ejecutar la migración |
+| D-210 | REST R8-71…R8-83, incluida la devolución atómica R8-83, enmiendas aditivas de R8-20/21/24/25/27/45/46 y OpenAPI `0.13.0-draft` (82 REST/78 rutas/162 esquemas; 62 PER) (docs/48 §11) | CONFIRMADO por el propietario (2026-11-27); implementación P3 |
+| D-211 | Comprobante externo POS: total original, redondeo (0 a −9) e importe pagadero separados en R8-81, con pagadero = total + redondeo; la nota de crédito exige pagadero = reembolso del expediente (docs/48 §8) | CONFIRMADO como ajuste previo a P3 ordenado por el propietario (2026-11-27) |
+| D-212 | Reembolso por línea: un expediente por operación R8-83, líneas en `pc_pos_return_lines`, devoluciones parciales y sucesivas limitadas por unidades y efectivo recibido, sin reembolsar el redondeo, y una nota de crédito por expediente con reembolso mayor que 0 (docs/48 §7, §10) | CONFIRMADO como ajuste previo a P3 ordenado por el propietario (2026-11-27) |
+| D-213 | Importes cero: venta POS con efectivo debido 0 rechazada; reembolso 0 admitido sin evento, movimiento de cajón ni nota de crédito; redondeo R8-24 solo si deja al menos 10 céntimos (docs/48 §6, §7) | CONFIRMADO como ajuste previo a P3 ordenado por el propietario (2026-11-27) |
+| D-214 | Los reintentos idempotentes recuperan la operación confirmada aunque la sesión de caja se cierre o el POS se desactive después: la reclamación y la reproducción preceden a las comprobaciones de sesión, estado y activación (docs/48 §12) | CONFIRMADO como ajuste previo a P3 ordenado por el propietario (2026-11-27) |
+| D-215 | Se conservan todas las puertas de seguridad (HTTPS, InnoDB, esquema, bloqueos verificados y autorización por recurso); una puerta cerrada responde 423 `pc_module_not_ready` (docs/48 §4) | CONFIRMADO como ajuste previo a P3 ordenado por el propietario (2026-11-27) |
+| D-216 | Desactivar el POS (R8-46) exige que no haya sesiones abiertas (409 `pos_sessions_open`), se serializa con la apertura por la fila de ajustes y deja disponibles cierre, consultas, comprobantes y devoluciones; desactivar el plugin no equivale a desactivar el POS (docs/48 §4, §12) | CONFIRMADO como ajuste previo a P3 ordenado por el propietario (2026-11-27) |
 
 ## Dirección de producto fijada en la conversación (sin confundir con especificación exhaustiva)
 
@@ -313,7 +319,7 @@
 
 **Antecedente histórico D-199 / DOC-QA30 (18-11-2026):** OpenAPI `0.11.0-draft` con **68 operaciones REST, 65 rutas y 136 esquemas**; **69 entradas R8** al contar R8-18 página WordPress; 56 PER, 39 tablas y 34 frames Figma sin modificaciones. D-199 cierra únicamente el origen administrativo del `case_id` requerido por R8-26 tras verificación manual del comprador. Docs/42 describe guarda, idempotencia y privacidad. Las cifras de 0.10.0-draft o anteriores son históricas. Esto NO autoriza código, pruebas ni release.
 
-**Fuente vigente D-210 / DOC-QA32 (27-11-2026):** OpenAPI **`0.13.0-draft`: 82 REST, 78 rutas y 162 esquemas** (83 entradas R8 con la página WordPress R8-18), **210 decisiones**, 62 PER, 24 capacidades y 41 tablas. El propietario ratificó el POS V1 (D-201) con precisiones D-202…D-207; D-208…D-210 concretan la transición O-10, la persistencia y las operaciones R8-71…R8-83, y quedan **DOCUMENTADAS/NO IMPLEMENTADAS** con revisión del propietario pendiente antes de P3. El contrato detallado está en [docs/48](48-CONTRATO-POS-V1-P2.md). El código y las pruebas offline siguen en 0.12.0-draft (docs/48 §15). P-B/P-C/P-D sin autorización/ejecución.
+**Fuente vigente D-216 / DOC-QA32 (27-11-2026):** OpenAPI **`0.13.0-draft`: 82 REST, 78 rutas y 162 esquemas** (83 entradas R8 con la página WordPress R8-18), **216 decisiones**, 62 PER, 24 capacidades y 42 tablas con 65 FK. El propietario ratificó el POS V1 (D-201) con precisiones D-202…D-207 y aprobó D-208…D-210 (transición O-10, persistencia y operaciones R8-71…R8-83, incluida R8-83); D-211…D-216 resuelven los ajustes que ordenó antes de P3. El contrato detallado está en [docs/48](48-CONTRATO-POS-V1-P2.md). P-B concedida para P1b y P3; el estado del código consta en [docs/43](43-ESTADO-IMPLEMENTACION.md). P-C/P-D sin autorización ni ejecución.
 
 **Fuente histórica D-200 / DOC-QA31 (18-11-2026):** OpenAPI **`0.12.0-draft`: 69 REST, 66 rutas y 138 esquemas** (70 entradas R8 con la página WordPress R8-18), **200 decisiones**, 56 PER y 39 tablas. R8-70 registra rechazo/retiro del expediente físico parcial sin ajuste; R8-26 solo finaliza el caso como `closed_adjusted` al confirmar el ajuste parcial en transacción atómica con `expected_case_version`. `docs/42` conserva el detalle y la evidencia estática. Los cortes anteriores son historia y no se generan controladores desde ellos. P-B/P-C/P-D sin autorización/ejecución.
 
